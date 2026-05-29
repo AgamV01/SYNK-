@@ -171,3 +171,8 @@ verify: `cd server && pytest tests/test_pathfinding.py -q`
 result: 15 passed. simplify_path() keeps only turn points (+endpoints) via per-step direction sign; collapses straight runs, preserves endpoints on detours, short paths unchanged.
 files: server/synk/pathfinding.py, server/tests/test_pathfinding.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 32 no-path returns empty
+verify: `cd server && pytest tests/test_pathfinding.py -q`
+result: 16 passed. Goal walled off on all 8 neighbors -> astar returns []. Pathfinding phase (27-32) complete.
+files: server/tests/test_pathfinding.py, fix_plan.md, PROGRESS.md
+

@@ -121,3 +121,14 @@ def test_simplify_endpoints_preserved_on_detour() -> None:
     assert waypoints[0] == (0, 3)
     assert waypoints[-1] == (6, 3)
     assert len(waypoints) < 9  # fewer than the full step-by-step path
+
+
+def test_astar_no_path_returns_empty() -> None:
+    g = Grid(0, 0, 5, 5, 1.0)
+    goal = (2, 2)
+    # Wall the goal off completely.
+    for dc in (-1, 0, 1):
+        for dr in (-1, 0, 1):
+            if (dc, dr) != (0, 0):
+                g.block((goal[0] + dc, goal[1] + dr))
+    assert astar(g, (0, 0), goal) == []
