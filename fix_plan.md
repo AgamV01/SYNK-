@@ -72,7 +72,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 
 ## Headless sanity
 - [x] 51. examples/headless_demo.py: spawn agents, N ticks, tick log, --selftest. verify: `cd server && python examples/headless_demo.py --selftest`
-- [ ] 52. Headless: agent navigates around an obstacle (assert path). verify: `cd server && python examples/headless_demo.py --selftest`
+- [x] 52. Headless: agent navigates around an obstacle (assert path). verify: `cd server && python examples/headless_demo.py --selftest`
 - [ ] 53. Headless: agent reacts to scripted nearby player (assert greeting). verify: `cd server && python examples/headless_demo.py --selftest`
 
 ## LLM providers

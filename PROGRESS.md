@@ -274,3 +274,8 @@ result: "SELFTEST PASS: agent approached and faced the player". DT=0.1 (10Hz), A
 notes: apply_action here is a demo stand-in; canonical per-tick apply comes in Simulation phase (86-91).
 files: server/examples/headless_demo.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 52 headless obstacle navigation
+verify: `cd server && python examples/headless_demo.py --selftest`
+result: both selftests PASS. Added build_obstacle_scene (wall col3 rows0-5, gap row6) + _selftest_obstacle: agent reaches player around the wall within 400 ticks, never enters a blocked cell, max_z>5 proves detour toward the gap.
+files: server/examples/headless_demo.py, fix_plan.md, PROGRESS.md
+

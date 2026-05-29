@@ -19,6 +19,7 @@ import sys
 from synk.brains.base import Action, Emote, Face, Idle, MoveTo, Wander
 from synk.brains.reactive import ReactiveBrain
 from synk.geometry import Vec3
+from synk.pathfinding import Grid
 from synk.perception import perceive
 from synk.world import Agent, Player, World
 
@@ -86,7 +87,21 @@ def run_log(ticks: int) -> None:
         )
 
 
-def run_selftest() -> None:
+def build_obstacle_scene() -> tuple[World, list[tuple[Agent, ReactiveBrain]], Player, Grid]:
+    """Agent and player on opposite sides of a wall (col 3, rows 0-5; gap at row 6)."""
+    grid = Grid(0, 0, 7, 7, 1.0)
+    for row in range(6):
+        grid.block((3, row))
+    world = World()
+    agent = Agent(id="npc_walker", name="Bo", position=grid.cell_center((0, 3)), zone="room")
+    player = Player(id="player_1", name="Ada", position=grid.cell_center((6, 3)), zone="room")
+    world.add(agent)
+    world.add(player)
+    brain = ReactiveBrain(arrive_radius=1.0, grid=grid, sense_radius=50.0)
+    return world, [(agent, brain)], player, grid
+
+
+def _selftest_approach() -> None:
     world, agents, player = build_approach_scene()
     agent, brain = agents[0]
     start_dist = agent.position.distance_to(player.position)
@@ -100,6 +115,34 @@ def run_selftest() -> None:
     )
     assert agent.current_action == "face", "agent should face the player on arrival"
     print("SELFTEST PASS: agent approached and faced the player")
+
+
+def _selftest_obstacle() -> None:
+    world, agents, player, grid = build_obstacle_scene()
+    agent, brain = agents[0]
+    start_dist = agent.position.distance_to(player.position)
+    max_z = agent.position.z
+    for _ in range(400):
+        step(world, agents)
+        max_z = max(max_z, agent.position.z)
+        assert not grid.is_blocked(grid.world_to_cell(agent.position)), (
+            "agent walked into a blocked cell"
+        )
+        if agent.position.distance_to(player.position) <= brain.arrive_radius:
+            break
+    end_dist = agent.position.distance_to(player.position)
+    assert end_dist <= brain.arrive_radius + 1e-6, (
+        f"agent should have reached the player around the wall (dist {end_dist:.3f})"
+    )
+    assert end_dist < start_dist
+    # Must have detoured toward the gap (row 6 center z ~ 6.5) rather than going straight.
+    assert max_z > 5.0, f"agent did not detour around the wall (max_z={max_z:.2f})"
+    print("SELFTEST PASS: agent navigated around the obstacle")
+
+
+def run_selftest() -> None:
+    _selftest_approach()
+    _selftest_obstacle()
 
 
 def main(argv: list[str] | None = None) -> int:
