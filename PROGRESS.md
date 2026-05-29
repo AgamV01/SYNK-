@@ -202,3 +202,8 @@ verify: `cd server && pytest tests/test_memory.py -q`
 result: 12 passed. recall_recent(n) returns n newest by ts (desc); n<=0 -> [].
 files: server/synk/memory.py, server/tests/test_memory.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 38 recall top-salient K
+verify: `cd server && pytest tests/test_memory.py -q`
+result: 14 passed. recall_salient(k) returns k highest-salience (ties: newer ts first); k<=0 -> [].
+files: server/synk/memory.py, server/tests/test_memory.py, fix_plan.md, PROGRESS.md
+

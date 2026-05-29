@@ -76,3 +76,9 @@ class MemoryStore:
         if n <= 0:
             return []
         return sorted(self._items, key=lambda m: m.ts, reverse=True)[:n]
+
+    def recall_salient(self, k: int) -> list[MemoryItem]:
+        """The `k` most salient memories, most salient first (ties: newer first)."""
+        if k <= 0:
+            return []
+        return sorted(self._items, key=lambda m: (m.salience, m.ts), reverse=True)[:k]

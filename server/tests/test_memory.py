@@ -95,3 +95,18 @@ def test_recall_recent_nonpositive_is_empty() -> None:
     s.add(MemoryItem("x", ts=1.0))
     assert s.recall_recent(0) == []
 
+
+def test_recall_salient_most_important_first() -> None:
+    s = MemoryStore()
+    s.add(MemoryItem("trivial", ts=3.0, salience=0.5))
+    s.add(MemoryItem("vital", ts=1.0, salience=9.0))
+    s.add(MemoryItem("notable", ts=2.0, salience=4.0))
+    top = s.recall_salient(2)
+    assert [m.text for m in top] == ["vital", "notable"]
+
+
+def test_recall_salient_nonpositive_is_empty() -> None:
+    s = MemoryStore()
+    s.add(MemoryItem("x", ts=1.0, salience=5.0))
+    assert s.recall_salient(0) == []
+
