@@ -45,3 +45,8 @@ verify: `cd client && node -e "require('./package.json')"`
 result: TASK6_PASS. three ^0.160 dep; vite/typescript/@types/three dev. scripts: dev, build (tsc --noEmit && vite build), preview, typecheck.
 files: client/package.json (new), fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 7 npm install
+verify: `cd client && npm install && test -d node_modules`
+result: TASK7_PASS. NOTE: user's ~/.npm cache has root-owned files (npm bug) → plain `npm install` fails EACCES. Workaround used: `npm install --cache /tmp/synk-npm-cache`. Future npm installs must use that flag (do NOT sudo chown the user's cache).
+files: client/package-lock.json (new), node_modules/ (gitignored), fix_plan.md, PROGRESS.md
+
