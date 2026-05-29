@@ -25,7 +25,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 16. Vec3 distance_to (xz), to/from list + test. verify: `cd server && pytest tests/test_geometry.py -q`
 
 ## World & entities
-- [ ] 17. Entity base (id, position, zone) + test. verify: `cd server && pytest tests/test_world.py -q`
+- [x] 17. Entity base (id, position, zone) + test. verify: `cd server && pytest tests/test_world.py -q`
 - [ ] 18. Player + Agent entity skeletons + test. verify: `cd server && pytest tests/test_world.py -q`
 - [ ] 19. World add/remove entity + test. verify: `cd server && pytest tests/test_world.py -q`
 - [ ] 20. World get-by-id, list-by-zone + test. verify: `cd server && pytest tests/test_world.py -q`

@@ -95,3 +95,9 @@ verify: `cd server && pytest tests/test_geometry.py -q`
 result: 11 passed. distance_to = xz distance; to_list/from_list roundtrip. Geometry phase (14-16) complete.
 files: server/synk/geometry.py, server/tests/test_geometry.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 17 Entity base
+verify: `cd server && pytest tests/test_world.py -q`
+result: 3 passed. Entity dataclass (id, position=Vec3 default, zone="default"); mutable position.
+files: server/synk/world.py, server/tests/test_world.py, fix_plan.md, PROGRESS.md
+notes: WORKFLOW CHANGE — switching to commit directly on `main` (default branch) from here so each commit counts on the GitHub contribution graph. main fast-forwarded to include the harness + tasks 1-17. ralph/synk-v1 retained but loop now targets main.
+
