@@ -60,6 +60,15 @@ class World:
     def emit_event(self, event: WorldEvent) -> None:
         self._events.append(event)
 
+    @property
+    def event_count(self) -> int:
+        """Total events emitted so far — a monotonic cursor for streaming consumers."""
+        return len(self._events)
+
+    def events_from(self, index: int) -> list[WorldEvent]:
+        """Events emitted at or after the given cursor index (see `event_count`)."""
+        return self._events[index:]
+
     def recent_events(self, within_ticks: int | None = None) -> list[WorldEvent]:
         """Events emitted recently. With `within_ticks`, only those whose tick is
         within that many ticks of the current tick; otherwise all buffered events."""

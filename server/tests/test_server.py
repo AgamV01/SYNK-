@@ -9,11 +9,12 @@ from synk.memory import MemoryStore
 from synk.server import (
     RateLimiter,
     Throttle,
+    broadcast_events,
     broadcast_world_state,
     create_app,
     origin_allowed,
 )
-from synk.world import Agent, Player, World
+from synk.world import Agent, Player, World, WorldEvent
 
 
 def test_healthz() -> None:
@@ -181,6 +182,28 @@ async def test_broadcast_world_state_is_zone_scoped() -> None:
     assert tavern_msg["tick"] == 1
     assert {a["id"] for a in tavern_msg["agents"]} == {"gus"}  # only tavern agents
     assert {a["id"] for a in conns["p_market"].sent[0]["agents"]} == {"bo"}
+
+
+async def test_broadcast_events_dialogue_and_agent_event_zone_scoped() -> None:
+    world = World()
+    world.add(Player(id="p_in", zone="tavern"))
+    world.add(Player(id="p_out", zone="market"))
+    world.advance(0.1)
+    world.emit_event(WorldEvent(kind="spoke", source_id="gus", zone="tavern", tick=1, payload={"text": "hello"}))
+    world.emit_event(WorldEvent(kind="emoted", source_id="gus", zone="tavern", tick=1, payload={"emote": "wave"}))
+    world.emit_event(WorldEvent(kind="spoke", source_id="bo", zone="market", tick=1, payload={"text": "psst"}))
+    conns = {"p_in": FakeWS(), "p_out": FakeWS()}
+    cursor = await broadcast_events(world, conns, 0)
+    assert cursor == 3
+    in_types = {m["type"] for m in conns["p_in"].sent}
+    assert in_types == {"dialogue", "agent_event"}
+    dlg = next(m for m in conns["p_in"].sent if m["type"] == "dialogue")
+    assert dlg["text"] == "hello"
+    assert [m["text"] for m in conns["p_out"].sent if m["type"] == "dialogue"] == ["psst"]
+    # Cursor advances; a second call with no new events sends nothing.
+    again = await broadcast_events(world, conns, cursor)
+    assert again == 3
+    assert len(conns["p_in"].sent) == 2  # unchanged
 
 
 async def test_broadcast_is_throttled() -> None:

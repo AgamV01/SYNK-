@@ -110,6 +110,38 @@ async def broadcast_world_state(
     return sent
 
 
+async def broadcast_events(
+    world: World,
+    connections: Mapping[str, object],
+    since_index: int,
+) -> int:
+    """Stream new WorldEvents to clients since `since_index`. `spoke` events become
+    `dialogue` messages; everything else becomes `agent_event`. Zone-scoped. Returns
+    the new cursor (world.event_count) to pass back next call."""
+    for event in world.events_from(since_index):
+        if event.kind == "spoke":
+            msg = {
+                "type": "dialogue",
+                "v": PROTOCOL_VERSION,
+                "agent_id": event.source_id,
+                "text": event.payload.get("text", ""),
+                "overheard": event.payload.get("overheard", False),
+            }
+        else:
+            msg = {
+                "type": "agent_event",
+                "v": PROTOCOL_VERSION,
+                "agent_id": event.source_id,
+                "kind": event.kind,
+                "payload": event.payload,
+            }
+        for player_id, ws in list(connections.items()):
+            player = world.try_get(player_id)
+            if player is not None and player.zone == event.zone:
+                await ws.send_json(msg)
+    return world.event_count
+
+
 def zone_snapshot(world: World, zone: str) -> dict:
     """A world_state-style snapshot of the agents in a zone."""
     agents = [
@@ -175,9 +207,11 @@ def create_app(
             tasks.append(asyncio.create_task(sim.run()))
 
             async def broadcaster() -> None:
+                event_cursor = world.event_count
                 while True:
                     await asyncio.sleep(sim.dt)
                     await broadcast_world_state(world, connections, broadcast_throttle)
+                    event_cursor = await broadcast_events(world, connections, event_cursor)
 
             tasks.append(asyncio.create_task(broadcaster()))
         try:
