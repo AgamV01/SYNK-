@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from synk.memory import MemoryItem
+import pytest
+
+from synk.memory import MemoryItem, MemoryStore
 
 
 def test_memory_item_fields() -> None:
@@ -13,3 +15,29 @@ def test_memory_item_fields() -> None:
 def test_memory_item_default_salience() -> None:
     m = MemoryItem(text="saw a stranger", ts=1.0)
     assert m.salience == 1.0
+
+
+def test_store_rejects_bad_capacity() -> None:
+    with pytest.raises(ValueError):
+        MemoryStore(capacity=0)
+
+
+def test_store_add_and_len() -> None:
+    s = MemoryStore(capacity=10)
+    s.add(MemoryItem("a", ts=1.0))
+    s.add(MemoryItem("b", ts=2.0))
+    assert len(s) == 2
+    assert {m.text for m in s.items} == {"a", "b"}
+
+
+def test_store_evicts_least_salient_when_full() -> None:
+    s = MemoryStore(capacity=3)
+    s.add(MemoryItem("low", ts=1.0, salience=0.5))
+    s.add(MemoryItem("mid", ts=2.0, salience=2.0))
+    s.add(MemoryItem("high", ts=3.0, salience=5.0))
+    s.add(MemoryItem("new", ts=4.0, salience=1.0))  # over capacity
+    texts = {m.text for m in s.items}
+    assert len(s) == 3
+    assert "low" not in texts  # least salient evicted
+    assert {"mid", "high", "new"} == texts
+

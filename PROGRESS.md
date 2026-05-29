@@ -181,3 +181,8 @@ verify: `cd server && pytest tests/test_memory.py -q`
 result: 2 passed. MemoryItem{text, ts (sim seconds), salience=1.0}.
 files: server/synk/memory.py, server/tests/test_memory.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 34 MemoryStore add + capacity cap
+verify: `cd server && pytest tests/test_memory.py -q`
+result: 5 passed. MemoryStore(capacity) rejects <=0; add() appends and, when over capacity, evicts least-salient (tie -> oldest ts). items property returns a copy.
+files: server/synk/memory.py, server/tests/test_memory.py, fix_plan.md, PROGRESS.md
+
