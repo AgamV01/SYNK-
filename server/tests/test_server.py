@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from synk.brains.reactive import ReactiveBrain
 from synk.geometry import Vec3
+from synk.memory import MemoryStore
 from synk.server import (
     RateLimiter,
     Throttle,
@@ -100,6 +101,25 @@ def test_ws_say_returns_dialogue() -> None:
         assert "Gus" in reply["text"]
         assert "hello" in reply["text"]
         assert reply["overheard"] is False
+
+
+def test_ws_say_records_memory_and_conversation() -> None:
+    app = create_app()
+    gus = Agent(id="npc_gus", name="Gus", zone="tavern", personality="a barkeep")
+    gus.memory = MemoryStore()
+    app.state.world.add(gus)
+    app.state.sim.register("npc_gus", ReactiveBrain())
+    client = TestClient(app)
+    with client.websocket_connect("/ws") as ws:
+        ws.send_json({"type": "join", "v": 1, "name": "Ada", "zone": "tavern"})
+        token = ws.receive_json()["token"]
+        ws.send_json({"type": "say", "v": 1, "target": "npc_gus", "text": "I am Ada the brave", "token": token})
+        ws.receive_json()  # dialogue reply
+    assert any("I am Ada the brave" in m.text for m in gus.memory.items)
+    assert gus.conversation is not None
+    turns = [t.text for t in gus.conversation.turns]
+    assert "I am Ada the brave" in turns  # player turn recorded
+    assert len(turns) >= 2  # + agent reply
 
 
 def test_ws_interact_returns_agent_event() -> None:

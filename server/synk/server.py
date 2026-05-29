@@ -20,6 +20,7 @@ from .auth import AuthManager
 from .brains.reactive import ReactiveBrain
 from .dialogue import DialogueManager
 from .geometry import Vec3
+from .memory import MemoryItem, MemoryStore, score_event_salience
 from .pathfinding import Grid, Obstacle
 from .perception import perceive
 from .simulation import Simulation
@@ -141,6 +142,7 @@ def populate_demo(world: World, sim: Simulation) -> None:
         Agent(id="npc_tomas", name="Tomas", personality="a suspicious guard", position=Vec3(-3, 0, 3), zone="tavern"),
     ]
     for npc in npcs:
+        npc.memory = MemoryStore()  # episodic memory (duck-typed; used by LLMBrain + reflection)
         world.add(npc)
         sim.register(npc.id, ReactiveBrain(grid=grid, arrive_radius=1.5))
 
@@ -265,7 +267,16 @@ def create_app(
                     if isinstance(agent, Agent):
                         brain = sim.brains.get(agent.id) or ReactiveBrain()
                         percept = perceive(world, agent)
-                        dialogue.route_player_message(player_id, agent.id, text)
+                        convo = dialogue.route_player_message(player_id, agent.id, text)
+                        agent.conversation = convo  # so LLMBrain sees history
+                        if getattr(agent, "memory", None) is not None:
+                            agent.memory.add(
+                                MemoryItem(
+                                    text=f"{player_id} said: {text}",
+                                    ts=world.sim_time,
+                                    salience=score_event_salience("spoke"),
+                                )
+                            )
                         # Deliberative reply: off the sim tick, so awaiting is fine here.
                         result = await brain.converse(agent, percept, text)
                         dialogue.append_agent_reply(player_id, agent.id, result.text)
