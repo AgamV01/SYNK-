@@ -5,15 +5,81 @@ streams welcome/world_state/agent_event/dialogue/error back."""
 
 from __future__ import annotations
 
-from fastapi import FastAPI
+import secrets
+
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+
+from .auth import AuthManager
+from .dialogue import DialogueManager
+from .simulation import Simulation
+from .world import Agent, Player, World
+
+PROTOCOL_VERSION = 1
+DEFAULT_ZONE = "default"
+
+
+def zone_snapshot(world: World, zone: str) -> dict:
+    """A world_state-style snapshot of the agents in a zone."""
+    agents = [
+        {
+            "id": e.id,
+            "name": e.name,
+            "position": e.position.to_list(),
+            "facing": e.facing,
+            "action": e.current_action,
+        }
+        for e in world.by_zone(zone)
+        if isinstance(e, Agent)
+    ]
+    return {"tick": world.tick, "agents": agents}
 
 
 def create_app() -> FastAPI:
     app = FastAPI(title="SYNK")
+    world = World()
+    auth = AuthManager()
+    dialogue = DialogueManager()
+    sim = Simulation(world)
+    connections: dict[str, WebSocket] = {}
+
+    app.state.world = world
+    app.state.auth = auth
+    app.state.dialogue = dialogue
+    app.state.sim = sim
+    app.state.connections = connections
 
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:
         return {"status": "ok"}
+
+    @app.websocket("/ws")
+    async def ws(websocket: WebSocket) -> None:
+        await websocket.accept()
+        player_id: str | None = None
+        try:
+            while True:
+                msg = await websocket.receive_json()
+                if msg.get("type") == "join":
+                    name = msg.get("name", "anon")
+                    zone = msg.get("zone") or DEFAULT_ZONE
+                    player_id = f"player_{secrets.token_hex(4)}"
+                    session = auth.issue(player_id)
+                    world.add(Player(id=player_id, name=name, zone=zone))
+                    connections[player_id] = websocket
+                    await websocket.send_json(
+                        {
+                            "type": "welcome",
+                            "v": PROTOCOL_VERSION,
+                            "player_id": player_id,
+                            "token": session.token,
+                            "tick_rate": round(1 / sim.dt),
+                            "zone": zone,
+                            "snapshot": zone_snapshot(world, zone),
+                        }
+                    )
+        except WebSocketDisconnect:
+            if player_id is not None:
+                connections.pop(player_id, None)
 
     return app
 

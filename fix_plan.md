@@ -131,7 +131,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 
 ## Server
 - [x] 92. FastAPI app + /healthz + test. verify: `cd server && pytest tests/test_server.py -q`
-- [ ] 93. WS accept; join -> welcome + token + test. verify: `cd server && pytest tests/test_server.py -q`
+- [x] 93. WS accept; join -> welcome + token + test. verify: `cd server && pytest tests/test_server.py -q`
 - [ ] 94. WS move intent updates player + test. verify: `cd server && pytest tests/test_server.py -q`
 - [ ] 95. WS say intent -> dialogue event + test. verify: `cd server && pytest tests/test_server.py -q`
 - [ ] 96. WS interact intent -> agent_event + test. verify: `cd server && pytest tests/test_server.py -q`
