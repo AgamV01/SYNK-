@@ -77,3 +77,20 @@ def test_astar_straight_orthogonal_length() -> None:
     path = astar(g, (0, 0), (5, 0))
     assert len(path) == 6  # Chebyshev distance 5 + 1
     assert all(row == 0 for _, row in path)
+
+
+def test_astar_routes_around_wall() -> None:
+    g = Grid(0, 0, 7, 7, 1.0)
+    # Vertical wall at column 3 blocking rows 0..5, with a gap at row 6.
+    for row in range(6):
+        g.block((3, row))
+    path = astar(g, (0, 3), (6, 3))
+    assert path, "expected a detour path around the wall"
+    assert path[0] == (0, 3)
+    assert path[-1] == (6, 3)
+    # The path never steps on a blocked cell...
+    assert all(not g.is_blocked(c) for c in path)
+    # ...and it must dip toward the gap (row 6) to get around the wall.
+    assert max(row for _, row in path) >= 6
+    # A straight crossing would be 7 cells; the detour is strictly longer.
+    assert len(path) > 7

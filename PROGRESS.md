@@ -161,3 +161,8 @@ verify: `cd server && pytest tests/test_pathfinding.py -q`
 result: 10 passed. Confirmed A* yields the optimal straight diagonal [(0,0)..(4,4)] and orthogonal paths of Chebyshev+1 length on empty grids. Test-only (impl already correct).
 files: server/tests/test_pathfinding.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 30 path around obstacle
+verify: `cd server && pytest tests/test_pathfinding.py -q`
+result: 11 passed. Wall at col 3 (rows 0-5, gap at row 6); A* detours through the gap, never steps on blocked cells, path strictly longer than the 7-cell straight crossing. Proves non-naive navigation.
+files: server/tests/test_pathfinding.py, fix_plan.md, PROGRESS.md
+
