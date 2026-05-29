@@ -460,3 +460,8 @@ verify: `cd server && pytest tests/test_simulation.py -q`
 result: 6 passed. dispatch_converse(agent_id, utterance) -> asyncio.create_task (returns immediately); result buffered in _results. Test with SlowProvider proves ticks advance while the converse task is still pending (tick never awaits it). pending_count property.
 files: server/synk/simulation.py, server/tests/test_simulation.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 89 drain LLM results into events
+verify: `cd server && pytest tests/test_simulation.py tests/test_llm_brain.py -q`
+result: 11 passed. drain_results() emits a "spoke" event per result + applies any structured action (its event); clears _results, prunes done tasks; step() drains first each tick. ALSO wired parse_llm_output into LLMBrain.converse -> ConverseResult(speech, action) (plain text still speech-only, task 61 test green).
+files: server/synk/simulation.py, server/synk/brains/llm.py, server/tests/test_simulation.py, fix_plan.md, PROGRESS.md
+

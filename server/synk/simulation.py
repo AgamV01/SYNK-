@@ -14,8 +14,9 @@ from typing import TYPE_CHECKING
 from . import actions
 from .brains.base import ConverseResult, Face, Idle, MoveTo, Wander
 from .geometry import Vec3
+from .memory import score_event_salience
 from .perception import DEFAULT_SENSE_RADIUS, perceive
-from .world import Agent, World
+from .world import Agent, World, WorldEvent
 
 if TYPE_CHECKING:
     from .brains.base import Brain
@@ -98,8 +99,37 @@ class Simulation:
         else:
             actions.apply_action(self.world, agent, action)
 
+    def drain_results(self) -> list[WorldEvent]:
+        """Fold completed off-tick converse results back into the world as events: a
+        `spoke` event for the dialogue line, plus any structured action's event."""
+        self._pending = [t for t in self._pending if not t.done()]
+        batch = self._results
+        self._results = []
+        events: list[WorldEvent] = []
+        for agent_id, result in batch:
+            agent = self.world.try_get(agent_id)
+            if not isinstance(agent, Agent):
+                continue
+            spoke = WorldEvent(
+                kind="spoke",
+                source_id=agent_id,
+                zone=agent.zone,
+                tick=self.world.tick,
+                position=agent.position,
+                salience=score_event_salience("spoke"),
+                payload={"text": result.text},
+            )
+            self.world.emit_event(spoke)
+            events.append(spoke)
+            if result.action is not None:
+                action_event = actions.apply_action(self.world, agent, result.action)
+                if action_event is not None:
+                    events.append(action_event)
+        return events
+
     def step(self) -> None:
-        """One tick: perceive -> decide -> apply for each registered agent, then advance."""
+        """One tick: drain off-tick results, then perceive -> decide -> apply, then advance."""
+        self.drain_results()
         for agent_id, brain in self.brains.items():
             agent = self.world.try_get(agent_id)
             if not isinstance(agent, Agent):

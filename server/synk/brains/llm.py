@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .base import Action, ConverseResult
+from .base import Action, ConverseResult, parse_llm_output
 from .providers import Provider, build_prompt
 from .reactive import ReactiveBrain
 
@@ -45,7 +45,9 @@ class LLMBrain:
             utterance=utterance,
         )
         text = await self.provider.generate(prompt, system=self._system_prompt(agent))
-        return ConverseResult(text=text.strip())
+        # Parse a possible structured action; malformed output degrades to speech-only.
+        speech, action = parse_llm_output(text)
+        return ConverseResult(text=speech, action=action)
 
     @staticmethod
     def _assemble_context(agent: Agent) -> tuple[list[str], list[tuple[str, str]]]:

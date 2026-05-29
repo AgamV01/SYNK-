@@ -82,3 +82,25 @@ async def test_converse_dispatched_off_tick() -> None:
     await task
     assert ("npc1", task.result()) in sim._results
     assert task.result().text == "a considered reply"
+
+
+class ActionJSONProvider:
+    name = "json"
+
+    async def generate(self, prompt: str, *, system: str | None = None) -> str:
+        return '{"speech": "Take this!", "action": {"type": "emote", "emote": "wave"}}'
+
+
+async def test_drain_results_emits_spoke_and_action_events() -> None:
+    world = World()
+    world.add(Agent(id="npc1", name="Gus", position=Vec3(0, 0, 0), zone="room"))
+    sim = Simulation(world, dt=0.001)
+    sim.register("npc1", LLMBrain(provider=ActionJSONProvider()))
+    await sim.dispatch_converse("npc1", "hello")
+    events = sim.drain_results()
+    kinds = [e.kind for e in events]
+    assert "spoke" in kinds
+    assert "emoted" in kinds
+    spoke = next(e for e in events if e.kind == "spoke")
+    assert spoke.payload["text"] == "Take this!"
+    assert sim._results == []  # drained
