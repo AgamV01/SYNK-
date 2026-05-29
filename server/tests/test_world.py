@@ -91,3 +91,21 @@ def test_world_by_zone() -> None:
     assert len(w.all()) == 3
     assert w.by_zone("empty") == []
 
+
+def test_within_radius_xz_and_zone_scoped() -> None:
+    w = World()
+    w.add(Entity(id="near", position=Vec3(3, 0, 4), zone="tavern"))  # dist 5
+    w.add(Entity(id="far", position=Vec3(20, 0, 0), zone="tavern"))
+    w.add(Entity(id="tall", position=Vec3(3, 100, 4), zone="tavern"))  # xz dist 5
+    w.add(Entity(id="other_zone", position=Vec3(1, 0, 1), zone="market"))
+    hits = {e.id for e in w.within_radius(Vec3(0, 0, 0), 5.0, zone="tavern")}
+    assert hits == {"near", "tall"}  # boundary inclusive, height ignored, zone scoped
+
+
+def test_within_radius_excludes_self() -> None:
+    w = World()
+    w.add(Entity(id="me", position=Vec3(0, 0, 0), zone="tavern"))
+    w.add(Entity(id="you", position=Vec3(1, 0, 0), zone="tavern"))
+    hits = {e.id for e in w.within_radius(Vec3(0, 0, 0), 10.0, "tavern", exclude_id="me")}
+    assert hits == {"you"}
+

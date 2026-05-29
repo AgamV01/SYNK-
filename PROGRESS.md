@@ -116,3 +116,8 @@ verify: `cd server && pytest tests/test_world.py -q`
 result: 11 passed. get (KeyError if missing), try_get (None), all(), by_zone(zone).
 files: server/synk/world.py, server/tests/test_world.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 21 World within_radius (xz, zone-scoped)
+verify: `cd server && pytest tests/test_world.py -q`
+result: 13 passed. within_radius(center, radius, zone, exclude_id) — xz distance, boundary inclusive, never leaks across zones, optional self-exclude.
+files: server/synk/world.py, server/tests/test_world.py, fix_plan.md, PROGRESS.md
+

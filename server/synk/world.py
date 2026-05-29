@@ -72,3 +72,23 @@ class World:
 
     def by_zone(self, zone: str) -> list[Entity]:
         return [e for e in self._entities.values() if e.zone == zone]
+
+    def within_radius(
+        self,
+        center: Vec3,
+        radius: float,
+        zone: str,
+        exclude_id: str | None = None,
+    ) -> list[Entity]:
+        """Entities within `radius` of `center` on the xz-plane, scoped to `zone`.
+
+        Distance is inclusive of the boundary. Entities in other zones are
+        never returned, so perception cannot leak across zones.
+        """
+        out: list[Entity] = []
+        for e in self._entities.values():
+            if e.zone != zone or e.id == exclude_id:
+                continue
+            if center.distance_to(e.position) <= radius:
+                out.append(e)
+        return out
