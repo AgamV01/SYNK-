@@ -212,3 +212,8 @@ verify: `cd server && pytest tests/test_memory.py -q`
 result: 16 passed. recall(recent_n=5, salient_k=5) = recent ∪ salient, deduped by id, newest-first. Memory phase (33-39) complete.
 files: server/synk/memory.py, server/tests/test_memory.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 40 core action types
+verify: `cd server && pytest tests/test_brain_contract.py -q`
+result: 3 passed. brains/base.py: frozen Idle/Wander/MoveTo(target)/Face(target_id)/Emote(emote) with ClassVar kind labels; Action union alias.
+files: server/synk/brains/base.py, server/tests/test_brain_contract.py, fix_plan.md, PROGRESS.md
+
