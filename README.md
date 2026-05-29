@@ -75,6 +75,15 @@ cd server && python examples/tavern.py --selftest   # 3 NPCs, 80 ticks
 cd server && python examples/headless_demo.py --selftest
 ```
 
+### Or run everything with Docker
+
+```bash
+docker compose up --build
+```
+
+Server on <http://localhost:8000>, demo client on <http://localhost:8080>. The world and
+NPC memories persist to a named volume, so they survive restarts.
+
 ## Architecture
 
 The server is authoritative: clients send intents and render snapshots; all agent

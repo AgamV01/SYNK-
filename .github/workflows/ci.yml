@@ -50,3 +50,19 @@ jobs:
       - name: Tests
         working-directory: client
         run: npm test --if-present
+
+  docker:
+    name: docker (server image + healthz)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build server image
+        run: docker build -t synk-server ./server
+      - name: Run and health-check
+        run: |
+          docker run -d -p 8000:8000 --name synk synk-server
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:8000/healthz && break || sleep 1
+          done
+          curl -fsS http://localhost:8000/healthz | grep -q ok
+          docker rm -f synk

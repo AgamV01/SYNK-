@@ -1,0 +1,22 @@
+# One-command SYNK: `docker compose up --build`
+# Server (FastAPI/WS) on :8000, client (Three.js demo via nginx) on :8080.
+services:
+  server:
+    build: ./server
+    ports:
+      - "8000:8000"
+    environment:
+      # Persist the world + memories to a volume so they survive restarts.
+      - SYNK_DB_PATH=/data/synk.db
+    volumes:
+      - synk-data:/data
+
+  client:
+    build: ./client
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
+
+volumes:
+  synk-data:
