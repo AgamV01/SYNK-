@@ -103,6 +103,16 @@ def test_ws_say_returns_dialogue() -> None:
         assert reply["overheard"] is False
 
 
+def test_demo_npcs_use_hybrid_llm_brain() -> None:
+    from synk.brains.llm import LLMBrain
+
+    app = create_app(demo=True)
+    # populate_demo runs at create time; NPCs use the hybrid brain (reactive tick +
+    # off-tick LLM converse). With no API key the provider is Mock, so it runs offline.
+    assert isinstance(app.state.sim.brains["npc_gus"], LLMBrain)
+    assert app.state.world.get("npc_gus").memory is not None
+
+
 def test_ws_say_records_memory_and_conversation() -> None:
     app = create_app()
     gus = Agent(id="npc_gus", name="Gus", zone="tavern", personality="a barkeep")

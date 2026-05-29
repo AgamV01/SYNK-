@@ -17,6 +17,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import actions
 from .auth import AuthManager
+from .brains.llm import LLMBrain
+from .brains.providers import select_provider
 from .brains.reactive import ReactiveBrain
 from .dialogue import DialogueManager
 from .geometry import Vec3
@@ -141,10 +143,12 @@ def populate_demo(world: World, sim: Simulation) -> None:
         Agent(id="npc_mira", name="Mira", personality="a curious bard", position=Vec3(3, 0, 2), zone="tavern"),
         Agent(id="npc_tomas", name="Tomas", personality="a suspicious guard", position=Vec3(-3, 0, 3), zone="tavern"),
     ]
+    provider = select_provider()  # Mock with no key; real LLM when ANTHROPIC/OPENAI key is set
     for npc in npcs:
         npc.memory = MemoryStore()  # episodic memory (duck-typed; used by LLMBrain + reflection)
         world.add(npc)
-        sim.register(npc.id, ReactiveBrain(grid=grid, arrive_radius=1.5))
+        reactive = ReactiveBrain(grid=grid, arrive_radius=1.5)  # cheap tick layer keeps the grid
+        sim.register(npc.id, LLMBrain(provider=provider, reactive=reactive))
 
 
 def create_app(
