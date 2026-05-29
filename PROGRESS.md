@@ -101,3 +101,8 @@ result: 3 passed. Entity dataclass (id, position=Vec3 default, zone="default"); 
 files: server/synk/world.py, server/tests/test_world.py, fix_plan.md, PROGRESS.md
 notes: WORKFLOW CHANGE — switching to commit directly on `main` (default branch) from here so each commit counts on the GitHub contribution graph. main fast-forwarded to include the harness + tasks 1-17. ralph/synk-v1 retained but loop now targets main.
 
+## 2026-05-28 — task 18 Player + Agent skeletons
+verify: `cd server && pytest tests/test_world.py -q`
+result: 5 passed. Player(Entity){name, facing}; Agent(Entity){name, facing, personality, current_action="idle", goal=None}. Brain/memory attach later.
+files: server/synk/world.py, server/tests/test_world.py, fix_plan.md, PROGRESS.md
+
