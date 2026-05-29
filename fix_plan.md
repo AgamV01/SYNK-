@@ -16,7 +16,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 ## Protocol contract
 - [x] 10. messages.md: client->server messages documented with field shapes. verify: `grep -q '"type": "join"' protocol/messages.md`
 - [x] 11. messages.md: server->client messages documented with field shapes. verify: `grep -q '"type": "world_state"' protocol/messages.md`
-- [ ] 12. messages.md: throttle rate, nearby radius, facing repr, structured-action event kinds. verify: `grep -qi throttle protocol/messages.md && grep -qi facing protocol/messages.md`
+- [x] 12. messages.md: throttle rate, nearby radius, facing repr, structured-action event kinds. verify: `grep -qi throttle protocol/messages.md && grep -qi facing protocol/messages.md`
 - [ ] 13. messages.md: version field + a JSON example per message. verify: `grep -c '"v":' protocol/messages.md`
 
 ## Geometry

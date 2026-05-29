@@ -70,3 +70,8 @@ verify: `grep -q '"type": "world_state"' protocol/messages.md`
 result: TASK11_PASS. Documented welcome/world_state/agent_event/dialogue/error with field shapes + JSON examples. agent_event kinds: spoke/emoted/moved/gave_item/goal_changed/handoff.
 files: protocol/messages.md, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 12 protocol pinned parameters
+verify: `grep -qi throttle protocol/messages.md && grep -qi facing protocol/messages.md`
+result: TASK12_PASS. Pinned: world_state throttle 10 Hz/100ms; nearby radius 12.0 xz units; facing = yaw radians (0=+x, CCW toward +z); structured-action→agent_event kind table.
+files: protocol/messages.md, fix_plan.md, PROGRESS.md
+

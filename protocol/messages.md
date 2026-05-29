@@ -137,3 +137,30 @@ Fields:
 ```json
 { "type": "error", "v": 1, "code": "unknown_agent", "message": "No agent with id 'npc_ghost' in zone 'tavern'." }
 ```
+
+## Pinned parameters
+
+These values are part of the contract; client and server must agree on them.
+
+### Snapshot throttle
+`world_state` is broadcast **at most 10 times per second** (every 100 ms), independent of the simulation tick rate. If the sim runs faster, snapshots are coalesced; if a zone is unchanged, the server may skip a broadcast. Clients must tolerate gaps and interpolate between snapshots.
+
+### Nearby radius (overhearing)
+The "nearby" radius for overhearing is **12.0 world units**, measured as xz-plane distance from the speaking agent. A `dialogue` message addressed to one player is also delivered to every other player within this radius with `overheard: true`. NPC↔NPC dialogue is delivered to all players within the radius, always with `overheard: true`.
+
+### Facing
+`facing` is a **yaw angle in radians**, a single float. `0.0` faces the `+x` axis; the angle increases counter-clockwise toward `+z` (right-handed, rotating about the `+y` up-axis). There is no pitch or roll in the protocol. Facing is optional on `move`; when omitted the server keeps the player's previous facing.
+
+### Structured-action event kinds
+LLM structured actions (spec section 4) surface to clients as `agent_event` messages with these `kind` values:
+
+| structured action | `agent_event.kind` | payload |
+| --- | --- | --- |
+| (spoken line) | `spoke` | `{ "text": string }` (also sent as a `dialogue` message) |
+| `emote` | `emoted` | `{ "emote": string }` |
+| `move_to` | `moved` | `{ "to": [x,y,z] }` |
+| `give_item` | `gave_item` | `{ "item": string, "to": string }` |
+| `set_goal` | `goal_changed` | `{ "goal": string }` |
+| `handoff` | `handoff` | `{ "to": string, "topic": string }` |
+
+Malformed LLM output never produces an `agent_event`; it falls back to a speech-only `dialogue` and is logged server-side (spec section 4).
