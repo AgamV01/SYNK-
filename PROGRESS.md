@@ -501,3 +501,9 @@ verify: `cd server && pytest tests/test_server.py -q`
 result: 6 passed. interact handler sends agent_event{kind:"emoted", payload:{emote:"nod", in_response_to:kind}} acknowledging the player's interaction.
 files: server/synk/server.py, server/tests/test_server.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 97 world_state broadcast
+verify: `cd server && pytest tests/test_server.py -q`
+result: 8 passed. Throttle(interval, clock) rate gate + broadcast_world_state(world, connections, throttle) sends each player a zone-scoped world_state, throttled to SNAPSHOT_INTERVAL=0.1s (10Hz). Tested with FakeWS connections (avoids TestClient unsolicited-push issues) + FakeClock for throttle.
+notes: broadcast is a standalone fn; the sim/run integration would call it on a cadence — wiring into the live loop is left to the run entrypoint, unit-tested here directly.
+files: server/synk/server.py, server/tests/test_server.py, fix_plan.md, PROGRESS.md
+

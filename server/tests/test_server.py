@@ -4,8 +4,8 @@ from fastapi.testclient import TestClient
 
 from synk.brains.reactive import ReactiveBrain
 from synk.geometry import Vec3
-from synk.server import create_app
-from synk.world import Agent
+from synk.server import Throttle, broadcast_world_state, create_app
+from synk.world import Agent, Player, World
 
 
 def test_healthz() -> None:
@@ -85,3 +85,51 @@ def test_ws_interact_returns_agent_event() -> None:
         assert event["agent_id"] == "npc_gus"
         assert event["kind"] == "emoted"
         assert event["payload"]["in_response_to"] == "give_item"
+
+
+class FakeWS:
+    def __init__(self) -> None:
+        self.sent: list[dict] = []
+
+    async def send_json(self, msg: dict) -> None:
+        self.sent.append(msg)
+
+
+class FakeClock:
+    def __init__(self) -> None:
+        self.t = 0.0
+
+    def __call__(self) -> float:
+        return self.t
+
+
+async def test_broadcast_world_state_is_zone_scoped() -> None:
+    world = World()
+    world.add(Agent(id="gus", name="Gus", position=Vec3(0, 0, 0), zone="tavern"))
+    world.add(Agent(id="bo", name="Bo", position=Vec3(1, 0, 0), zone="market"))
+    world.add(Player(id="p_tavern", zone="tavern"))
+    world.add(Player(id="p_market", zone="market"))
+    world.advance(0.1)
+    conns = {"p_tavern": FakeWS(), "p_market": FakeWS()}
+    sent = await broadcast_world_state(world, conns, Throttle(0.1))
+    assert sent == 2
+    tavern_msg = conns["p_tavern"].sent[0]
+    assert tavern_msg["type"] == "world_state"
+    assert tavern_msg["zone"] == "tavern"
+    assert tavern_msg["tick"] == 1
+    assert {a["id"] for a in tavern_msg["agents"]} == {"gus"}  # only tavern agents
+    assert {a["id"] for a in conns["p_market"].sent[0]["agents"]} == {"bo"}
+
+
+async def test_broadcast_is_throttled() -> None:
+    world = World()
+    world.add(Player(id="p1", zone="default"))
+    conns = {"p1": FakeWS()}
+    clock = FakeClock()
+    throttle = Throttle(0.1, clock=clock)
+    assert await broadcast_world_state(world, conns, throttle) == 1
+    clock.t = 0.05  # too soon
+    assert await broadcast_world_state(world, conns, throttle) == 0
+    clock.t = 0.15  # past the interval
+    assert await broadcast_world_state(world, conns, throttle) == 1
+    assert len(conns["p1"].sent) == 2

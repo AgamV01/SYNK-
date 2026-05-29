@@ -6,6 +6,8 @@ streams welcome/world_state/agent_event/dialogue/error back."""
 from __future__ import annotations
 
 import secrets
+import time
+from collections.abc import Callable, Mapping
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
@@ -20,6 +22,50 @@ from .world import Agent, Player, World
 
 PROTOCOL_VERSION = 1
 DEFAULT_ZONE = "default"
+SNAPSHOT_INTERVAL = 0.1  # 10 Hz, per protocol/messages.md
+
+
+class Throttle:
+    """Rate gate: ready() returns True at most once per `interval` seconds."""
+
+    def __init__(self, interval: float, clock: Callable[[], float] | None = None) -> None:
+        self.interval = interval
+        self._clock = clock or time.monotonic
+        self._last: float | None = None
+
+    def ready(self) -> bool:
+        now = self._clock()
+        if self._last is None or now - self._last >= self.interval:
+            self._last = now
+            return True
+        return False
+
+
+async def broadcast_world_state(
+    world: World,
+    connections: Mapping[str, object],
+    throttle: Throttle,
+) -> int:
+    """Send each connected player a per-zone world_state snapshot, throttled. Returns
+    the number of clients sent to (0 if throttled). Scoped to each player's zone."""
+    if not throttle.ready():
+        return 0
+    sent = 0
+    for player_id, ws in list(connections.items()):
+        player = world.try_get(player_id)
+        zone = player.zone if player is not None else DEFAULT_ZONE
+        snap = zone_snapshot(world, zone)
+        await ws.send_json(
+            {
+                "type": "world_state",
+                "v": PROTOCOL_VERSION,
+                "zone": zone,
+                "tick": snap["tick"],
+                "agents": snap["agents"],
+            }
+        )
+        sent += 1
+    return sent
 
 
 def zone_snapshot(world: World, zone: str) -> dict:
