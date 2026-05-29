@@ -217,3 +217,8 @@ verify: `cd server && pytest tests/test_brain_contract.py -q`
 result: 3 passed. brains/base.py: frozen Idle/Wander/MoveTo(target)/Face(target_id)/Emote(emote) with ClassVar kind labels; Action union alias.
 files: server/synk/brains/base.py, server/tests/test_brain_contract.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 41 deliberative action types
+verify: `cd server && pytest tests/test_brain_contract.py -q`
+result: 5 passed. Added GiveItem(item,to_id)/SetGoal(goal)/Handoff(to_id,topic); extended Action union.
+files: server/synk/brains/base.py, server/tests/test_brain_contract.py, fix_plan.md, PROGRESS.md
+

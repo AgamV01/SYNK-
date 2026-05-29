@@ -40,4 +40,24 @@ class Emote:
     kind: ClassVar[str] = "emote"
 
 
-Action = Idle | Wander | MoveTo | Face | Emote
+@dataclass(frozen=True, slots=True)
+class GiveItem:
+    item: str
+    to_id: str
+    kind: ClassVar[str] = "give_item"
+
+
+@dataclass(frozen=True, slots=True)
+class SetGoal:
+    goal: str
+    kind: ClassVar[str] = "set_goal"
+
+
+@dataclass(frozen=True, slots=True)
+class Handoff:
+    to_id: str
+    topic: str
+    kind: ClassVar[str] = "handoff"
+
+
+Action = Idle | Wander | MoveTo | Face | Emote | GiveItem | SetGoal | Handoff

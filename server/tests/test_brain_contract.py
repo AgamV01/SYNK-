@@ -1,6 +1,15 @@
 from __future__ import annotations
 
-from synk.brains.base import Emote, Face, Idle, MoveTo, Wander
+from synk.brains.base import (
+    Emote,
+    Face,
+    GiveItem,
+    Handoff,
+    Idle,
+    MoveTo,
+    SetGoal,
+    Wander,
+)
 from synk.geometry import Vec3
 
 
@@ -17,6 +26,20 @@ def test_actions_carry_payload() -> None:
     assert mt.target == Vec3(1, 0, 2)
     assert Face(target_id="npc1").target_id == "npc1"
     assert Emote(emote="wave").emote == "wave"
+
+
+def test_deliberative_action_kinds() -> None:
+    assert GiveItem.kind == "give_item"
+    assert SetGoal.kind == "set_goal"
+    assert Handoff.kind == "handoff"
+
+
+def test_deliberative_actions_carry_payload() -> None:
+    g = GiveItem(item="ale", to_id="player_1")
+    assert (g.item, g.to_id) == ("ale", "player_1")
+    assert SetGoal(goal="find the thief").goal == "find the thief"
+    h = Handoff(to_id="npc_guard", topic="the missing coin")
+    assert (h.to_id, h.topic) == ("npc_guard", "the missing coin")
 
 
 def test_actions_are_immutable() -> None:
