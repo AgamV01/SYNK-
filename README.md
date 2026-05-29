@@ -1,10 +1,36 @@
 # SYNK
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)
+![Node 18+](https://img.shields.io/badge/node-18%2B-brightgreen.svg)
+![status: v1](https://img.shields.io/badge/status-v1-success.svg)
+![tests: 207](https://img.shields.io/badge/tests-207%20passing-success.svg)
+![coverage: 93%](https://img.shields.io/badge/coverage-93%25-success.svg)
+
+> Repository: [`AgamV01/SYNK-`](https://github.com/AgamV01/SYNK-) (the project is **SYNK**; the
+> GitHub repo name carries a trailing dash, so `git clone` creates a `SYNK-` directory).
+
 Open-source framework for intelligent, LLM-driven NPCs in web-based 3D worlds. A server-authoritative Python runtime drives agent behavior, memory, and dialogue; a TypeScript SDK plus a Three.js demo render the world so a player can walk up, talk, and interact in real time.
+
+<!-- Demo placeholder: record the tavern demo and save it as docs/demo.gif, then uncomment. -->
+<!-- ![SYNK tavern demo](docs/demo.gif) -->
+
+> 🎥 **Demo (placeholder):** record a short screen capture of the tavern demo — walk up to
+> Gus with **WASD** and type to talk — save it as `docs/demo.gif`, and replace this note with
+> `![SYNK tavern demo](docs/demo.gif)`.
 
 The headline idea is the **hybrid brain**: a cheap reactive layer runs every tick with no network I/O, and the expensive LLM layer fires only on meaningful events. An idle world costs near zero; adding an API key upgrades NPC dialogue to real LLM reasoning.
 
-> Status: under construction. See `fix_plan.md` for the build plan and `PROGRESS.md` for the journal.
+## Features
+
+- **Hybrid brain** — reactive behavior every tick (zero I/O); the LLM fires only on meaningful events, off the tick (enforced by a test).
+- **Runs with zero API keys** — MockProvider + reactive dialogue out of the box; drop in Anthropic or OpenAI to upgrade.
+- **Server-authoritative** — clients send intents and render snapshots; all agent state lives on the server.
+- **Real navigation** — grid-based A\* pathfinding around obstacles, not naive straight-line steering.
+- **Memory** — salience-weighted items with decay and recall (recent ∪ salient), plus low-frequency reflection.
+- **Pluggable** — swap the LLM provider or the whole brain behind small interfaces.
+- **Persistence** — async, batched SQLite; world + memories survive restarts and never block the tick.
+- **TypeScript SDK + Three.js demo** — typed WebSocket client with auto-reconnect, and a playable tavern with 3 NPCs.
 
 ## Quickstart
 
@@ -13,6 +39,13 @@ move, navigate, and talk out of the box. (Adding a key upgrades dialogue to a re
 see [Upgrading](#upgrading-to-real-llm-dialogue).)
 
 **Prerequisites:** Python 3.11+ and Node 18+.
+
+**0. Clone:**
+
+```bash
+git clone https://github.com/AgamV01/SYNK-.git
+cd SYNK-
+```
 
 **1. Backend** (serves the tavern world on `:8000`):
 
