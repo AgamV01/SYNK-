@@ -6,13 +6,33 @@ build-backend = "setuptools.build_meta"
 name = "synk"
 version = "0.1.0"
 description = "Server-authoritative runtime for intelligent, LLM-driven NPCs in web-based 3D worlds."
+readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
+authors = [{ name = "Agam Vohra", email = "agam.vohra.11@gmail.com" }]
+keywords = ["npc", "llm", "game-ai", "agents", "simulation", "websocket", "threejs"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Framework :: AsyncIO",
+    "Framework :: FastAPI",
+    "Topic :: Games/Entertainment",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
 dependencies = [
     "fastapi>=0.110",
     "uvicorn[standard]>=0.27",
     "aiosqlite>=0.19",
 ]
+
+[project.urls]
+Homepage = "https://github.com/AgamV01/SYNK-"
+Repository = "https://github.com/AgamV01/SYNK-"
+Issues = "https://github.com/AgamV01/SYNK-/issues"
 
 [project.optional-dependencies]
 # Guarded LLM providers — the package imports and runs without these.
