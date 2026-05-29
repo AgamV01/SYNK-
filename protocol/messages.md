@@ -63,3 +63,77 @@ Voluntary disconnect. The server also handles abrupt socket close as an implicit
 ```json
 { "type": "leave", "v": 1 }
 ```
+
+## Server → client
+
+The server sends authoritative state and events. Clients render these; they never compute agent state locally.
+
+### `welcome`
+Reply to `join`. Carries the session token and an initial snapshot of the player's zone.
+
+Fields:
+- `player_id` (string) — id assigned to this player.
+- `token` (string) — short-lived session token (see auth in spec section 4).
+- `tick_rate` (number) — simulation ticks per second (default 10).
+- `zone` (string) — the zone the player joined.
+- `snapshot` (object) — same shape as a `world_state` body (`tick`, `agents`).
+
+```json
+{
+  "type": "welcome", "v": 1,
+  "player_id": "player_7f3a", "token": "eyJ...", "tick_rate": 10, "zone": "tavern",
+  "snapshot": { "tick": 0, "agents": [] }
+}
+```
+
+### `world_state`
+Throttled per-zone snapshot of agents. See Snapshot throttle below.
+
+Fields:
+- `zone` (string) — zone these agents belong to.
+- `tick` (number) — simulation tick the snapshot was taken at.
+- `agents` (array) — each: `id` (string), `name` (string), `position` (`[x,y,z]`), `facing` (number, yaw radians), `action` (string label of current action, e.g. `"wander"`, `"approach"`, `"talk"`).
+
+```json
+{
+  "type": "world_state", "v": 1, "zone": "tavern", "tick": 142,
+  "agents": [
+    { "id": "npc_barkeep", "name": "Gus", "position": [0.0, 0.0, 0.0], "facing": 0.0, "action": "wander" }
+  ]
+}
+```
+
+### `agent_event`
+A discrete thing an agent did. `kind` is one of the enumerated kinds (see Structured-action event kinds).
+
+Fields:
+- `agent_id` (string) — the acting agent.
+- `kind` (string) — event kind: `spoke`, `emoted`, `moved`, `gave_item`, `goal_changed`, `handoff`.
+- `payload` (object) — kind-specific, e.g. `{ "emote": "wave" }` or `{ "item": "ale", "to": "player_7f3a" }`.
+
+```json
+{ "type": "agent_event", "v": 1, "agent_id": "npc_barkeep", "kind": "emoted", "payload": { "emote": "wave" } }
+```
+
+### `dialogue`
+A line of speech from an agent. `overheard` is true when the line was not addressed to the receiving player but they are within the nearby radius (see Overhearing).
+
+Fields:
+- `agent_id` (string) — the speaking agent.
+- `text` (string) — the spoken line.
+- `overheard` (boolean, optional) — defaults to false.
+
+```json
+{ "type": "dialogue", "v": 1, "agent_id": "npc_barkeep", "text": "We've a fine stout tonight.", "overheard": false }
+```
+
+### `error`
+Sent when the server rejects input or hits a recoverable problem.
+
+Fields:
+- `code` (string) — machine-readable code, e.g. `"bad_message"`, `"unknown_agent"`, `"unauthorized"`.
+- `message` (string) — human-readable detail.
+
+```json
+{ "type": "error", "v": 1, "code": "unknown_agent", "message": "No agent with id 'npc_ghost' in zone 'tavern'." }
+```

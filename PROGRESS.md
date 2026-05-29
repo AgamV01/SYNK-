@@ -65,3 +65,8 @@ verify: `grep -q '"type": "join"' protocol/messages.md`
 result: TASK10_PASS. Documented join/move/say/interact/leave with field shapes + JSON examples. Decided: position=[x,y,z] floats, facing=yaw radians, v=1.
 files: protocol/messages.md, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 11 protocol server->client messages
+verify: `grep -q '"type": "world_state"' protocol/messages.md`
+result: TASK11_PASS. Documented welcome/world_state/agent_event/dialogue/error with field shapes + JSON examples. agent_event kinds: spoke/emoted/moved/gave_item/goal_changed/handoff.
+files: protocol/messages.md, fix_plan.md, PROGRESS.md
+
