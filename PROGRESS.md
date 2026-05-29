@@ -582,3 +582,8 @@ verify: `cd client && npm run build`
 result: built OK. setAgentDebug({name, action, goal?, recent?[]}|null) renders a monospace panel (bottom-right) of the focused agent's action, goal, and recent-activity peek. main.ts feeds action from snapshot + a rolling event/dialogue buffer as the "memory" proxy.
 files: client/src/demo/ui.ts, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 113 voice (TTS/STT)
+verify: `cd client && npm run build`
+result: built OK. Voice({enabled=false, lang}) — speak() via SpeechSynthesisUtterance; startListening/stopListening via SpeechRecognition (typed shims, cast through unknown, no any). Disabled by default; no-ops/returns false when off or unsupported.
+files: client/src/demo/voice.ts, fix_plan.md, PROGRESS.md
+
