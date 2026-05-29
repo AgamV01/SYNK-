@@ -151,3 +151,8 @@ verify: `cd server && pytest tests/test_pathfinding.py -q`
 result: 5 passed. Grid(min_x,min_z,cols,rows,cell_size) with world_to_cell/cell_center/in_bounds/is_blocked/block. Obstacle(center,radius). from_obstacles blocks cells whose center is within an obstacle radius.
 files: server/synk/pathfinding.py, server/tests/test_pathfinding.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 28 A* core
+verify: `cd server && pytest tests/test_pathfinding.py -q`
+result: 8 passed. 8-connected A* with octile heuristic, heapq open set, closed set, no diagonal corner-cutting. Returns cell path incl endpoints, or [] for invalid/blocked endpoints. Grid.neighbors() added.
+files: server/synk/pathfinding.py, server/tests/test_pathfinding.py, fix_plan.md, PROGRESS.md
+

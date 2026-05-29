@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from synk.geometry import Vec3
-from synk.pathfinding import Grid, Obstacle
+from synk.pathfinding import Grid, Obstacle, astar
 
 
 def test_grid_rejects_bad_dims() -> None:
@@ -40,3 +40,25 @@ def test_from_obstacles_blocks_covered_cells() -> None:
 def test_from_obstacles_empty_list() -> None:
     g = Grid.from_obstacles(0, 0, 5, 5, 1.0, [])
     assert g.blocked == set()
+
+
+def test_astar_same_cell() -> None:
+    g = Grid(0, 0, 5, 5, 1.0)
+    assert astar(g, (1, 1), (1, 1)) == [(1, 1)]
+
+
+def test_astar_path_endpoints_and_connectivity() -> None:
+    g = Grid(0, 0, 5, 5, 1.0)
+    path = astar(g, (0, 0), (4, 0))
+    assert path[0] == (0, 0)
+    assert path[-1] == (4, 0)
+    # consecutive cells are adjacent (Chebyshev distance 1)
+    for a, b in zip(path, path[1:]):
+        assert max(abs(a[0] - b[0]), abs(a[1] - b[1])) == 1
+
+
+def test_astar_invalid_endpoints() -> None:
+    g = Grid(0, 0, 5, 5, 1.0)
+    assert astar(g, (-1, 0), (4, 0)) == []
+    g.block((4, 4))
+    assert astar(g, (0, 0), (4, 4)) == []  # goal blocked

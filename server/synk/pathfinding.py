@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import heapq
+import math
 from dataclasses import dataclass
 
 from .geometry import Vec3
 
 Cell = tuple[int, int]  # (col, row) == (x-index, z-index)
+
+_DIAGONAL = math.sqrt(2.0)
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,3 +77,67 @@ class Grid:
                         grid.block((col, row))
                         break
         return grid
+
+    def neighbors(self, cell: Cell) -> list[Cell]:
+        """In-bounds, unblocked 8-connected neighbors. Diagonals that would clip
+        the corner of a blocked cell are disallowed."""
+        col, row = cell
+        out: list[Cell] = []
+        for dc in (-1, 0, 1):
+            for dr in (-1, 0, 1):
+                if dc == 0 and dr == 0:
+                    continue
+                cand = (col + dc, row + dr)
+                if not self.in_bounds(cand) or self.is_blocked(cand):
+                    continue
+                if dc != 0 and dr != 0:
+                    if self.is_blocked((col + dc, row)) or self.is_blocked((col, row + dr)):
+                        continue
+                out.append(cand)
+        return out
+
+
+def _step_cost(a: Cell, b: Cell) -> float:
+    return 1.0 if (a[0] == b[0] or a[1] == b[1]) else _DIAGONAL
+
+
+def _octile(a: Cell, b: Cell) -> float:
+    dx = abs(a[0] - b[0])
+    dz = abs(a[1] - b[1])
+    return (dx + dz) + (_DIAGONAL - 2.0) * min(dx, dz)
+
+
+def astar(grid: Grid, start: Cell, goal: Cell) -> list[Cell]:
+    """A* over the grid. Returns the cell path from start to goal inclusive, or
+    [] if start/goal are invalid or no path exists."""
+    if not (grid.in_bounds(start) and grid.in_bounds(goal)):
+        return []
+    if grid.is_blocked(start) or grid.is_blocked(goal):
+        return []
+    if start == goal:
+        return [start]
+
+    open_heap: list[tuple[float, Cell]] = [(0.0, start)]
+    came_from: dict[Cell, Cell] = {}
+    g_score: dict[Cell, float] = {start: 0.0}
+    closed: set[Cell] = set()
+
+    while open_heap:
+        _, current = heapq.heappop(open_heap)
+        if current == goal:
+            path = [current]
+            while current in came_from:
+                current = came_from[current]
+                path.append(current)
+            path.reverse()
+            return path
+        if current in closed:
+            continue
+        closed.add(current)
+        for nbr in grid.neighbors(current):
+            tentative = g_score[current] + _step_cost(current, nbr)
+            if nbr not in g_score or tentative < g_score[nbr]:
+                g_score[nbr] = tentative
+                came_from[nbr] = current
+                heapq.heappush(open_heap, (tentative + _octile(nbr, goal), nbr))
+    return []
