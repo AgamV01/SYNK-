@@ -6,6 +6,9 @@ All messages are JSON objects. Every message carries:
 - `type` — a string tag identifying the message.
 - `v` — an integer protocol version. Current version: `1`.
 
+### Versioning
+The `v` field is **required on every message in both directions**. A receiver that sees a `v` it does not support replies with an `error` of code `"unsupported_version"` and ignores the message. Within a major version, fields may only be *added* (receivers ignore unknown fields); removing or repurposing a field requires bumping `v`. Every message type documented below includes a concrete JSON example carrying `"v": 1`.
+
 Coordinates are `[x, y, z]` arrays of three floats. `y` is up; spatial queries (range, overhearing) use the xz-plane only.
 
 ## Client → server

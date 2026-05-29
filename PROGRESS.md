@@ -75,3 +75,8 @@ verify: `grep -qi throttle protocol/messages.md && grep -qi facing protocol/mess
 result: TASK12_PASS. Pinned: world_state throttle 10 Hz/100ms; nearby radius 12.0 xz units; facing = yaw radians (0=+x, CCW toward +z); structured-action→agent_event kind table.
 files: protocol/messages.md, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 13 protocol versioning + examples
+verify: `grep -c '"v":' protocol/messages.md`
+result: TASK13_PASS, count=11 (every message example carries "v": 1). Added Versioning section: v required both directions, unknown v -> error "unsupported_version", additive-only within major.
+files: protocol/messages.md, fix_plan.md, PROGRESS.md
+
