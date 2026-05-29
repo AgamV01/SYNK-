@@ -106,3 +106,8 @@ verify: `cd server && pytest tests/test_world.py -q`
 result: 5 passed. Player(Entity){name, facing}; Agent(Entity){name, facing, personality, current_action="idle", goal=None}. Brain/memory attach later.
 files: server/synk/world.py, server/tests/test_world.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 19 World add/remove
+verify: `cd server && pytest tests/test_world.py -q`
+result: 9 passed. World holds dict by id; add (ValueError on dup), remove (returns entity, KeyError if missing), __contains__, __len__.
+files: server/synk/world.py, server/tests/test_world.py, fix_plan.md, PROGRESS.md
+

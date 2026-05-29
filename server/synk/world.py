@@ -33,3 +33,27 @@ class Agent(Entity):
     personality: str = ""
     current_action: str = "idle"
     goal: str | None = None
+
+
+class World:
+    """Holds all entities and the simulation clock. Authoritative."""
+
+    def __init__(self) -> None:
+        self._entities: dict[str, Entity] = {}
+
+    def add(self, entity: Entity) -> None:
+        if entity.id in self._entities:
+            raise ValueError(f"entity id already present: {entity.id!r}")
+        self._entities[entity.id] = entity
+
+    def remove(self, entity_id: str) -> Entity:
+        try:
+            return self._entities.pop(entity_id)
+        except KeyError:
+            raise KeyError(f"no entity with id {entity_id!r}") from None
+
+    def __contains__(self, entity_id: object) -> bool:
+        return entity_id in self._entities
+
+    def __len__(self) -> int:
+        return len(self._entities)

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from synk.geometry import Vec3
-from synk.world import Agent, Entity, Player
+import pytest
+
+from synk.world import Agent, Entity, Player, World
 
 
 def test_entity_defaults() -> None:
@@ -36,4 +38,34 @@ def test_agent_skeleton_defaults() -> None:
     assert a.current_action == "idle"
     assert a.goal is None
     assert a.personality == "gruff barkeep"
+
+
+def test_world_add_and_len() -> None:
+    w = World()
+    assert len(w) == 0
+    w.add(Entity(id="e1"))
+    assert len(w) == 1
+    assert "e1" in w
+
+
+def test_world_add_duplicate_raises() -> None:
+    w = World()
+    w.add(Entity(id="e1"))
+    with pytest.raises(ValueError):
+        w.add(Entity(id="e1"))
+
+
+def test_world_remove() -> None:
+    w = World()
+    e = Entity(id="e1")
+    w.add(e)
+    removed = w.remove("e1")
+    assert removed is e
+    assert "e1" not in w
+
+
+def test_world_remove_missing_raises() -> None:
+    w = World()
+    with pytest.raises(KeyError):
+        w.remove("ghost")
 
