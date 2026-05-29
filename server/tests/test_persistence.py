@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from synk.geometry import Vec3
 from synk.persistence import Persistence
+from synk.world import Agent, Player, World
 
 
 async def test_migrate_creates_tables() -> None:
@@ -60,5 +62,28 @@ async def test_flush_empty_queue_returns_zero() -> None:
     await p.connect()
     try:
         assert await p.flush() == 0
+    finally:
+        await p.close()
+
+
+async def test_save_world_snapshot() -> None:
+    world = World()
+    world.add(Agent(id="npc1", name="Gus", position=Vec3(1, 0, 2), zone="tavern", goal="serve"))
+    world.add(Player(id="p1", name="Ada", position=Vec3(3, 0, 4), zone="tavern"))
+    world.advance(0.1)
+    p = Persistence(":memory:")
+    await p.connect()
+    try:
+        p.save_world(world)
+        await p.flush()
+        cursor = await p.db.execute("SELECT id, kind, name, x, zone FROM entities ORDER BY id")
+        rows = await cursor.fetchall()
+        assert rows == [
+            ("npc1", "agent", "Gus", 1.0, "tavern"),
+            ("p1", "player", "Ada", 3.0, "tavern"),
+        ]
+        cursor = await p.db.execute("SELECT value FROM world_meta WHERE key='tick'")
+        (tick,) = await cursor.fetchone()
+        assert tick == "1"
     finally:
         await p.close()

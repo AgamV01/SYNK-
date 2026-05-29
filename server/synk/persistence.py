@@ -74,6 +74,36 @@ class Persistence:
         await self.db.commit()
         return len(batch)
 
+    def save_world(self, world) -> None:
+        """Queue a full snapshot of the world (meta + all entities). Synchronous and
+        tick-safe; call flush() off-tick to persist. Entities are upserted by id."""
+        self.enqueue(
+            "INSERT OR REPLACE INTO world_meta(key, value) VALUES ('tick', ?)",
+            (str(world.tick),),
+        )
+        self.enqueue(
+            "INSERT OR REPLACE INTO world_meta(key, value) VALUES ('sim_time', ?)",
+            (str(world.sim_time),),
+        )
+        for entity in world.all():
+            self.enqueue(
+                "INSERT OR REPLACE INTO entities"
+                "(id, kind, name, x, y, z, facing, zone, current_action, goal) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?)",
+                (
+                    entity.id,
+                    type(entity).__name__.lower(),
+                    getattr(entity, "name", None),
+                    entity.position.x,
+                    entity.position.y,
+                    entity.position.z,
+                    getattr(entity, "facing", None),
+                    entity.zone,
+                    getattr(entity, "current_action", None),
+                    getattr(entity, "goal", None),
+                ),
+            )
+
     async def table_names(self) -> set[str]:
         cursor = await self.db.execute(
             "SELECT name FROM sqlite_master WHERE type='table'"
