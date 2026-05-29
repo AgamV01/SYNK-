@@ -14,7 +14,7 @@ Open-source framework for intelligent, LLM-driven NPCs in web-based 3D worlds. A
 
 ![SYNK tavern demo](docs/demo.gif)
 
-> 🎥 Engine-rendered top-down view of the tavern: the player (blue) walks up to Gus, the
+> 🎥 Engine-rendered isometric view of the tavern: the player (blue) walks up to Gus, the
 > NPCs react and converge, and Gus greets back in a speech bubble — all driven by the real
 > `Simulation` + reactive brains. Regenerate with `python tools/render_demo_gif.py`.
 > _(Swap in a screen capture of the 3D Three.js client for the full effect.)_
