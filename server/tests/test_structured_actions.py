@@ -117,3 +117,35 @@ def test_apply_emote_emits_emoted_event() -> None:
     assert event.kind == "emoted"
     assert event.payload == {"emote": "wave"}
     assert agent.current_action == "wave"
+
+
+def test_apply_give_item() -> None:
+    world, agent = _agent_in_world()
+    event = apply_action(world, agent, GiveItem(item="ale", to_id="p1"))
+    assert event is not None
+    assert event.kind == "gave_item"
+    assert event.payload == {"item": "ale", "to": "p1"}
+
+
+def test_apply_set_goal_updates_agent() -> None:
+    world, agent = _agent_in_world()
+    event = apply_action(world, agent, SetGoal(goal="find the thief"))
+    assert event is not None
+    assert event.kind == "goal_changed"
+    assert event.payload == {"goal": "find the thief"}
+    assert agent.goal == "find the thief"
+
+
+def test_apply_handoff() -> None:
+    world, agent = _agent_in_world()
+    event = apply_action(world, agent, Handoff(to_id="guard", topic="the coin"))
+    assert event is not None
+    assert event.kind == "handoff"
+    assert event.payload == {"to": "guard", "topic": "the coin"}
+
+
+def test_apply_unhandled_action_returns_none() -> None:
+    from synk.brains.base import Idle
+
+    world, agent = _agent_in_world()
+    assert apply_action(world, agent, Idle()) is None

@@ -355,3 +355,8 @@ verify: `cd server && pytest tests/test_structured_actions.py -q`
 result: 12 passed. NEW module synk/actions.py: apply_action(world, agent, action) -> WorldEvent|None. move_to -> "moved" {to:[x,y,z]}, emote -> "emoted" {emote}; sets current_action; emits to world. Salience via score_event_salience. Other kinds return None (task 68).
 files: server/synk/actions.py, server/tests/test_structured_actions.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 68 apply give_item/set_goal/handoff
+verify: `cd server && pytest tests/test_structured_actions.py -q`
+result: 16 passed. give_item->"gave_item"{item,to}; set_goal sets agent.goal + "goal_changed"{goal}; handoff->"handoff"{to,topic}. Idle/unhandled -> None. Structured actions phase (64-68) complete.
+files: server/synk/actions.py, server/tests/test_structured_actions.py, fix_plan.md, PROGRESS.md
+

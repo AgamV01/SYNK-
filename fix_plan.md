@@ -94,7 +94,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 65. Safe parse of LLM structured output + test. verify: `cd server && pytest tests/test_structured_actions.py -q`
 - [x] 66. Malformed output -> speech-only fallback + log, no raise + test. verify: `cd server && pytest tests/test_structured_actions.py -q`
 - [x] 67. Apply parsed action (move_to, emote) + test. verify: `cd server && pytest tests/test_structured_actions.py -q`
-- [ ] 68. Apply parsed action (give_item, set_goal, handoff) + test. verify: `cd server && pytest tests/test_structured_actions.py -q`
+- [x] 68. Apply parsed action (give_item, set_goal, handoff) + test. verify: `cd server && pytest tests/test_structured_actions.py -q`
 
 ## Reflection
 - [ ] 69. Reflection timer scheduling (low freq, per-agent) + test. verify: `cd server && pytest tests/test_reflection.py -q`

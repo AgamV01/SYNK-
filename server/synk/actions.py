@@ -3,7 +3,7 @@ clients as `agent_event` messages (see protocol/messages.md)."""
 
 from __future__ import annotations
 
-from .brains.base import Action, Emote, MoveTo
+from .brains.base import Action, Emote, GiveItem, Handoff, MoveTo, SetGoal
 from .memory import score_event_salience
 from .world import Agent, World, WorldEvent
 
@@ -31,6 +31,16 @@ def apply_action(world: World, agent: Agent, action: Action) -> WorldEvent | Non
     elif isinstance(action, Emote):
         agent.current_action = action.emote
         event = _event(agent, world, "emoted", {"emote": action.emote})
+    elif isinstance(action, GiveItem):
+        agent.current_action = "give_item"
+        event = _event(agent, world, "gave_item", {"item": action.item, "to": action.to_id})
+    elif isinstance(action, SetGoal):
+        agent.goal = action.goal
+        agent.current_action = "set_goal"
+        event = _event(agent, world, "goal_changed", {"goal": action.goal})
+    elif isinstance(action, Handoff):
+        agent.current_action = "handoff"
+        event = _event(agent, world, "handoff", {"to": action.to_id, "topic": action.topic})
     else:
         return None
     world.emit_event(event)
