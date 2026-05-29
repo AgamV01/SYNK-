@@ -7,6 +7,9 @@ import pytest
 from synk.brains.llm import LLMBrain
 from synk.brains.reactive import ReactiveBrain
 from synk.geometry import Vec3
+from synk.memory import MemoryItem, MemoryStore
+from synk.persistence import Persistence
+from synk.reflection import ReflectionScheduler
 from synk.simulation import Simulation
 from synk.world import Agent, Player, World
 
@@ -126,3 +129,35 @@ def test_no_llm_call_on_tick_path() -> None:
     for _ in range(50):
         sim.step()
     assert world.tick == 50
+
+
+async def test_persistence_hook_enqueues_snapshot() -> None:
+    world = World()
+    world.add(Agent(id="npc1", position=Vec3(0, 0, 0), zone="room"))
+    persistence = Persistence(":memory:")
+    await persistence.connect()
+    try:
+        sim = Simulation(world, dt=0.001, persistence=persistence, save_every=1)
+        sim.step()  # tick becomes 1; 1 % 1 == 0 -> snapshot enqueued (tick-safe)
+        assert persistence.pending > 0
+        await persistence.flush()
+        cursor = await persistence.db.execute("SELECT COUNT(*) FROM entities")
+        (count,) = await cursor.fetchone()
+        assert count == 1
+    finally:
+        await persistence.close()
+
+
+async def test_reflection_hook_dispatches_off_tick() -> None:
+    world = World()
+    agent = Agent(id="npc1", position=Vec3(0, 0, 0), zone="room")
+    agent.memory = MemoryStore()
+    agent.memory.add(MemoryItem("a thing happened", ts=0.0, salience=1.0))
+    world.add(agent)
+    sim = Simulation(world, dt=0.1, reflection=ReflectionScheduler(interval=0.05))
+    sim.register("npc1", ReactiveBrain())
+    sim.step()  # sim_time 0->0.1; first due() call schedules (not yet due)
+    sim.step()  # sim_time 0.1; now due -> reflect dispatched off-tick
+    assert sim.pending_count >= 1
+    await asyncio.gather(*sim._pending)
+    assert len(agent.memory) == 2  # reflection added a salient memory

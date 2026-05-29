@@ -16,21 +16,37 @@ from .brains.base import ConverseResult, Face, Idle, MoveTo, Wander
 from .geometry import Vec3
 from .memory import score_event_salience
 from .perception import DEFAULT_SENSE_RADIUS, perceive
+from .reflection import reflect
 from .world import Agent, World, WorldEvent
 
 if TYPE_CHECKING:
     from .brains.base import Brain
+    from .brains.providers import Provider
+    from .persistence import Persistence
+    from .reflection import ReflectionScheduler
 
 AGENT_SPEED = 2.0  # world units per second
 
 
 class Simulation:
-    def __init__(self, world: World, dt: float = 0.1) -> None:
+    def __init__(
+        self,
+        world: World,
+        dt: float = 0.1,
+        persistence: Persistence | None = None,
+        reflection: ReflectionScheduler | None = None,
+        reflection_provider: Provider | None = None,
+        save_every: int = 50,
+    ) -> None:
         if dt <= 0:
             raise ValueError("dt must be positive")
         self.world = world
         self.dt = dt
         self.brains: dict[str, Brain] = {}
+        self.persistence = persistence
+        self.reflection = reflection
+        self.reflection_provider = reflection_provider
+        self.save_every = save_every
         self._running = False
         self._pending: list[asyncio.Task] = []
         self._results: list[tuple[str, ConverseResult]] = []
@@ -127,6 +143,32 @@ class Simulation:
                     events.append(action_event)
         return events
 
+    def _maybe_reflect(self) -> int:
+        """Dispatch off-tick reflection for any agent whose timer is due. Returns the
+        number dispatched. Reflection runs async (never on the tick)."""
+        if self.reflection is None:
+            return 0
+        dispatched = 0
+        for agent_id in self.brains:
+            agent = self.world.try_get(agent_id)
+            memory = getattr(agent, "memory", None)
+            if memory is None or not hasattr(memory, "recall_recent"):
+                continue
+            if self.reflection.due(agent_id, self.world.sim_time):
+                task = asyncio.create_task(
+                    reflect(memory, self.world.sim_time, self.reflection_provider)
+                )
+                self._pending.append(task)
+                self.reflection.mark(agent_id, self.world.sim_time)
+                dispatched += 1
+        return dispatched
+
+    def _maybe_persist(self) -> None:
+        """Queue a world snapshot every `save_every` ticks. Enqueue only (tick-safe);
+        the actual disk write is flushed off-tick in run()."""
+        if self.persistence is not None and self.world.tick % self.save_every == 0:
+            self.persistence.save_world(self.world)
+
     def step(self) -> None:
         """One tick: drain off-tick results, then perceive -> decide -> apply, then advance."""
         self.drain_results()
@@ -137,7 +179,9 @@ class Simulation:
             percept = perceive(self.world, agent, self._sense_radius(brain))
             action = brain.decide(agent, percept)
             self._apply(agent, action)
+        self._maybe_reflect()
         self.world.advance(self.dt)
+        self._maybe_persist()
 
     async def run(self, max_ticks: int | None = None) -> None:
         """Run the fixed-timestep loop until stopped (or `max_ticks` reached)."""
@@ -146,6 +190,8 @@ class Simulation:
         try:
             while self._running:
                 self.step()
+                if self.persistence is not None:
+                    await self.persistence.flush()  # off-tick disk write
                 count += 1
                 if max_ticks is not None and count >= max_ticks:
                     break

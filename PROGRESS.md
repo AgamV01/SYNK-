@@ -470,3 +470,9 @@ verify: `cd server && pytest tests/test_simulation.py -q`
 result: 8 passed. ExplodingProvider (raises in generate) registered via LLMBrain; 50 ticks with a player present never trigger it -> tick path does zero LLM I/O. Core cost invariant guarded by test.
 files: server/tests/test_simulation.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 91 reflection + persistence hooks
+verify: `cd server && pytest tests/test_simulation.py -q`
+result: 10 passed. Simulation gains optional persistence/reflection/reflection_provider/save_every. step(): _maybe_reflect (dispatches reflect off-tick for due agents w/ memory among registered brains), _maybe_persist (enqueue save_world every save_every ticks, tick-safe); run() awaits persistence.flush() off-tick. Simulation phase (86-91) complete.
+notes: reflection iterates registered brains; an agent needs a registered brain + a `memory` attr to reflect.
+files: server/synk/simulation.py, server/tests/test_simulation.py, fix_plan.md, PROGRESS.md
+

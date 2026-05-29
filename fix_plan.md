@@ -127,7 +127,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 88. Async LLM dispatch queue off-tick + test. verify: `cd server && pytest tests/test_simulation.py -q`
 - [x] 89. Drain completed LLM results into world events + test. verify: `cd server && pytest tests/test_simulation.py -q`
 - [x] 90. Invariant test: no LLM call on the tick path (assert). verify: `cd server && pytest tests/test_simulation.py -q`
-- [ ] 91. Wire reflection + persistence hooks into loop + test. verify: `cd server && pytest tests/test_simulation.py -q`
+- [x] 91. Wire reflection + persistence hooks into loop + test. verify: `cd server && pytest tests/test_simulation.py -q`
 
 ## Server
 - [ ] 92. FastAPI app + /healthz + test. verify: `cd server && pytest tests/test_server.py -q`
