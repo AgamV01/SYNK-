@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+*.db
+*.sqlite
+*.sqlite3
+
+# Node
+node_modules/
+client/dist/
+*.tsbuildinfo
+npm-debug.log*
+
+# Ralph loop logs
+.ralph/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/

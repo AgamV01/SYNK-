@@ -4,7 +4,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 
 ## Scaffolding & tooling
 - [x] 1. git repo + MIT LICENSE. verify: `git rev-parse --git-dir && test -f LICENSE`
-- [ ] 2. .gitignore (Python + Node). verify: `grep -q __pycache__ .gitignore && grep -q node_modules .gitignore`
+- [x] 2. .gitignore (Python + Node). verify: `grep -q __pycache__ .gitignore && grep -q node_modules .gitignore`
 - [ ] 3. Dir skeleton + empty module files per spec section 5. verify: `test -f server/synk/__init__.py && test -d client/src/sdk`
 - [ ] 4. server/pyproject.toml with deps + pytest/coverage config. verify: `cd server && python -c "import tomllib,pathlib;tomllib.loads(pathlib.Path('pyproject.toml').read_text())"`
 - [ ] 5. Installable package; import works. verify: `cd server && pip install -e . -q && python -c "import synk"`

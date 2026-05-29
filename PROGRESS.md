@@ -19,3 +19,8 @@ verify: `git rev-parse --git-dir && test -f LICENSE`
 result: `.git` printed, TASK1_PASS. Repo + MIT LICENSE already present from initial commit.
 files: fix_plan.md (checkbox), PROGRESS.md
 
+## 2026-05-28 — task 2 .gitignore (Python + Node)
+verify: `grep -q __pycache__ .gitignore && grep -q node_modules .gitignore`
+result: TASK2_PASS
+files: .gitignore (new), fix_plan.md, PROGRESS.md
+
