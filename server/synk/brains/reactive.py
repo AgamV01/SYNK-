@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from ..geometry import Vec3
 from ..pathfinding import astar, simplify_path
 from ..world import Player
-from .base import Action, ConverseResult, Idle, MoveTo, Wander
+from .base import Action, ConverseResult, Face, Idle, MoveTo, Wander
 
 if TYPE_CHECKING:
     from ..pathfinding import Grid
@@ -58,7 +58,10 @@ class ReactiveBrain:
     def decide(self, agent: Agent, percept: Percept) -> Action:
         player = self._nearest_player(agent, percept)
         if player is not None:
-            # A player is nearby: steer toward them, routing around obstacles.
+            if agent.position.distance_to(player.position) <= self.arrive_radius:
+                # Close enough: stop and face the player rather than crowd them.
+                return Face(target_id=player.id)
+            # Otherwise steer toward them, routing around obstacles.
             return self._steer_towards(agent, player.position)
         # Ambient behavior when nothing demands attention: wander, or idle if calm.
         return Wander() if self.restless else Idle()

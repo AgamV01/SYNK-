@@ -248,3 +248,8 @@ verify: `cd server && pytest tests/test_reactive.py -q`
 result: 5 passed. _steer_towards() uses astar+simplify_path on the brain's grid, returns MoveTo(cell_center of path[1]); straight MoveTo when grid is None. decide() now routes approach through it. Wall test confirms waypoint is unblocked and not straight at the walled-off player.
 files: server/synk/brains/reactive.py, server/tests/test_reactive.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 47 face entity at arrive radius
+verify: `cd server && pytest tests/test_reactive.py -q`
+result: 7 passed. decide(): within arrive_radius of nearest player -> Face(player.id); beyond -> MoveTo (steer).
+files: server/synk/brains/reactive.py, server/tests/test_reactive.py, fix_plan.md, PROGRESS.md
+

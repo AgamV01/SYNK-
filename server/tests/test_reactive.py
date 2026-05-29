@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from synk.brains.base import Idle, MoveTo, Wander
+from synk.brains.base import Face, Idle, MoveTo, Wander
 from synk.brains.reactive import ReactiveBrain
 from synk.geometry import Vec3
 from synk.pathfinding import Grid
@@ -64,4 +64,20 @@ def test_steers_around_wall_using_path() -> None:
     assert not grid.is_blocked(cell)
     # ...and it must NOT head straight at the player (that path is walled off).
     assert action.target != player.position
+
+
+def test_faces_player_when_within_arrive_radius() -> None:
+    brain = ReactiveBrain(arrive_radius=1.5)
+    agent = Agent(id="npc1", position=Vec3(0, 0, 0))
+    player = Player(id="p1", position=Vec3(1.0, 0, 0))  # within 1.5
+    action = brain.decide(agent, _percept(agent, nearby=[player]))
+    assert isinstance(action, Face)
+    assert action.target_id == "p1"
+
+
+def test_moves_when_player_outside_arrive_radius() -> None:
+    brain = ReactiveBrain(arrive_radius=1.5)
+    agent = Agent(id="npc1", position=Vec3(0, 0, 0))
+    player = Player(id="p1", position=Vec3(5.0, 0, 0))  # beyond 1.5
+    assert isinstance(brain.decide(agent, _percept(agent, nearby=[player])), MoveTo)
 
