@@ -160,7 +160,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 
 ## Example, docs, final gates
 - [x] 115. examples/tavern.py: zone, props/obstacles, 3 NPCs with personalities + --selftest. verify: `cd server && python examples/tavern.py --selftest`
-- [ ] 116. README: zero-config quickstart + exact run steps. verify: follow the quickstart on a clean checkout; paste the command sequence.
+- [x] 116. README: zero-config quickstart + exact run steps. verify: follow the quickstart on a clean checkout; paste the command sequence.
 - [ ] 117. README: mermaid architecture + hybrid-brain section + upgrade-to-LLM. verify: `grep -qi mermaid README.md && grep -qi hybrid README.md`
 - [ ] 118. docs/writing-a-brain.md + docs/custom-actions.md. verify: `test -f docs/writing-a-brain.md && test -f docs/custom-actions.md`
 - [ ] 119. Coverage gate >= 80%. verify: `cd server && pytest --cov=synk --cov-fail-under=80`

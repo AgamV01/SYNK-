@@ -8,7 +8,39 @@ The headline idea is the **hybrid brain**: a cheap reactive layer runs every tic
 
 ## Quickstart
 
-_TODO (task 116): zero-config quickstart with exact run steps._
+No API key required — the server runs the **MockProvider + reactive brain**, so NPCs
+move, navigate, and talk out of the box. (Adding a key upgrades dialogue to a real LLM;
+see [Upgrading](#upgrading-to-real-llm-dialogue).)
+
+**Prerequisites:** Python 3.11+ and Node 18+.
+
+**1. Backend** (serves the tavern world on `:8000`):
+
+```bash
+cd server
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e .
+uvicorn synk.server:app --port 8000
+```
+
+**2. Client** (Three.js demo, in a second terminal):
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+**3. Play:** open the URL Vite prints (default <http://localhost:5173>). Use **WASD**
+to move, walk up to an NPC named Gus, Mira, or Tomas, and type in the chat box to talk.
+The panel on the right shows the focused agent's live action and recent activity.
+
+Sanity-check the runtime with no browser at all:
+
+```bash
+cd server && python examples/tavern.py --selftest   # 3 NPCs, 80 ticks
+cd server && python examples/headless_demo.py --selftest
+```
 
 ## Architecture
 

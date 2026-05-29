@@ -5,9 +5,11 @@ streams welcome/world_state/agent_event/dialogue/error back."""
 
 from __future__ import annotations
 
+import asyncio
 import secrets
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import AsyncIterator, Callable, Mapping
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
@@ -16,6 +18,7 @@ from .auth import AuthManager
 from .brains.reactive import ReactiveBrain
 from .dialogue import DialogueManager
 from .geometry import Vec3
+from .pathfinding import Grid, Obstacle
 from .perception import perceive
 from .simulation import Simulation
 from .world import Agent, Player, World
@@ -90,14 +93,53 @@ async def send_error(ws: object, code: str, message: str) -> None:
     )
 
 
-def create_app() -> FastAPI:
-    app = FastAPI(title="SYNK")
+def populate_demo(world: World, sim: Simulation) -> None:
+    """Add the tavern demo world: three personality NPCs around two obstacles, each
+    with a reactive brain registered on the simulation. Lets `uvicorn synk.server:app`
+    show living NPCs with zero configuration."""
+    obstacles = [Obstacle(center=Vec3(-4, 0, -2), radius=1.2), Obstacle(center=Vec3(5, 0, 1), radius=1.0)]
+    grid = Grid.from_obstacles(-15, -15, 30, 30, 1.0, obstacles)
+    npcs = [
+        Agent(id="npc_gus", name="Gus", personality="a gruff barkeep", position=Vec3(0, 0, -3), zone="tavern"),
+        Agent(id="npc_mira", name="Mira", personality="a curious bard", position=Vec3(3, 0, 2), zone="tavern"),
+        Agent(id="npc_tomas", name="Tomas", personality="a suspicious guard", position=Vec3(-3, 0, 3), zone="tavern"),
+    ]
+    for npc in npcs:
+        world.add(npc)
+        sim.register(npc.id, ReactiveBrain(grid=grid, arrive_radius=1.5))
+
+
+def create_app(demo: bool = False) -> FastAPI:
     world = World()
     auth = AuthManager()
     dialogue = DialogueManager()
-    sim = Simulation(world)
+    sim = Simulation(world, dt=SNAPSHOT_INTERVAL)
     connections: dict[str, WebSocket] = {}
+    broadcast_throttle = Throttle(0.0)
 
+    if demo:
+        populate_demo(world, sim)
+
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        tasks: list[asyncio.Task] = []
+        if demo:
+            tasks.append(asyncio.create_task(sim.run()))
+
+            async def broadcaster() -> None:
+                while True:
+                    await asyncio.sleep(sim.dt)
+                    await broadcast_world_state(world, connections, broadcast_throttle)
+
+            tasks.append(asyncio.create_task(broadcaster()))
+        try:
+            yield
+        finally:
+            sim.stop()
+            for task in tasks:
+                task.cancel()
+
+    app = FastAPI(title="SYNK", lifespan=lifespan)
     app.state.world = world
     app.state.auth = auth
     app.state.dialogue = dialogue
@@ -204,4 +246,4 @@ def create_app() -> FastAPI:
     return app
 
 
-app = create_app()
+app = create_app(demo=True)

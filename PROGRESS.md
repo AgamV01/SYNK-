@@ -598,3 +598,13 @@ verify: `cd server && python examples/tavern.py --selftest`
 result: SELFTEST PASS. build_tavern() -> Tavern{world, brains, obstacles, grid}: 3 NPCs (Gus gruff barkeep / Mira curious bard / Tomas suspicious guard), 2 table/hearth obstacles, grid for pathfinding. selftest runs 80 sim ticks with a player near Gus -> Gus engages (move_to/face). build_tavern is reusable by the server (task 116).
 files: server/examples/tavern.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 116 README quickstart + server demo wiring
+verify (command sequence, all green):
+  - `cd server && python -m venv .venv && source .venv/bin/activate && pip install -e . && uvicorn synk.server:app --port 8000`
+  - `cd client && npm install && npm run dev` -> http://localhost:5173 (WASD + chat)
+  - `cd server && python examples/tavern.py --selftest` -> PASS
+  - programmatic: TestClient(create_app(demo=True)) join -> welcome snapshot has npc_gus/mira/tomas; next msg = world_state (tavern, 3 agents). "DEMO_OK".
+result: CLOSED the clone-and-run gap. server.py: create_app(demo=False default; True for module `app`). populate_demo() adds 3 tavern NPCs + reactive brains; FastAPI lifespan runs sim.run() + a 10Hz broadcaster when demo. Tests use demo=False (no bg loops) so suite unaffected (test_server + e2e still green). README Quickstart filled with exact steps (no API key needed).
+notes: did NOT run a live browser screenshot (would require creating/altering ARIA's .claude/launch.json = user WIP). Verified server-side serving + broadcast programmatically + both client builds + both Python selftests.
+files: server/synk/server.py, README.md, fix_plan.md, PROGRESS.md
+
