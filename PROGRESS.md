@@ -29,3 +29,8 @@ verify: `test -f server/synk/__init__.py && test -d client/src/sdk`
 result: TASK3_PASS. Created server/synk/{geometry,world,agent,perception,memory,pathfinding,dialogue,persistence,auth,simulation,server}.py, server/synk/brains/{base,reactive,llm,providers}.py, examples/, tests/, client/src/{sdk,demo}/*.ts — all empty per spec section 5.
 files: 28 empty module files (new), fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 4 server/pyproject.toml
+verify: `cd server && python -c "import tomllib,pathlib;tomllib.loads(pathlib.Path('pyproject.toml').read_text())"`
+result: TASK4_PASS. setuptools build backend; deps fastapi/uvicorn/aiosqlite; optional [llm]=anthropic,openai (guarded) and [dev]=pytest,pytest-asyncio,pytest-cov,httpx. pytest asyncio_mode=auto; coverage source=synk.
+files: server/pyproject.toml (new), fix_plan.md, PROGRESS.md
+

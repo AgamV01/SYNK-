@@ -6,7 +6,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 1. git repo + MIT LICENSE. verify: `git rev-parse --git-dir && test -f LICENSE`
 - [x] 2. .gitignore (Python + Node). verify: `grep -q __pycache__ .gitignore && grep -q node_modules .gitignore`
 - [x] 3. Dir skeleton + empty module files per spec section 5. verify: `test -f server/synk/__init__.py && test -d client/src/sdk`
-- [ ] 4. server/pyproject.toml with deps + pytest/coverage config. verify: `cd server && python -c "import tomllib,pathlib;tomllib.loads(pathlib.Path('pyproject.toml').read_text())"`
+- [x] 4. server/pyproject.toml with deps + pytest/coverage config. verify: `cd server && python -c "import tomllib,pathlib;tomllib.loads(pathlib.Path('pyproject.toml').read_text())"`
 - [ ] 5. Installable package; import works. verify: `cd server && pip install -e . -q && python -c "import synk"`
 - [ ] 6. client/package.json (vite+three+typescript). verify: `cd client && node -e "require('./package.json')"`
 - [ ] 7. npm install. verify: `cd client && npm install && test -d node_modules`
