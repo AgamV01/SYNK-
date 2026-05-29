@@ -35,6 +35,9 @@ include = ["synk*"]
 testpaths = ["tests"]
 addopts = "-q"
 asyncio_mode = "auto"
+filterwarnings = [
+    "ignore:Using `httpx` with `starlette.testclient`",
+]
 
 [tool.coverage.run]
 source = ["synk"]

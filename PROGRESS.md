@@ -476,3 +476,8 @@ result: 10 passed. Simulation gains optional persistence/reflection/reflection_p
 notes: reflection iterates registered brains; an agent needs a registered brain + a `memory` attr to reflect.
 files: server/synk/simulation.py, server/tests/test_simulation.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 92 FastAPI app + /healthz
+verify: `cd server && pytest tests/test_server.py -q`
+result: 1 passed. synk/server.py: create_app() -> FastAPI(title="SYNK") with GET /healthz -> {"status":"ok"}; module-level app=create_app(). Added pytest filterwarnings to mute Starlette TestClient/httpx deprecation noise.
+files: server/synk/server.py, server/tests/test_server.py, server/pyproject.toml, fix_plan.md, PROGRESS.md
+
