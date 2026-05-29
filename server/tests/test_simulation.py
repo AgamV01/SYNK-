@@ -4,10 +4,19 @@ import asyncio
 
 import pytest
 
+from synk.brains.llm import LLMBrain
 from synk.brains.reactive import ReactiveBrain
 from synk.geometry import Vec3
 from synk.simulation import Simulation
 from synk.world import Agent, Player, World
+
+
+class SlowProvider:
+    name = "slow"
+
+    async def generate(self, prompt: str, *, system: str | None = None) -> str:
+        await asyncio.sleep(0.02)
+        return "a considered reply"
 
 
 def test_rejects_bad_dt() -> None:
@@ -56,3 +65,20 @@ def test_step_faces_player_when_close() -> None:
     sim.register("npc1", ReactiveBrain(arrive_radius=1.5))
     sim.step()
     assert agent.current_action == "face"
+
+
+async def test_converse_dispatched_off_tick() -> None:
+    world = World()
+    world.add(Agent(id="npc1", name="Gus", position=Vec3(0, 0, 0), zone="room"))
+    sim = Simulation(world, dt=0.001)
+    sim.register("npc1", LLMBrain(provider=SlowProvider()))
+    task = sim.dispatch_converse("npc1", "hello")
+    assert sim.pending_count == 1
+    # The tick loop keeps running while the slow LLM call is in flight.
+    sim.step()
+    sim.step()
+    assert world.tick == 2
+    assert not task.done()  # still pending; the tick never awaited it
+    await task
+    assert ("npc1", task.result()) in sim._results
+    assert task.result().text == "a considered reply"

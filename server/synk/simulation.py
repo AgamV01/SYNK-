@@ -12,7 +12,7 @@ import math
 from typing import TYPE_CHECKING
 
 from . import actions
-from .brains.base import Face, Idle, MoveTo, Wander
+from .brains.base import ConverseResult, Face, Idle, MoveTo, Wander
 from .geometry import Vec3
 from .perception import DEFAULT_SENSE_RADIUS, perceive
 from .world import Agent, World
@@ -31,6 +31,8 @@ class Simulation:
         self.dt = dt
         self.brains: dict[str, Brain] = {}
         self._running = False
+        self._pending: list[asyncio.Task] = []
+        self._results: list[tuple[str, ConverseResult]] = []
 
     @property
     def running(self) -> bool:
@@ -38,6 +40,30 @@ class Simulation:
 
     def register(self, agent_id: str, brain: Brain) -> None:
         self.brains[agent_id] = brain
+
+    @property
+    def pending_count(self) -> int:
+        return len(self._pending)
+
+    def dispatch_converse(self, agent_id: str, utterance: str) -> asyncio.Task:
+        """Kick off an agent's deliberative reply as an off-tick async task.
+
+        Returns immediately with the Task — the tick loop never awaits it. The
+        result lands in `_results` for the loop to drain into world events later."""
+        brain = self.brains[agent_id]
+        agent = self.world.try_get(agent_id)
+        if not isinstance(agent, Agent):
+            raise KeyError(f"no agent {agent_id!r} to converse")
+        percept = perceive(self.world, agent, self._sense_radius(brain))
+
+        async def _runner() -> ConverseResult:
+            result = await brain.converse(agent, percept, utterance)
+            self._results.append((agent_id, result))
+            return result
+
+        task = asyncio.create_task(_runner())
+        self._pending.append(task)
+        return task
 
     @staticmethod
     def _sense_radius(brain: Brain) -> float:

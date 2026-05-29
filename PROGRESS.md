@@ -455,3 +455,8 @@ verify: `cd server && pytest tests/test_simulation.py -q`
 result: 5 passed. step() now perceives (sense radius from brain/.reactive), decides, applies per registered agent then advances. _apply integrates MoveTo locomotion (AGENT_SPEED=2.0/s), Face turns, Wander/Idle set label, discrete actions -> actions.apply_action (events). decide() is sync (reactive) so still no LLM on tick.
 files: server/synk/simulation.py, server/tests/test_simulation.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 88 async LLM dispatch off-tick
+verify: `cd server && pytest tests/test_simulation.py -q`
+result: 6 passed. dispatch_converse(agent_id, utterance) -> asyncio.create_task (returns immediately); result buffered in _results. Test with SlowProvider proves ticks advance while the converse task is still pending (tick never awaits it). pending_count property.
+files: server/synk/simulation.py, server/tests/test_simulation.py, fix_plan.md, PROGRESS.md
+
