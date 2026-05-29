@@ -268,3 +268,9 @@ verify: `cd server && pytest tests/test_reactive.py -q`
 result: 13 passed. _candidates() adds Emote(react_<kind>) at utility 1.5 when percept has events (reacts to most salient); beats ambient, loses to social (approach 2.0 / face 3.0). Reactive brain phase (44-50) complete.
 files: server/synk/brains/reactive.py, server/tests/test_reactive.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 51 headless demo
+verify: `cd server && python examples/headless_demo.py --selftest`
+result: "SELFTEST PASS: agent approached and faced the player". DT=0.1 (10Hz), AGENT_SPEED=2.0. apply_action() = minimal demo stepper (MoveTo steers+faces, Face turns, Emote/Wander/Idle set label). step()=perceive->decide->apply->advance. --selftest asserts 100 ticks, distance decreased, reached arrive_radius, ends action=face. --ticks N prints log.
+notes: apply_action here is a demo stand-in; canonical per-tick apply comes in Simulation phase (86-91).
+files: server/examples/headless_demo.py, fix_plan.md, PROGRESS.md
+
