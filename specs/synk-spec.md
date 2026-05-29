@@ -35,7 +35,7 @@ synk/
   server/
     pyproject.toml                # Python 3.11+
     synk/
-      geometry.py  world.py  agent.py  perception.py  memory.py  pathfinding.py
+      geometry.py  world.py  perception.py  memory.py  pathfinding.py    # Agent lives in world.py
       brains/ base.py reactive.py llm.py providers.py
       dialogue.py  persistence.py  auth.py  simulation.py  server.py
     examples/ headless_demo.py  tavern.py
