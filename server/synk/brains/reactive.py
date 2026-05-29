@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ..geometry import Vec3
+from ..pathfinding import astar, simplify_path
 from ..world import Player
 from .base import Action, ConverseResult, Idle, MoveTo, Wander
 
@@ -39,11 +41,25 @@ class ReactiveBrain:
             return None
         return min(players, key=lambda p: agent.position.distance_to(p.position))
 
+    def _steer_towards(self, agent: Agent, target: Vec3) -> MoveTo:
+        """Return a MoveTo aimed at the next waypoint of the A* path to `target`.
+
+        With no grid, steer straight. With a grid, follow the path so the agent
+        rounds obstacles instead of walking into them."""
+        if self.grid is None:
+            return MoveTo(target=target)
+        start = self.grid.world_to_cell(agent.position)
+        goal = self.grid.world_to_cell(target)
+        path = simplify_path(astar(self.grid, start, goal))
+        if len(path) >= 2:
+            return MoveTo(target=self.grid.cell_center(path[1]))
+        return MoveTo(target=target)
+
     def decide(self, agent: Agent, percept: Percept) -> Action:
         player = self._nearest_player(agent, percept)
         if player is not None:
-            # A player is nearby: approach them.
-            return MoveTo(target=player.position)
+            # A player is nearby: steer toward them, routing around obstacles.
+            return self._steer_towards(agent, player.position)
         # Ambient behavior when nothing demands attention: wander, or idle if calm.
         return Wander() if self.restless else Idle()
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from synk.brains.base import Idle, MoveTo, Wander
 from synk.brains.reactive import ReactiveBrain
 from synk.geometry import Vec3
+from synk.pathfinding import Grid
 from synk.perception import Percept
 from synk.world import Agent, Player
 
@@ -46,3 +47,21 @@ def test_approaches_nearest_of_several_players() -> None:
     action = brain.decide(agent, _percept(agent, nearby=[far, near]))
     assert isinstance(action, MoveTo)
     assert action.target == Vec3(2, 0, 0)
+
+
+def test_steers_around_wall_using_path() -> None:
+    # Wall at column 3 rows 0..5, gap at row 6. Agent left of wall, player right.
+    grid = Grid(0, 0, 7, 7, 1.0)
+    for row in range(6):
+        grid.block((3, row))
+    brain = ReactiveBrain(grid=grid)
+    agent = Agent(id="npc1", position=grid.cell_center((0, 3)))
+    player = Player(id="p1", position=grid.cell_center((6, 3)))
+    action = brain.decide(agent, _percept(agent, nearby=[player]))
+    assert isinstance(action, MoveTo)
+    # The steering waypoint must be a real, unblocked cell center...
+    cell = grid.world_to_cell(action.target)
+    assert not grid.is_blocked(cell)
+    # ...and it must NOT head straight at the player (that path is walled off).
+    assert action.target != player.position
+

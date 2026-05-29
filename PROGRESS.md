@@ -243,3 +243,8 @@ verify: `cd server && pytest tests/test_reactive.py -q`
 result: 4 passed. _nearest_player() finds closest Player in percept; decide() returns MoveTo(player.position) when one is present, else ambient.
 files: server/synk/brains/reactive.py, server/tests/test_reactive.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 46 steering toward target via path
+verify: `cd server && pytest tests/test_reactive.py -q`
+result: 5 passed. _steer_towards() uses astar+simplify_path on the brain's grid, returns MoveTo(cell_center of path[1]); straight MoveTo when grid is None. decide() now routes approach through it. Wall test confirms waypoint is unblocked and not straight at the walled-off player.
+files: server/synk/brains/reactive.py, server/tests/test_reactive.py, fix_plan.md, PROGRESS.md
+
