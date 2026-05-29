@@ -532,3 +532,8 @@ verify: `cd client && npx tsc --noEmit`
 result: TASK102_PASS. SynkClient: connect(url) opens WebSocket, parses messages, dispatch() fans out to typed listeners via on(type, handler) (mapped-type, no any). socket getter.
 files: client/src/sdk/client.ts, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 103 SDK send intents
+verify: `cd client && npx tsc --noEmit`
+result: TASK103_PASS. join/move/say/interact/leave methods build typed ClientMessages and send via private send(); PROTOCOL_VERSION stamped.
+files: client/src/sdk/client.ts, fix_plan.md, PROGRESS.md
+

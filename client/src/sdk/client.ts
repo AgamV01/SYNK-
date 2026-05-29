@@ -1,10 +1,13 @@
 // SynkClient: a typed WebSocket client for the SYNK protocol.
 
+import { PROTOCOL_VERSION } from "./types";
 import type {
   AgentEventMessage,
+  ClientMessage,
   DialogueMessage,
   ErrorMessage,
   ServerMessage,
+  Vec3,
   WelcomeMessage,
   WorldStateMessage,
 } from "./types";
@@ -65,5 +68,30 @@ export class SynkClient {
 
   get socket(): WebSocket | null {
     return this.ws;
+  }
+
+  // ---- Intents (client -> server) ----
+  protected send(msg: ClientMessage): void {
+    this.ws?.send(JSON.stringify(msg));
+  }
+
+  join(name: string, zone?: string): void {
+    this.send({ type: "join", v: PROTOCOL_VERSION, name, zone });
+  }
+
+  move(position: Vec3, facing?: number): void {
+    this.send({ type: "move", v: PROTOCOL_VERSION, position, facing });
+  }
+
+  say(target: string, text: string): void {
+    this.send({ type: "say", v: PROTOCOL_VERSION, target, text });
+  }
+
+  interact(target: string, kind: string, payload?: Record<string, unknown>): void {
+    this.send({ type: "interact", v: PROTOCOL_VERSION, target, kind, payload });
+  }
+
+  leave(): void {
+    this.send({ type: "leave", v: PROTOCOL_VERSION });
   }
 }
