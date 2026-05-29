@@ -24,3 +24,8 @@ verify: `grep -q __pycache__ .gitignore && grep -q node_modules .gitignore`
 result: TASK2_PASS
 files: .gitignore (new), fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 3 dir skeleton + empty module files
+verify: `test -f server/synk/__init__.py && test -d client/src/sdk`
+result: TASK3_PASS. Created server/synk/{geometry,world,agent,perception,memory,pathfinding,dialogue,persistence,auth,simulation,server}.py, server/synk/brains/{base,reactive,llm,providers}.py, examples/, tests/, client/src/{sdk,demo}/*.ts — all empty per spec section 5.
+files: 28 empty module files (new), fix_plan.md, PROGRESS.md
+
