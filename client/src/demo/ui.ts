@@ -7,11 +7,29 @@ export interface DemoUIOptions {
 export class DemoUI {
   private readonly prompt: HTMLDivElement;
   private readonly input: HTMLInputElement;
+  private readonly log: HTMLDivElement;
   private nearbyAgentId: string | null = null;
   private readonly onSay?: (text: string) => void;
 
   constructor(root: HTMLElement, options: DemoUIOptions = {}) {
     this.onSay = options.onSay;
+
+    this.log = document.createElement("div");
+    Object.assign(this.log.style, {
+      position: "fixed",
+      top: "16px",
+      left: "16px",
+      width: "min(320px, 40vw)",
+      maxHeight: "40vh",
+      overflowY: "auto",
+      padding: "10px 12px",
+      borderRadius: "10px",
+      background: "rgba(20,20,28,0.7)",
+      color: "#eee",
+      font: "13px system-ui, sans-serif",
+      lineHeight: "1.5",
+    } satisfies Partial<CSSStyleDeclaration>);
+    root.appendChild(this.log);
 
     this.prompt = document.createElement("div");
     Object.assign(this.prompt.style, {
@@ -75,5 +93,18 @@ export class DemoUI {
 
   get currentTarget(): string | null {
     return this.nearbyAgentId;
+  }
+
+  /** Append a dialogue line. Overheard lines (NPC↔NPC or others' chats) are dimmed. */
+  addDialogue(speaker: string, text: string, overheard = false): void {
+    const line = document.createElement("div");
+    const prefix = overheard ? "(overheard) " : "";
+    line.textContent = `${prefix}${speaker}: ${text}`;
+    if (overheard) {
+      line.style.opacity = "0.6";
+      line.style.fontStyle = "italic";
+    }
+    this.log.appendChild(line);
+    this.log.scrollTop = this.log.scrollHeight;
   }
 }

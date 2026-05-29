@@ -572,3 +572,8 @@ verify: `cd client && npm run build`
 result: built OK. DemoUI(root, {onSay}): proximity prompt div + chat input form (bottom). setNearbyAgent(id,name) toggles prompt; submit calls onSay(text) when a target is in range. currentTarget getter.
 files: client/src/demo/ui.ts, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 111 overhearing display
+verify: `cd client && npm run build`
+result: built OK. DemoUI gains a scrolling dialogue log (top-left); addDialogue(speaker, text, overheard) appends lines, dimming/italicizing overheard ones with an "(overheard)" prefix.
+files: client/src/demo/ui.ts, fix_plan.md, PROGRESS.md
+
