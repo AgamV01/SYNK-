@@ -107,6 +107,26 @@ def _octile(a: Cell, b: Cell) -> float:
     return (dx + dz) + (_DIAGONAL - 2.0) * min(dx, dz)
 
 
+def _direction(a: Cell, b: Cell) -> Cell:
+    def sign(n: int) -> int:
+        return (n > 0) - (n < 0)
+
+    return (sign(b[0] - a[0]), sign(b[1] - a[1]))
+
+
+def simplify_path(path: list[Cell]) -> list[Cell]:
+    """Drop interior cells that lie on a straight run, keeping only turn points
+    (plus the start and goal). A grid path of unit steps becomes a short waypoint list."""
+    if len(path) <= 2:
+        return list(path)
+    out: list[Cell] = [path[0]]
+    for i in range(1, len(path) - 1):
+        if _direction(path[i - 1], path[i]) != _direction(path[i], path[i + 1]):
+            out.append(path[i])
+    out.append(path[-1])
+    return out
+
+
 def astar(grid: Grid, start: Cell, goal: Cell) -> list[Cell]:
     """A* over the grid. Returns the cell path from start to goal inclusive, or
     [] if start/goal are invalid or no path exists."""

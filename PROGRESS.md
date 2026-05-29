@@ -166,3 +166,8 @@ verify: `cd server && pytest tests/test_pathfinding.py -q`
 result: 11 passed. Wall at col 3 (rows 0-5, gap at row 6); A* detours through the gap, never steps on blocked cells, path strictly longer than the 7-cell straight crossing. Proves non-naive navigation.
 files: server/tests/test_pathfinding.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 31 waypoint simplification
+verify: `cd server && pytest tests/test_pathfinding.py -q`
+result: 15 passed. simplify_path() keeps only turn points (+endpoints) via per-step direction sign; collapses straight runs, preserves endpoints on detours, short paths unchanged.
+files: server/synk/pathfinding.py, server/tests/test_pathfinding.py, fix_plan.md, PROGRESS.md
+

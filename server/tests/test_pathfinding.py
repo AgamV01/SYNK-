@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from synk.geometry import Vec3
-from synk.pathfinding import Grid, Obstacle, astar
+from synk.pathfinding import Grid, Obstacle, astar, simplify_path
 
 
 def test_grid_rejects_bad_dims() -> None:
@@ -94,3 +94,30 @@ def test_astar_routes_around_wall() -> None:
     assert max(row for _, row in path) >= 6
     # A straight crossing would be 7 cells; the detour is strictly longer.
     assert len(path) > 7
+
+
+def test_simplify_collapses_straight_run() -> None:
+    straight = [(0, 0), (1, 0), (2, 0), (3, 0)]
+    assert simplify_path(straight) == [(0, 0), (3, 0)]
+
+
+def test_simplify_keeps_turn_points() -> None:
+    # right 3, then up 2
+    path = [(0, 0), (1, 0), (2, 0), (3, 0), (3, 1), (3, 2)]
+    assert simplify_path(path) == [(0, 0), (3, 0), (3, 2)]
+
+
+def test_simplify_short_paths_unchanged() -> None:
+    assert simplify_path([]) == []
+    assert simplify_path([(2, 2)]) == [(2, 2)]
+    assert simplify_path([(0, 0), (1, 1)]) == [(0, 0), (1, 1)]
+
+
+def test_simplify_endpoints_preserved_on_detour() -> None:
+    g = Grid(0, 0, 7, 7, 1.0)
+    for row in range(6):
+        g.block((3, row))
+    waypoints = simplify_path(astar(g, (0, 3), (6, 3)))
+    assert waypoints[0] == (0, 3)
+    assert waypoints[-1] == (6, 3)
+    assert len(waypoints) < 9  # fewer than the full step-by-step path
