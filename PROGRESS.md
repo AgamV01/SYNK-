@@ -335,3 +335,8 @@ result: 4 passed. _assemble_context(agent) duck-types agent.memory (.recall()) -
 notes: memory/conversation are duck-typed attachments (not Agent dataclass fields) so the sim/dialogue layers can wire them later without changing Brain protocol.
 files: server/synk/brains/llm.py, server/tests/test_llm_brain.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 64 action JSON schema + mapping
+verify: `cd server && pytest tests/test_structured_actions.py -q`
+result: 4 passed. ACTION_SCHEMA documents fields per type. action_from_dict(data) maps move_to/face/emote/give_item/set_goal/handoff to typed Actions; ValueError on unknown type or missing/ill-typed field. give_item/handoff use "to" key (per protocol payload).
+files: server/synk/brains/base.py, server/tests/test_structured_actions.py, fix_plan.md, PROGRESS.md
+

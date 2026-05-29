@@ -90,7 +90,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 63. Conversation-context assembly for converse + test. verify: `cd server && pytest tests/test_llm_brain.py -q`
 
 ## Structured actions
-- [ ] 64. Action schema for LLM output (JSON contract) + test. verify: `cd server && pytest tests/test_structured_actions.py -q`
+- [x] 64. Action schema for LLM output (JSON contract) + test. verify: `cd server && pytest tests/test_structured_actions.py -q`
 - [ ] 65. Safe parse of LLM structured output + test. verify: `cd server && pytest tests/test_structured_actions.py -q`
 - [ ] 66. Malformed output -> speech-only fallback + log, no raise + test. verify: `cd server && pytest tests/test_structured_actions.py -q`
 - [ ] 67. Apply parsed action (move_to, emote) + test. verify: `cd server && pytest tests/test_structured_actions.py -q`
