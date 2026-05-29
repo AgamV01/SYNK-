@@ -54,3 +54,14 @@ def test_manager_append_reply_and_fetch_history() -> None:
 def test_manager_history_unknown_pair_is_empty() -> None:
     dm = DialogueManager()
     assert dm.history("nobody", "noone") == []
+
+
+def test_multiparty_npc_conversation() -> None:
+    dm = DialogueManager()
+    dm.group("tavern_chat", ["npc_gus", "npc_bo"])
+    dm.route_group_message("tavern_chat", "npc_gus", "quiet night, eh?", ts=1.0)
+    dm.route_group_message("tavern_chat", "npc_bo", "aye, too quiet", ts=2.0)
+    convo = dm.group("tavern_chat")
+    assert set(convo.participants) == {"npc_gus", "npc_bo"}
+    assert [t.speaker for t in convo.turns] == ["npc_gus", "npc_bo"]
+    assert convo.turns[1].text == "aye, too quiet"

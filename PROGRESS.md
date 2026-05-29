@@ -390,3 +390,8 @@ verify: `cd server && pytest tests/test_dialogue.py -q`
 result: 6 passed. append_agent_reply() adds agent turn; history(player,agent,limit) returns ordered turns, [] for unknown pair.
 files: server/synk/dialogue.py, server/tests/test_dialogue.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 75 multi-party NPC conversation
+verify: `cd server && pytest tests/test_dialogue.py -q`
+result: 7 passed. group(conv_id, participants) + route_group_message() support NPC<->NPC multi-party conversations keyed by id.
+files: server/synk/dialogue.py, server/tests/test_dialogue.py, fix_plan.md, PROGRESS.md
+
