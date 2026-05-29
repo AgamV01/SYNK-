@@ -110,7 +110,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 
 ## Persistence
 - [x] 77. SQLite schema + migrate on boot + test. verify: `cd server && pytest tests/test_persistence.py -q`
-- [ ] 78. Async/batched writer (queue, flush) + test. verify: `cd server && pytest tests/test_persistence.py -q`
+- [x] 78. Async/batched writer (queue, flush) + test. verify: `cd server && pytest tests/test_persistence.py -q`
 - [ ] 79. Save world snapshot + test. verify: `cd server && pytest tests/test_persistence.py -q`
 - [ ] 80. Load world snapshot on boot + test. verify: `cd server && pytest tests/test_persistence.py -q`
 - [ ] 81. Save/load agent memory roundtrip + test. verify: `cd server && pytest tests/test_persistence.py -q`

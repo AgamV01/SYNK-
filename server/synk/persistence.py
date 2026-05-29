@@ -38,6 +38,7 @@ class Persistence:
     def __init__(self, path: str = ":memory:") -> None:
         self.path = path
         self._db: aiosqlite.Connection | None = None
+        self._queue: list[tuple[str, tuple]] = []
 
     @property
     def db(self) -> aiosqlite.Connection:
@@ -52,6 +53,26 @@ class Persistence:
     async def migrate(self) -> None:
         await self.db.executescript(SCHEMA)
         await self.db.commit()
+
+    def enqueue(self, sql: str, params: tuple = ()) -> None:
+        """Queue a write. Synchronous and cheap — safe to call from the tick path.
+        The actual disk write happens later in `flush`, off the tick."""
+        self._queue.append((sql, params))
+
+    @property
+    def pending(self) -> int:
+        return len(self._queue)
+
+    async def flush(self) -> int:
+        """Execute all queued writes in one transaction. Returns the number written."""
+        if not self._queue:
+            return 0
+        batch = self._queue
+        self._queue = []
+        for sql, params in batch:
+            await self.db.execute(sql, params)
+        await self.db.commit()
+        return len(batch)
 
     async def table_names(self) -> set[str]:
         cursor = await self.db.execute(

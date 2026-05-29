@@ -405,3 +405,8 @@ verify: `cd server && pytest tests/test_persistence.py -q`
 result: 3 passed. NEW synk/persistence.py: Persistence(path) connect()->migrate() (executescript SCHEMA: world_meta, entities, memories + index). Idempotent (IF NOT EXISTS). table_names() helper. db property raises if not connected. aiosqlite 0.22.1.
 files: server/synk/persistence.py, server/tests/test_persistence.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 78 async/batched writer
+verify: `cd server && pytest tests/test_persistence.py -q`
+result: 5 passed. enqueue(sql, params) is sync (tick-safe); flush() executes the batch in one transaction + commit, returns count, clears queue; pending property; empty flush -> 0.
+files: server/synk/persistence.py, server/tests/test_persistence.py, fix_plan.md, PROGRESS.md
+
