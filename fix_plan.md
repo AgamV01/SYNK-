@@ -3,7 +3,7 @@
 Work top to bottom. One unchecked task per Ralph iteration, topmost whose dependencies are checked. Run its `verify:` for real before checking the box; paste output into PROGRESS.md. Each task is one commit. Spec sections are in `specs/synk-spec.md`.
 
 ## Scaffolding & tooling
-- [ ] 1. git repo + MIT LICENSE. verify: `git rev-parse --git-dir && test -f LICENSE`
+- [x] 1. git repo + MIT LICENSE. verify: `git rev-parse --git-dir && test -f LICENSE`
 - [ ] 2. .gitignore (Python + Node). verify: `grep -q __pycache__ .gitignore && grep -q node_modules .gitignore`
 - [ ] 3. Dir skeleton + empty module files per spec section 5. verify: `test -f server/synk/__init__.py && test -d client/src/sdk`
 - [ ] 4. server/pyproject.toml with deps + pytest/coverage config. verify: `cd server && python -c "import tomllib,pathlib;tomllib.loads(pathlib.Path('pyproject.toml').read_text())"`
