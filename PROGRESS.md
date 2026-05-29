@@ -537,3 +537,8 @@ verify: `cd client && npx tsc --noEmit`
 result: TASK103_PASS. join/move/say/interact/leave methods build typed ClientMessages and send via private send(); PROTOCOL_VERSION stamped.
 files: client/src/sdk/client.ts, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 104 SDK auto-reconnect
+verify: `cd client && npx tsc --noEmit`
+result: TASK104_PASS. connect() stores url + reconnect flag; onclose schedules reconnect with exponential backoff (base 250ms, cap 10s, reset on open); disconnect() stops it. SynkClientOptions for tuning.
+files: client/src/sdk/client.ts, fix_plan.md, PROGRESS.md
+

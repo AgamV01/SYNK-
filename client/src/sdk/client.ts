@@ -22,8 +22,18 @@ interface ServerMessageMap {
 
 type Listener<K extends keyof ServerMessageMap> = (msg: ServerMessageMap[K]) => void;
 
+export interface SynkClientOptions {
+  baseBackoffMs?: number;
+  maxBackoffMs?: number;
+}
+
 export class SynkClient {
   private ws: WebSocket | null = null;
+  private url = "";
+  private shouldReconnect = false;
+  private reconnectAttempts = 0;
+  private readonly baseBackoffMs: number;
+  private readonly maxBackoffMs: number;
   private listeners: { [K in keyof ServerMessageMap]: Listener<K>[] } = {
     welcome: [],
     world_state: [],
@@ -31,6 +41,11 @@ export class SynkClient {
     dialogue: [],
     error: [],
   };
+
+  constructor(options: SynkClientOptions = {}) {
+    this.baseBackoffMs = options.baseBackoffMs ?? 250;
+    this.maxBackoffMs = options.maxBackoffMs ?? 10000;
+  }
 
   on<K extends keyof ServerMessageMap>(type: K, handler: Listener<K>): this {
     this.listeners[type].push(handler);
@@ -58,12 +73,45 @@ export class SynkClient {
   }
 
   connect(url: string): void {
-    const ws = new WebSocket(url);
+    this.url = url;
+    this.shouldReconnect = true;
+    this.open();
+  }
+
+  private open(): void {
+    const ws = new WebSocket(this.url);
     this.ws = ws;
+    ws.onopen = () => {
+      this.reconnectAttempts = 0;
+    };
     ws.onmessage = (event: MessageEvent) => {
       const data = JSON.parse(event.data as string) as ServerMessage;
       this.dispatch(data);
     };
+    ws.onclose = () => {
+      if (this.shouldReconnect) {
+        this.scheduleReconnect();
+      }
+    };
+  }
+
+  private scheduleReconnect(): void {
+    const delay = Math.min(
+      this.maxBackoffMs,
+      this.baseBackoffMs * 2 ** this.reconnectAttempts,
+    );
+    this.reconnectAttempts += 1;
+    setTimeout(() => {
+      if (this.shouldReconnect) {
+        this.open();
+      }
+    }, delay);
+  }
+
+  /** Stop reconnecting and close the socket. */
+  disconnect(): void {
+    this.shouldReconnect = false;
+    this.ws?.close();
   }
 
   get socket(): WebSocket | null {
