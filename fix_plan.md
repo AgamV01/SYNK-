@@ -149,7 +149,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 
 ## Three.js demo
 - [x] 106. scene.ts ground + lighting + props/obstacles. verify: `cd client && npm run build`
-- [ ] 107. player.ts WASD + camera, emits move. verify: `cd client && npm run build`
+- [x] 107. player.ts WASD + camera, emits move. verify: `cd client && npm run build`
 - [ ] 108. npc.ts avatars from world_state + name labels. verify: `cd client && npm run build`
 - [ ] 109. npc.ts speech bubbles + emote animation. verify: `cd client && npm run build`
 - [ ] 110. ui.ts proximity prompt + chat input -> say. verify: `cd client && npm run build`

@@ -552,3 +552,8 @@ verify: `cd client && npm run build`
 result: built OK (tsc + vite). NEW client/index.html (vite entry: canvas#scene + #ui overlay + main.ts). scene.ts createScene(canvas, obstacles) -> {scene, camera, renderer, resize}: ground plane, grid, ambient+directional light, cylinder props for obstacles, fog. Vite bundled 4 modules (main.ts still empty; scene wired at task 114).
 files: client/index.html, client/src/demo/scene.ts, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 107 player controller
+verify: `cd client && npm run build`
+result: built OK. PlayerController(camera, {speed, emitIntervalMs, onMove}): capsule mesh, WASD/arrow keys, normalized movement, follow camera, throttled onMove([x,0,z], facing) at ~10Hz. facing=atan2(dz,dx) matches server convention.
+files: client/src/demo/player.ts, fix_plan.md, PROGRESS.md
+
