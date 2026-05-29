@@ -103,10 +103,10 @@ deliberative `converse`), **Simulation** (the loop), **Server** (the protocol).
 The whole point of SYNK is that intelligence is **two layers**:
 
 - **Reactive layer** — runs *every tick*, synchronously, with zero network I/O.
-  Wander, steer toward targets, pathfind around obstacles, face entities, emote.
-  This drives continuous behavior for free.
+  Wander, steer toward targets, pathfind around obstacles, face entities, and emote.
+  This drives continuous behaviour for free.
 - **Deliberative (LLM) layer** — fires *only on meaningful events*: a player speaks to
-  the agent, a salient event crosses a threshold, or a low-frequency reflection timer.
+  The agent, a salient event crosses a threshold, or a low-frequency reflection timer.
   It runs **off the tick** as an async task; its result is injected back into the world
   as events on a later tick.
 
@@ -116,7 +116,7 @@ you only spend tokens when something worth thinking about happens.
 
 ## Upgrading to real LLM dialogue
 
-By default `SYNK_PROVIDER` is unset and no keys are present, so the **MockProvider**
+By default, `SYNK_PROVIDER` is unset and no keys are present, so the **MockProvider**
 serves deterministic, offline lines. To use a real model, install the extra and set a key:
 
 ```bash
