@@ -6,7 +6,6 @@ build-backend = "setuptools.build_meta"
 name = "synk"
 version = "0.1.0"
 description = "Server-authoritative runtime for intelligent, LLM-driven NPCs in web-based 3D worlds."
-readme = "../README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 dependencies = [

@@ -34,3 +34,9 @@ verify: `cd server && python -c "import tomllib,pathlib;tomllib.loads(pathlib.Pa
 result: TASK4_PASS. setuptools build backend; deps fastapi/uvicorn/aiosqlite; optional [llm]=anthropic,openai (guarded) and [dev]=pytest,pytest-asyncio,pytest-cov,httpx. pytest asyncio_mode=auto; coverage source=synk.
 files: server/pyproject.toml (new), fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 5 installable package
+verify: `cd server && pip install -e . -q && python -c "import synk"`
+result: TASK5_PASS. Removed `readme = "../README.md"` from pyproject (setuptools forbids reading files outside project root). Also installed `.[dev]` extras → pytest 9.0.3 available.
+files: server/pyproject.toml, fix_plan.md, PROGRESS.md
+notes: pytest is 9.0.3 (very new); watch pytest-asyncio compatibility when async tests start (~task 71+).
+
