@@ -60,3 +60,8 @@ verify: `grep -qi synk README.md`
 result: TASK9_PASS. Title + section stubs (Quickstart, Architecture, hybrid brain, Upgrading, Docs, License) with TODO markers pointing at tasks 116-118.
 files: README.md, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 10 protocol client->server messages
+verify: `grep -q '"type": "join"' protocol/messages.md`
+result: TASK10_PASS. Documented join/move/say/interact/leave with field shapes + JSON examples. Decided: position=[x,y,z] floats, facing=yaw radians, v=1.
+files: protocol/messages.md, fix_plan.md, PROGRESS.md
+
