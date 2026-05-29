@@ -87,6 +87,35 @@ async def test_converse_dispatched_off_tick() -> None:
     assert task.result().text == "a considered reply"
 
 
+async def test_event_driven_deliberation_on_salient_event() -> None:
+    world = World()
+    world.add(Agent(id="npc1", position=Vec3(0, 0, 0), zone="room"))
+    sim = Simulation(world, dt=0.1, deliberate_threshold=1.0, deliberate_cooldown=5.0)
+    sim.register("npc1", LLMBrain(provider=SlowProvider()))
+    world.emit_event(
+        WorldEvent(kind="gave_item", source_id="bob", zone="room", tick=0,
+                   position=Vec3(1, 0, 0), salience=3.0, payload={"item": "coin"})
+    )
+    sim.step()  # perceives the salient event -> deliberates (off-tick)
+    assert sim.pending_count >= 1
+    await asyncio.gather(*sim._pending)
+    sim.step()  # drains the result -> spoke event
+    assert any(e.kind == "spoke" for e in world.recent_events())
+
+
+def test_no_deliberation_below_threshold_or_for_reactive() -> None:
+    world = World()
+    world.add(Agent(id="npc1", position=Vec3(0, 0, 0), zone="room"))
+    sim = Simulation(world, dt=0.1, deliberate_threshold=5.0)
+    sim.register("npc1", LLMBrain(provider=SlowProvider()))
+    world.emit_event(
+        WorldEvent(kind="moved", source_id="bob", zone="room", tick=0,
+                   position=Vec3(1, 0, 0), salience=0.5)
+    )
+    sim.step()
+    assert sim.pending_count == 0  # below threshold
+
+
 class ActionJSONProvider:
     name = "json"
 

@@ -50,6 +50,8 @@ class Simulation:
         reflection_provider: Provider | None = None,
         save_every: int = 50,
         memory_decay_every: int = 100,
+        deliberate_threshold: float = 1.5,
+        deliberate_cooldown: float = 5.0,
     ) -> None:
         if dt <= 0:
             raise ValueError("dt must be positive")
@@ -61,6 +63,9 @@ class Simulation:
         self.reflection_provider = reflection_provider
         self.save_every = save_every
         self.memory_decay_every = memory_decay_every
+        self.deliberate_threshold = deliberate_threshold
+        self.deliberate_cooldown = deliberate_cooldown
+        self._last_deliberation: dict[str, float] = {}
         self._running = False
         self._pending: list[asyncio.Task] = []
         self._results: list[tuple[str, ConverseResult]] = []
@@ -149,6 +154,8 @@ class Simulation:
                 salience=score_event_salience("spoke"),
                 payload={"text": result.text},
             )
+            # Off-tick speech is autonomous (no synchronous addressee) -> overheard.
+            spoke.payload["overheard"] = True
             self.world.emit_event(spoke)
             events.append(spoke)
             if result.action is not None:
@@ -205,6 +212,22 @@ class Simulation:
                     )
                 )
 
+    def _maybe_deliberate(self, agent_id: str, brain: Brain, percept) -> None:
+        """Wake an LLM agent's deliberative layer when it perceives a salient event,
+        subject to a per-agent cooldown. Proactive reaction, dispatched off-tick."""
+        if getattr(brain, "provider", None) is None or not percept.events:
+            return  # only LLM-backed brains deliberate
+        top = max(percept.events, key=lambda e: e.salience)
+        if top.salience < self.deliberate_threshold:
+            return
+        last = self._last_deliberation.get(agent_id, float("-inf"))
+        if self.world.sim_time - last < self.deliberate_cooldown:
+            return
+        self._last_deliberation[agent_id] = self.world.sim_time
+        self.dispatch_converse(
+            agent_id, f"You witnessed: {describe_event(top)}. React briefly, in character."
+        )
+
     def _maybe_decay(self) -> None:
         """Periodically decay every agent's memory off the hot path."""
         if self.world.tick % self.memory_decay_every != 0:
@@ -227,6 +250,7 @@ class Simulation:
             action = brain.decide(agent, percept)
             self._apply(agent, action)
             self._form_memories(agent, percept)
+            self._maybe_deliberate(agent_id, brain, percept)
         self._maybe_reflect()
         self.world.advance(self.dt)
         self._maybe_persist()
