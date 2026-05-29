@@ -47,8 +47,16 @@ export class SynkClient {
     this.maxBackoffMs = options.maxBackoffMs ?? 10000;
   }
 
+  private readonly openHandlers: Array<() => void> = [];
+
   on<K extends keyof ServerMessageMap>(type: K, handler: Listener<K>): this {
     this.listeners[type].push(handler);
+    return this;
+  }
+
+  /** Register a callback fired whenever the socket (re)connects. */
+  onOpen(handler: () => void): this {
+    this.openHandlers.push(handler);
     return this;
   }
 
@@ -83,6 +91,7 @@ export class SynkClient {
     this.ws = ws;
     ws.onopen = () => {
       this.reconnectAttempts = 0;
+      this.openHandlers.forEach((fn) => fn());
     };
     ws.onmessage = (event: MessageEvent) => {
       const data = JSON.parse(event.data as string) as ServerMessage;

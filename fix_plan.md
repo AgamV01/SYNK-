@@ -156,7 +156,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 111. ui.ts overhearing display. verify: `cd client && npm run build`
 - [x] 112. ui.ts agent-state debug panel (action, goal, memory). verify: `cd client && npm run build`
 - [x] 113. voice.ts Web Speech TTS + STT, flagged off by default. verify: `cd client && npm run build`
-- [ ] 114. main.ts wire SDK + scene + ui; connect to server. verify: `cd client && npm run build`
+- [x] 114. main.ts wire SDK + scene + ui; connect to server. verify: `cd client && npm run build`
 
 ## Example, docs, final gates
 - [ ] 115. examples/tavern.py: zone, props/obstacles, 3 NPCs with personalities + --selftest. verify: `cd server && python examples/tavern.py --selftest`

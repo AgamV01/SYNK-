@@ -587,3 +587,9 @@ verify: `cd client && npm run build`
 result: built OK. Voice({enabled=false, lang}) — speak() via SpeechSynthesisUtterance; startListening/stopListening via SpeechRecognition (typed shims, cast through unknown, no any). Disabled by default; no-ops/returns false when off or unsupported.
 files: client/src/demo/voice.ts, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 114 main.ts wiring
+verify: `cd client && npm run build` (13 modules incl three.js, ~494kB, OK)
+result: main.ts wires SynkClient + scene + player + NPCManager + DemoUI + Voice; rAF loop (player.update/npcs.animate/render). client.onOpen->join; world_state->npc.update + proximity/debug; dialogue->bubble+log+TTS; agent_event emoted->emote anim. WS_URL ws://<host>:8000/ws. Added SynkClient.onOpen() hook (SDK) to send join on (re)connect.
+notes: GAP for clone-and-run — server create_app() starts with an EMPTY world and does NOT run the sim loop/broadcast. Need server-startup wiring (populate tavern + run Simulation.run + periodic broadcast_world_state) to actually show NPCs. Plan to add in task 115/116. Skipped live browser check until then (nothing to render yet); did not touch ARIA's .claude/launch.json (user WIP).
+files: client/src/demo/main.ts, client/src/sdk/client.ts, fix_plan.md, PROGRESS.md
+
