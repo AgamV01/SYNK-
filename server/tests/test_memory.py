@@ -55,3 +55,28 @@ def test_salience_known_kinds_ordered() -> None:
 def test_salience_unknown_kind_is_default() -> None:
     assert score_event_salience("teleported") == DEFAULT_SALIENCE
 
+
+def test_decay_reduces_salience() -> None:
+    s = MemoryStore()
+    s.add(MemoryItem("x", ts=0.0, salience=4.0))
+    s.decay(dt=1.0, rate=0.5, floor=0.0)
+    assert s.items[0].salience < 4.0
+    assert s.items[0].salience > 0.0
+
+
+def test_decay_forgets_below_floor() -> None:
+    s = MemoryStore()
+    s.add(MemoryItem("faint", ts=0.0, salience=0.1))
+    s.add(MemoryItem("strong", ts=0.0, salience=10.0))
+    # factor = exp(-2) ~= 0.135: faint -> 0.0135 (< floor), strong -> 1.35 (kept)
+    s.decay(dt=1.0, rate=2.0, floor=0.05)
+    texts = {m.text for m in s.items}
+    assert "faint" not in texts
+    assert "strong" in texts
+
+
+def test_decay_rejects_negative_dt() -> None:
+    s = MemoryStore()
+    with pytest.raises(ValueError):
+        s.decay(dt=-1.0)
+

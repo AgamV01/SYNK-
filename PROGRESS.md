@@ -191,3 +191,9 @@ verify: `cd server && pytest tests/test_memory.py -q`
 result: 7 passed. SALIENCE_BY_KIND table + score_event_salience(kind) with DEFAULT_SALIENCE=1.0 fallback (gave_item>spoke>moved).
 files: server/synk/memory.py, server/tests/test_memory.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 36 memory decay
+verify: `cd server && pytest tests/test_memory.py -q`
+result: 10 passed. MemoryStore.decay(dt, rate=0.05, floor=0.05) multiplies salience by exp(-rate*dt) then forgets items below floor; rejects negative dt.
+notes: decay is multiplicative PER CALL (not based on item.ts age) so periodic calls compose correctly; exp(-rate*dt) with large dt*rate annihilates everything — keep test params modest.
+files: server/synk/memory.py, server/tests/test_memory.py, fix_plan.md, PROGRESS.md
+
