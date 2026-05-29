@@ -136,3 +136,8 @@ verify: `cd server && pytest tests/test_perception.py -q`
 result: 3 passed. perceive(world, agent, sense_radius=10) builds Percept via within_radius (self excluded). DEFAULT_SENSE_RADIUS=10.
 files: server/synk/perception.py, server/tests/test_perception.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 25 perception zone-scoping
+verify: `cd server && pytest tests/test_perception.py -q`
+result: 4 passed. Added test: entity at identical position but different zone is NOT perceived (enforced by within_radius zone filter). No impl change needed.
+files: server/tests/test_perception.py, fix_plan.md, PROGRESS.md
+

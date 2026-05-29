@@ -39,3 +39,14 @@ def test_perceive_within_sense_radius() -> None:
     assert p.tick == 1
     assert {e.id for e in p.nearby} == {"close", "edge"}  # self excluded, beyond excluded
 
+
+def test_perceive_excludes_other_zones() -> None:
+    w = World()
+    me = Entity(id="me", position=Vec3(0, 0, 0), zone="tavern")
+    w.add(me)
+    w.add(Entity(id="same_zone", position=Vec3(1, 0, 0), zone="tavern"))
+    # Physically adjacent but in a different logical zone — must not be perceived.
+    w.add(Entity(id="other_zone", position=Vec3(1, 0, 0), zone="market"))
+    p = perceive(w, me, sense_radius=50.0)
+    assert {e.id for e in p.nearby} == {"same_zone"}
+
