@@ -68,3 +68,20 @@ def test_ws_say_returns_dialogue() -> None:
         assert "Gus" in reply["text"]
         assert "hello" in reply["text"]
         assert reply["overheard"] is False
+
+
+def test_ws_interact_returns_agent_event() -> None:
+    app = create_app()
+    app.state.world.add(Agent(id="npc_gus", name="Gus", zone="tavern"))
+    client = TestClient(app)
+    with client.websocket_connect("/ws") as ws:
+        ws.send_json({"type": "join", "v": 1, "name": "Ada", "zone": "tavern"})
+        ws.receive_json()  # welcome
+        ws.send_json(
+            {"type": "interact", "v": 1, "target": "npc_gus", "kind": "give_item", "payload": {"item": "coin"}}
+        )
+        event = ws.receive_json()
+        assert event["type"] == "agent_event"
+        assert event["agent_id"] == "npc_gus"
+        assert event["kind"] == "emoted"
+        assert event["payload"]["in_response_to"] == "give_item"

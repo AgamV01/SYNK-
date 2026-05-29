@@ -496,3 +496,8 @@ verify: `cd server && pytest tests/test_server.py -q`
 result: 5 passed. say handler: route to DialogueManager, await brain.converse (off the SIM tick -> allowed in WS coroutine), send dialogue{agent_id,text,overheard:false}, apply any structured action. Uses sim.brains[agent] or a default ReactiveBrain.
 files: server/synk/server.py, server/tests/test_server.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 96 WS interact -> agent_event
+verify: `cd server && pytest tests/test_server.py -q`
+result: 6 passed. interact handler sends agent_event{kind:"emoted", payload:{emote:"nod", in_response_to:kind}} acknowledging the player's interaction.
+files: server/synk/server.py, server/tests/test_server.py, fix_plan.md, PROGRESS.md
+

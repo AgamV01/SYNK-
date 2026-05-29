@@ -112,6 +112,21 @@ def create_app() -> FastAPI:
                         )
                         if result.action is not None:
                             actions.apply_action(world, agent, result.action)
+                elif msg.get("type") == "interact" and player_id is not None:
+                    target_id = msg.get("target")
+                    kind = msg.get("kind", "")
+                    agent = world.try_get(target_id) if target_id else None
+                    if isinstance(agent, Agent):
+                        # The agent acknowledges the interaction with a nod.
+                        await websocket.send_json(
+                            {
+                                "type": "agent_event",
+                                "v": PROTOCOL_VERSION,
+                                "agent_id": agent.id,
+                                "kind": "emoted",
+                                "payload": {"emote": "nod", "in_response_to": kind},
+                            }
+                        )
         except WebSocketDisconnect:
             if player_id is not None:
                 connections.pop(player_id, None)

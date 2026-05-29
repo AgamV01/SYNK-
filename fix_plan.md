@@ -134,7 +134,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 93. WS accept; join -> welcome + token + test. verify: `cd server && pytest tests/test_server.py -q`
 - [x] 94. WS move intent updates player + test. verify: `cd server && pytest tests/test_server.py -q`
 - [x] 95. WS say intent -> dialogue event + test. verify: `cd server && pytest tests/test_server.py -q`
-- [ ] 96. WS interact intent -> agent_event + test. verify: `cd server && pytest tests/test_server.py -q`
+- [x] 96. WS interact intent -> agent_event + test. verify: `cd server && pytest tests/test_server.py -q`
 - [ ] 97. WS world_state broadcast (throttled, zone-scoped) + test. verify: `cd server && pytest tests/test_server.py -q`
 - [ ] 98. WS leave/disconnect cleanup + test. verify: `cd server && pytest tests/test_server.py -q`
 - [ ] 99. WS error message on bad input + test. verify: `cd server && pytest tests/test_server.py -q`
