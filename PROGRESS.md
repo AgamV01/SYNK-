@@ -284,3 +284,8 @@ verify: `cd server && python examples/headless_demo.py --selftest`
 result: all 3 selftests PASS (greeting -> 'Gus: Well met. You said, "hello, barkeep".'). _selftest_greeting uses asyncio.run on brain.converse. Headless sanity phase (51-53) complete.
 files: server/examples/headless_demo.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 54 provider interface
+verify: `cd server && pytest tests/test_providers.py -q`
+result: 2 passed. Provider runtime_checkable Protocol: name + async generate(prompt, *, system=None)->str. EchoProvider test impl.
+files: server/synk/brains/providers.py, server/tests/test_providers.py, fix_plan.md, PROGRESS.md
+
