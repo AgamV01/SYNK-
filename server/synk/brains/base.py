@@ -67,6 +67,20 @@ class Handoff:
 Action = Idle | Wander | MoveTo | Face | Emote | GiveItem | SetGoal | Handoff
 
 
+@dataclass
+class Goal:
+    """A structured intention an agent is pursuing. `description` is the human/LLM
+    readable goal; `priority` orders competing goals; `done` marks completion."""
+
+    description: str
+    priority: float = 1.0
+    created_ts: float = 0.0
+    done: bool = False
+
+    def complete(self) -> None:
+        self.done = True
+
+
 @dataclass(frozen=True, slots=True)
 class ConverseResult:
     """The output of the deliberative layer: a spoken line plus an optional action."""

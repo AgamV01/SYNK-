@@ -8,6 +8,7 @@ from synk.brains.base import (
     Emote,
     Face,
     GiveItem,
+    Goal,
     Handoff,
     Idle,
     MoveTo,
@@ -77,6 +78,20 @@ def test_dummy_brain_decide_is_sync_action() -> None:
     agent = Agent(id="npc1")
     percept = Percept(agent_id="npc1", position=Vec3(0, 0, 0), tick=0)
     assert isinstance(brain.decide(agent, percept), Idle)
+
+
+def test_goal_defaults_and_completion() -> None:
+    g = Goal(description="find the thief")
+    assert g.priority == 1.0
+    assert g.done is False
+    g.complete()
+    assert g.done is True
+
+
+def test_goal_priority_ordering() -> None:
+    goals = [Goal("low", priority=1.0), Goal("high", priority=5.0), Goal("mid", priority=3.0)]
+    ordered = sorted(goals, key=lambda g: g.priority, reverse=True)
+    assert [g.description for g in ordered] == ["high", "mid", "low"]
 
 
 async def test_dummy_brain_converse_is_async() -> None:

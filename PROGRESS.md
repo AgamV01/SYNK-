@@ -228,3 +228,8 @@ result: 8 passed (incl. 1 async). Brain runtime_checkable Protocol: sync decide(
 notes: CONFIRMED pytest-asyncio works with pytest 9.0.3 under asyncio_mode=auto (async def test ran). Earlier compatibility worry cleared.
 files: server/synk/brains/base.py, server/tests/test_brain_contract.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 43 goal representation
+verify: `cd server && pytest tests/test_brain_contract.py -q`
+result: 10 passed. Goal{description, priority=1.0, created_ts=0.0, done=False}.complete(). Brain interface phase (40-43) complete. (Agent.goal stays a simple str label; Goal is the richer structured form for brains.)
+files: server/synk/brains/base.py, server/tests/test_brain_contract.py, fix_plan.md, PROGRESS.md
+
