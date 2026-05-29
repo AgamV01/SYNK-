@@ -577,3 +577,8 @@ verify: `cd client && npm run build`
 result: built OK. DemoUI gains a scrolling dialogue log (top-left); addDialogue(speaker, text, overheard) appends lines, dimming/italicizing overheard ones with an "(overheard)" prefix.
 files: client/src/demo/ui.ts, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 112 agent-state debug panel
+verify: `cd client && npm run build`
+result: built OK. setAgentDebug({name, action, goal?, recent?[]}|null) renders a monospace panel (bottom-right) of the focused agent's action, goal, and recent-activity peek. main.ts feeds action from snapshot + a rolling event/dialogue buffer as the "memory" proxy.
+files: client/src/demo/ui.ts, fix_plan.md, PROGRESS.md
+

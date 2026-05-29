@@ -4,10 +4,18 @@ export interface DemoUIOptions {
   onSay?: (text: string) => void;
 }
 
+export interface AgentDebugInfo {
+  name: string;
+  action: string;
+  goal?: string | null;
+  recent?: string[];
+}
+
 export class DemoUI {
   private readonly prompt: HTMLDivElement;
   private readonly input: HTMLInputElement;
   private readonly log: HTMLDivElement;
+  private readonly debug: HTMLDivElement;
   private nearbyAgentId: string | null = null;
   private readonly onSay?: (text: string) => void;
 
@@ -30,6 +38,22 @@ export class DemoUI {
       lineHeight: "1.5",
     } satisfies Partial<CSSStyleDeclaration>);
     root.appendChild(this.log);
+
+    this.debug = document.createElement("div");
+    Object.assign(this.debug.style, {
+      position: "fixed",
+      bottom: "16px",
+      right: "16px",
+      width: "min(300px, 40vw)",
+      padding: "10px 12px",
+      borderRadius: "10px",
+      background: "rgba(20,20,28,0.7)",
+      color: "#9fe0a0",
+      font: "12px ui-monospace, monospace",
+      whiteSpace: "pre-wrap",
+      display: "none",
+    } satisfies Partial<CSSStyleDeclaration>);
+    root.appendChild(this.debug);
 
     this.prompt = document.createElement("div");
     Object.assign(this.prompt.style, {
@@ -106,5 +130,24 @@ export class DemoUI {
     }
     this.log.appendChild(line);
     this.log.scrollTop = this.log.scrollHeight;
+  }
+
+  /** Show the legible agent-state panel (current action, goal, recent memory peek). */
+  setAgentDebug(info: AgentDebugInfo | null): void {
+    if (!info) {
+      this.debug.style.display = "none";
+      return;
+    }
+    const lines = [
+      `▸ ${info.name}`,
+      `action: ${info.action}`,
+      `goal:   ${info.goal ?? "—"}`,
+      "recent:",
+      ...(info.recent && info.recent.length
+        ? info.recent.map((m) => `  · ${m}`)
+        : ["  · (nothing yet)"]),
+    ];
+    this.debug.textContent = lines.join("\n");
+    this.debug.style.display = "block";
   }
 }
