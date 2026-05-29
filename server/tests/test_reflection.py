@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import asyncio
+import inspect
+
 import pytest
 
 from synk.memory import MemoryItem, MemoryStore
@@ -49,3 +52,35 @@ async def test_reflect_summarizes_into_salient_memory() -> None:
 
 async def test_reflect_empty_memory_returns_none() -> None:
     assert await reflect(MemoryStore(), now=1.0, provider=None) is None
+
+
+def test_reflect_is_a_coroutine_function() -> None:
+    # Off-tick by construction: it's awaitable, so the sim runs it as a background task.
+    assert inspect.iscoroutinefunction(reflect)
+
+
+async def test_reflect_runs_concurrently_off_tick() -> None:
+    stores = []
+    for i in range(3):
+        m = MemoryStore()
+        m.add(MemoryItem(f"event {i}", ts=1.0, salience=1.0))
+        stores.append(m)
+    # Several agents reflecting at once, gathered off the tick path.
+    results = await asyncio.gather(*(reflect(m, now=2.0) for m in stores))
+    assert all(r is not None for r in results)
+    assert all(len(m) == 2 for m in stores)
+
+
+async def test_scheduler_gates_reflection() -> None:
+    sched = ReflectionScheduler(interval=10.0)
+    mem = MemoryStore()
+    mem.add(MemoryItem("a thing happened", ts=0.0, salience=1.0))
+    sched.due("npc1", now=0.0)  # schedule
+    # Not due yet -> the sim would not reflect.
+    assert sched.due("npc1", now=5.0) is False
+    # Due -> reflect off-tick and mark.
+    assert sched.due("npc1", now=10.0) is True
+    item = await reflect(mem, now=10.0)
+    sched.mark("npc1", now=10.0)
+    assert item is not None
+    assert sched.due("npc1", now=15.0) is False
