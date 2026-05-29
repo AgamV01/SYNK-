@@ -517,3 +517,8 @@ verify: `cd server && pytest tests/test_server.py -q`
 result: 12 passed. send_error() helper -> error{code,message}. say/interact to unknown agent -> "unknown_agent"; unhandled message type -> "bad_message".
 files: server/synk/server.py, server/tests/test_server.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 100 E2E WS test
+verify: `cd server && pytest tests/test_e2e_ws.py -q`
+result: 1 passed. Full flow over one socket: join->welcome (snapshot carries agent state), move (verified applied via app.state.world), say->dialogue (greeting names agent + echoes utterance). Server phase (92-100) complete.
+files: server/tests/test_e2e_ws.py, fix_plan.md, PROGRESS.md
+

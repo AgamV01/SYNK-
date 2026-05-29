@@ -138,7 +138,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 97. WS world_state broadcast (throttled, zone-scoped) + test. verify: `cd server && pytest tests/test_server.py -q`
 - [x] 98. WS leave/disconnect cleanup + test. verify: `cd server && pytest tests/test_server.py -q`
 - [x] 99. WS error message on bad input + test. verify: `cd server && pytest tests/test_server.py -q`
-- [ ] 100. E2E WS test: join, move, say, receive welcome+state+dialogue. verify: `cd server && pytest tests/test_e2e_ws.py -q`
+- [x] 100. E2E WS test: join, move, say, receive welcome+state+dialogue. verify: `cd server && pytest tests/test_e2e_ws.py -q`
 
 ## TypeScript SDK
 - [ ] 101. sdk/types.ts mirrors protocol. verify: `cd client && npx tsc --noEmit`
