@@ -20,7 +20,7 @@ from .auth import AuthManager
 from .brains.llm import LLMBrain
 from .brains.providers import select_provider
 from .brains.reactive import ReactiveBrain
-from .dialogue import DialogueManager
+from .dialogue import DialogueManager, overhearers
 from .geometry import Vec3
 from .memory import MemoryItem, MemoryStore, score_event_salience
 from .pathfinding import Grid, Obstacle
@@ -353,6 +353,19 @@ def create_app(
                                 "overheard": False,
                             }
                         )
+                        # Nearby players who weren't addressed overhear the reply.
+                        for bystander in overhearers(world, agent, exclude_id=player_id):
+                            ws2 = connections.get(bystander.id)
+                            if ws2 is not None:
+                                await ws2.send_json(
+                                    {
+                                        "type": "dialogue",
+                                        "v": PROTOCOL_VERSION,
+                                        "agent_id": agent.id,
+                                        "text": result.text,
+                                        "overheard": True,
+                                    }
+                                )
                         if result.action is not None:
                             actions.apply_action(world, agent, result.action)
                     else:

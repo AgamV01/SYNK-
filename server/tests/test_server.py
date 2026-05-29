@@ -159,6 +159,25 @@ def test_ws_say_records_memory_and_conversation() -> None:
     assert len(turns) >= 2  # + agent reply
 
 
+def test_ws_say_is_overheard_by_nearby_player() -> None:
+    app = create_app()
+    app.state.world.add(Agent(id="npc_gus", name="Gus", zone="tavern", position=Vec3(0, 0, 0)))
+    app.state.sim.register("npc_gus", ReactiveBrain())
+    client = TestClient(app)
+    with client.websocket_connect("/ws") as wa, client.websocket_connect("/ws") as wb:
+        wa.send_json({"type": "join", "v": 1, "name": "Ada", "zone": "tavern"})
+        token_a = wa.receive_json()["token"]
+        wb.send_json({"type": "join", "v": 1, "name": "Bo", "zone": "tavern"})
+        wb.receive_json()  # B's welcome (both players spawn at origin, near Gus)
+        wa.send_json({"type": "say", "v": 1, "target": "npc_gus", "text": "hello", "token": token_a})
+        direct = wa.receive_json()
+        assert direct["type"] == "dialogue" and direct["overheard"] is False
+        overheard = wb.receive_json()  # B wasn't addressed but is nearby
+        assert overheard["type"] == "dialogue"
+        assert overheard["agent_id"] == "npc_gus"
+        assert overheard["overheard"] is True
+
+
 def test_ws_interact_returns_agent_event() -> None:
     app = create_app()
     app.state.world.add(Agent(id="npc_gus", name="Gus", zone="tavern"))
