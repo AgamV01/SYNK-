@@ -141,7 +141,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 100. E2E WS test: join, move, say, receive welcome+state+dialogue. verify: `cd server && pytest tests/test_e2e_ws.py -q`
 
 ## TypeScript SDK
-- [ ] 101. sdk/types.ts mirrors protocol. verify: `cd client && npx tsc --noEmit`
+- [x] 101. sdk/types.ts mirrors protocol. verify: `cd client && npx tsc --noEmit`
 - [ ] 102. sdk/client.ts connect + typed event emitter. verify: `cd client && npx tsc --noEmit`
 - [ ] 103. sdk/client.ts send intents (join/move/say/interact/leave). verify: `cd client && npx tsc --noEmit`
 - [ ] 104. sdk/client.ts auto-reconnect + backoff. verify: `cd client && npx tsc --noEmit`

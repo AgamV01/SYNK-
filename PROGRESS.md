@@ -522,3 +522,8 @@ verify: `cd server && pytest tests/test_e2e_ws.py -q`
 result: 1 passed. Full flow over one socket: join->welcome (snapshot carries agent state), move (verified applied via app.state.world), say->dialogue (greeting names agent + echoes utterance). Server phase (92-100) complete.
 files: server/tests/test_e2e_ws.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 101 SDK types
+verify: `cd client && npx tsc --noEmit`
+result: TASK101_PASS. client/src/sdk/types.ts mirrors protocol: Vec3, Client/Server message interfaces + unions, AgentSnapshot/ZoneSnapshot, PROTOCOL_VERSION=1.
+files: client/src/sdk/types.ts, fix_plan.md, PROGRESS.md
+
