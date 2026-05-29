@@ -400,3 +400,8 @@ verify: `cd server && pytest tests/test_dialogue.py -q`
 result: 9 passed. overhearers(world, speaker, radius=NEARBY_RADIUS=12.0, exclude_id) returns nearby Players (same zone, within radius) minus speaker + addressed player. Dialogue phase (72-76) complete.
 files: server/synk/dialogue.py, server/tests/test_dialogue.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 77 SQLite schema + migrate
+verify: `cd server && pytest tests/test_persistence.py -q`
+result: 3 passed. NEW synk/persistence.py: Persistence(path) connect()->migrate() (executescript SCHEMA: world_meta, entities, memories + index). Idempotent (IF NOT EXISTS). table_names() helper. db property raises if not connected. aiosqlite 0.22.1.
+files: server/synk/persistence.py, server/tests/test_persistence.py, fix_plan.md, PROGRESS.md
+
