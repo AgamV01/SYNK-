@@ -618,3 +618,9 @@ verify: `test -f docs/writing-a-brain.md && test -f docs/custom-actions.md` -> T
 result: docs/writing-a-brain.md (Brain protocol, decide/converse contract + invariant, minimal + reactive-delegating examples) and docs/custom-actions.md (3-step add: dataclass+union, ACTION_SCHEMA+action_from_dict, apply_action; protocol sync checklist). README Documentation links them.
 files: docs/writing-a-brain.md, docs/custom-actions.md, README.md, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 119 coverage gate
+verify: `cd server && pytest --cov=synk --cov-fail-under=80 -q`
+result: 207 passed, TOTAL coverage 93.43% — "Required test coverage of 80% reached." Lowest module providers.py 72% (real-SDK branches unreachable without keys/sdk, by design).
+files: fix_plan.md, PROGRESS.md
+
+
