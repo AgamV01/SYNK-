@@ -7,6 +7,7 @@ import pytest
 from synk.brains.llm import LLMBrain
 from synk.brains.reactive import ReactiveBrain
 from synk.geometry import Vec3
+from synk.dialogue import DialogueManager
 from synk.memory import MemoryItem, MemoryStore
 from synk.persistence import Persistence
 from synk.reflection import ReflectionScheduler
@@ -114,6 +115,28 @@ def test_no_deliberation_below_threshold_or_for_reactive() -> None:
     )
     sim.step()
     assert sim.pending_count == 0  # below threshold
+
+
+async def test_autonomous_npc_to_npc_conversation() -> None:
+    world = World()
+    world.add(Agent(id="a", name="A", position=Vec3(0, 0, 0), zone="room"))
+    world.add(Agent(id="b", name="B", position=Vec3(1, 0, 0), zone="room"))
+    dm = DialogueManager()
+    sim = Simulation(
+        world, dt=0.1, dialogue=dm,
+        npc_chat=True, npc_chat_turns=2, npc_chat_interval=0.0, npc_chat_cooldown=100.0,
+        deliberate_threshold=100.0,  # keep deliberation out of this test
+    )
+    sim.register("a", LLMBrain(provider=SlowProvider()))
+    sim.register("b", LLMBrain(provider=SlowProvider()))
+    for _ in range(6):
+        sim.step()
+        if sim._pending:
+            await asyncio.gather(*sim._pending)
+    convo = dm.group("npc:a:b")
+    speakers = {t.speaker for t in convo.turns}
+    assert speakers == {"a", "b"}  # both NPCs took a turn
+    assert len(convo.turns) >= 2
 
 
 class ActionJSONProvider:

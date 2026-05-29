@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 
 from . import actions
 from .brains.base import ConverseResult, Face, Idle, MoveTo, Wander
+from .dialogue import DialogueManager
 from .geometry import Vec3
 from .memory import MemoryItem, score_event_salience
 from .perception import DEFAULT_SENSE_RADIUS, perceive
@@ -40,6 +41,72 @@ if TYPE_CHECKING:
 AGENT_SPEED = 2.0  # world units per second
 
 
+class NpcConversation:
+    """Drives a bounded, alternating conversation between two LLM NPCs. Each turn is an
+    off-tick `dispatch_converse`; the spoken line is recorded into a group conversation
+    (so the next speaker has context) and surfaced to nearby players as overheard speech."""
+
+    def __init__(
+        self,
+        sim: Simulation,
+        a_id: str,
+        b_id: str,
+        turns: int = 4,
+        interval: float = 1.5,
+    ) -> None:
+        self.sim = sim
+        self.a = a_id
+        self.b = b_id
+        self.convo_id = f"npc:{a_id}:{b_id}"
+        self.turns_remaining = turns
+        self.interval = interval
+        self.next_speaker = a_id
+        self.last_turn = float("-inf")
+        self.in_flight = False
+        self._task = None
+        self._speaker: str | None = None
+        sim.dialogue.group(self.convo_id, [a_id, b_id])
+
+    @property
+    def done(self) -> bool:
+        return self.turns_remaining <= 0 and not self.in_flight
+
+    def tick(self, now: float) -> None:
+        # Collect a completed turn before starting the next.
+        if self.in_flight:
+            if self._task is not None and self._task.done():
+                result = None
+                try:
+                    result = self._task.result()
+                except Exception:  # pragma: no cover - provider failure is non-fatal
+                    result = None
+                if result is not None and self._speaker is not None:
+                    self.sim.dialogue.route_group_message(self.convo_id, self._speaker, result.text)
+                self.in_flight = False
+                self._task = None
+            else:
+                return
+        if self.turns_remaining <= 0 or now - self.last_turn < self.interval:
+            return
+        speaker_id = self.next_speaker
+        listener_id = self.b if speaker_id == self.a else self.a
+        speaker = self.sim.world.try_get(speaker_id)
+        if not isinstance(speaker, Agent):
+            self.turns_remaining = 0
+            return
+        speaker.conversation = self.sim.dialogue.group(self.convo_id)  # context for the LLM
+        listener = self.sim.world.try_get(listener_id)
+        listener_name = getattr(listener, "name", listener_id)
+        self.last_turn = now
+        self.turns_remaining -= 1
+        self.next_speaker = listener_id
+        self._speaker = speaker_id
+        self.in_flight = True
+        self._task = self.sim.dispatch_converse(
+            speaker_id, f"Continue your conversation with {listener_name}. Say one short line."
+        )
+
+
 class Simulation:
     def __init__(
         self,
@@ -52,6 +119,11 @@ class Simulation:
         memory_decay_every: int = 100,
         deliberate_threshold: float = 1.5,
         deliberate_cooldown: float = 5.0,
+        dialogue: DialogueManager | None = None,
+        npc_chat: bool = False,
+        npc_chat_turns: int = 4,
+        npc_chat_interval: float = 1.5,
+        npc_chat_cooldown: float = 15.0,
     ) -> None:
         if dt <= 0:
             raise ValueError("dt must be positive")
@@ -66,6 +138,13 @@ class Simulation:
         self.deliberate_threshold = deliberate_threshold
         self.deliberate_cooldown = deliberate_cooldown
         self._last_deliberation: dict[str, float] = {}
+        self.dialogue = dialogue or DialogueManager()
+        self.npc_chat = npc_chat
+        self.npc_chat_turns = npc_chat_turns
+        self.npc_chat_interval = npc_chat_interval
+        self.npc_chat_cooldown = npc_chat_cooldown
+        self._npc_convos: list[NpcConversation] = []
+        self._npc_chat_cooldown_until: dict[frozenset, float] = {}
         self._running = False
         self._pending: list[asyncio.Task] = []
         self._results: list[tuple[str, ConverseResult]] = []
@@ -228,6 +307,43 @@ class Simulation:
             agent_id, f"You witnessed: {describe_event(top)}. React briefly, in character."
         )
 
+    def _maybe_npc_converse(self) -> None:
+        """Advance active NPC↔NPC conversations and matchmake new ones between nearby
+        idle LLM agents. Off by default; enable with npc_chat=True."""
+        if not self.npc_chat:
+            return
+        now = self.world.sim_time
+        for convo in list(self._npc_convos):
+            convo.tick(now)
+            if convo.done:
+                self._npc_convos.remove(convo)
+                self._npc_chat_cooldown_until[frozenset((convo.a, convo.b))] = (
+                    now + self.npc_chat_cooldown
+                )
+        busy = {agent_id for convo in self._npc_convos for agent_id in (convo.a, convo.b)}
+        llm_ids = [aid for aid, brain in self.brains.items() if getattr(brain, "provider", None)]
+        for i, a_id in enumerate(llm_ids):
+            if a_id in busy:
+                continue
+            a = self.world.try_get(a_id)
+            if not isinstance(a, Agent):
+                continue
+            for b_id in llm_ids[i + 1:]:
+                if b_id in busy:
+                    continue
+                b = self.world.try_get(b_id)
+                if not isinstance(b, Agent) or b.zone != a.zone:
+                    continue
+                if a.position.distance_to(b.position) > self._sense_radius(self.brains[a_id]):
+                    continue
+                if now < self._npc_chat_cooldown_until.get(frozenset((a_id, b_id)), float("-inf")):
+                    continue
+                self._npc_convos.append(
+                    NpcConversation(self, a_id, b_id, self.npc_chat_turns, self.npc_chat_interval)
+                )
+                busy.update((a_id, b_id))
+                break
+
     def _maybe_decay(self) -> None:
         """Periodically decay every agent's memory off the hot path."""
         if self.world.tick % self.memory_decay_every != 0:
@@ -252,6 +368,7 @@ class Simulation:
             self._form_memories(agent, percept)
             self._maybe_deliberate(agent_id, brain, percept)
         self._maybe_reflect()
+        self._maybe_npc_converse()
         self.world.advance(self.dt)
         self._maybe_persist()
         self._maybe_decay()

@@ -206,7 +206,13 @@ def create_app(
     dialogue = DialogueManager()
     db_path = db_path if db_path is not None else os.environ.get("SYNK_DB_PATH")
     persistence = Persistence(db_path) if db_path else None
-    sim = Simulation(world, dt=SNAPSHOT_INTERVAL, persistence=persistence)
+    sim = Simulation(
+        world,
+        dt=SNAPSHOT_INTERVAL,
+        persistence=persistence,
+        dialogue=dialogue,
+        npc_chat=demo,  # NPCs chat autonomously in the demo world
+    )
     connections: dict[str, WebSocket] = {}
     broadcast_throttle = Throttle(0.0)
     allowed = allowed_origins if allowed_origins is not None else _env_allowed_origins()
