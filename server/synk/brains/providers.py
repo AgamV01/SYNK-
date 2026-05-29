@@ -21,6 +21,29 @@ class Provider(Protocol):
     async def generate(self, prompt: str, *, system: str | None = None) -> str: ...
 
 
+def build_prompt(
+    personality: str,
+    memories: list[str],
+    history: list[tuple[str, str]],
+    utterance: str,
+) -> str:
+    """Assemble an NPC dialogue prompt from personality, recalled memories, and
+    conversation history. Provider-agnostic plain text so any backend can use it."""
+    persona = personality or "a nondescript character"
+    lines = [
+        f"You are {persona}. Stay in character. Reply in one or two sentences.",
+    ]
+    if memories:
+        lines.append("\nWhat you remember:")
+        lines.extend(f"- {m}" for m in memories)
+    if history:
+        lines.append("\nConversation so far:")
+        lines.extend(f"{speaker}: {text}" for speaker, text in history)
+    lines.append(f'\nThe player says: "{utterance}"')
+    lines.append("Your reply:")
+    return "\n".join(lines)
+
+
 _MOCK_TEMPLATES = (
     'Hmm, "{kw}"... let me consider that.',
     'Ah, you mention "{kw}". Interesting.',

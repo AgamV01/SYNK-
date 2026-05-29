@@ -7,6 +7,7 @@ from synk.brains.providers import (
     MockProvider,
     OpenAIProvider,
     Provider,
+    build_prompt,
     select_provider,
 )
 
@@ -93,3 +94,23 @@ def test_openai_is_selectable() -> None:
 async def test_openai_generate_raises_clearly_without_sdk_or_key() -> None:
     with pytest.raises(RuntimeError):
         await OpenAIProvider(api_key=None).generate("hello")
+
+
+def test_build_prompt_includes_all_context() -> None:
+    prompt = build_prompt(
+        personality="a gruff barkeep named Gus",
+        memories=["the player gave me a coin", "a brawl broke out last night"],
+        history=[("Ada", "good evening"), ("Gus", "evening")],
+        utterance="what's on tap?",
+    )
+    assert "gruff barkeep named Gus" in prompt
+    assert "the player gave me a coin" in prompt
+    assert "a brawl broke out last night" in prompt
+    assert "Ada: good evening" in prompt
+    assert "what's on tap?" in prompt
+
+
+def test_build_prompt_handles_empty_context() -> None:
+    prompt = build_prompt(personality="", memories=[], history=[], utterance="hi")
+    assert "nondescript character" in prompt
+    assert "hi" in prompt

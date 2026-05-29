@@ -309,3 +309,8 @@ verify: `cd server && env -u ANTHROPIC_API_KEY -u OPENAI_API_KEY pytest tests/te
 result: 15 passed. OpenAIProvider mirrors Anthropic guard (lazy AsyncOpenAI chat.completions, model gpt-4o-mini). Registered "openai".
 files: server/synk/brains/providers.py, server/tests/test_providers.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 59 prompt builder
+verify: `cd server && pytest tests/test_providers.py -q`
+result: 17 passed. build_prompt(personality, memories, history[(speaker,text)], utterance) -> plain-text prompt with persona line, remembered facts, conversation, and the current utterance; empty personality -> "nondescript character". LLM providers phase (54-59) complete.
+files: server/synk/brains/providers.py, server/tests/test_providers.py, fix_plan.md, PROGRESS.md
+
