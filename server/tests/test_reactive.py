@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from synk.brains.base import Face, Idle, MoveTo, Wander
+from synk.brains.base import Emote, Face, Idle, MoveTo, Wander
 from synk.brains.reactive import ReactiveBrain
 from synk.geometry import Vec3
 from synk.pathfinding import Grid
 from synk.perception import Percept
-from synk.world import Agent, Player
+from synk.world import Agent, Player, WorldEvent
 
 
 def _percept(agent: Agent, nearby=None, events=None) -> Percept:
@@ -116,4 +116,22 @@ def test_decide_picks_highest_utility() -> None:
     player = Player(id="p1", position=Vec3(1.0, 0, 0))  # within arrive radius
     # Face (3.0) should beat approach/wander/idle.
     assert isinstance(brain.decide(agent, _percept(agent, nearby=[player])), Face)
+
+
+def test_emotes_on_nearby_event_when_alone() -> None:
+    brain = ReactiveBrain()
+    agent = Agent(id="npc1", position=Vec3(0, 0, 0))
+    ev = WorldEvent(kind="spoke", source_id="bob", zone="default", tick=1, salience=1.5)
+    action = brain.decide(agent, _percept(agent, events=[ev]))
+    assert isinstance(action, Emote)
+    assert action.emote == "react_spoke"
+
+
+def test_social_outranks_emote() -> None:
+    brain = ReactiveBrain()
+    agent = Agent(id="npc1", position=Vec3(0, 0, 0))
+    player = Player(id="p1", position=Vec3(1.0, 0, 0))
+    ev = WorldEvent(kind="spoke", source_id="bob", zone="default", tick=1, salience=9.0)
+    # Player within arrive radius -> Face still wins over emote reaction.
+    assert isinstance(brain.decide(agent, _percept(agent, nearby=[player], events=[ev])), Face)
 

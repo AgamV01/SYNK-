@@ -263,3 +263,8 @@ verify: `cd server && pytest tests/test_reactive.py -q`
 result: 11 passed. decide() now = max utility over _candidates(): Face 3.0 > approach 2.0 > Wander 1.0(restless) > Idle 0.1; calm flips wander/idle to 0.2/0.5. Behavior unchanged, selection now principled.
 files: server/synk/brains/reactive.py, server/tests/test_reactive.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 50 emote on event
+verify: `cd server && pytest tests/test_reactive.py -q`
+result: 13 passed. _candidates() adds Emote(react_<kind>) at utility 1.5 when percept has events (reacts to most salient); beats ambient, loses to social (approach 2.0 / face 3.0). Reactive brain phase (44-50) complete.
+files: server/synk/brains/reactive.py, server/tests/test_reactive.py, fix_plan.md, PROGRESS.md
+

@@ -68,7 +68,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 47. Face entity + test. verify: `cd server && pytest tests/test_reactive.py -q`
 - [x] 48. Templated greeting dialogue (converse) + test. verify: `cd server && pytest tests/test_reactive.py -q`
 - [x] 49. Utility scoring to choose behavior + test. verify: `cd server && pytest tests/test_reactive.py -q`
-- [ ] 50. Emote on event + test. verify: `cd server && pytest tests/test_reactive.py -q`
+- [x] 50. Emote on event + test. verify: `cd server && pytest tests/test_reactive.py -q`
 
 ## Headless sanity
 - [ ] 51. examples/headless_demo.py: spawn agents, N ticks, tick log, --selftest. verify: `cd server && python examples/headless_demo.py --selftest`

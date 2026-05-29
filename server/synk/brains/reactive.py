@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from ..geometry import Vec3
 from ..pathfinding import astar, simplify_path
 from ..world import Player
-from .base import Action, ConverseResult, Face, Idle, MoveTo, Wander
+from .base import Action, ConverseResult, Emote, Face, Idle, MoveTo, Wander
 
 if TYPE_CHECKING:
     from ..pathfinding import Grid
@@ -62,6 +62,10 @@ class ReactiveBrain:
             (1.0 if self.restless else 0.2, Wander()),
             (0.1 if self.restless else 0.5, Idle()),
         ]
+        if percept.events:
+            # React to the most salient nearby happening with a quick emote.
+            top = max(percept.events, key=lambda e: e.salience)
+            cands.append((1.5, Emote(emote=f"react_{top.kind}")))
         player = self._nearest_player(agent, percept)
         if player is not None:
             if agent.position.distance_to(player.position) <= self.arrive_radius:
