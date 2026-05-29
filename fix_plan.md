@@ -145,7 +145,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 102. sdk/client.ts connect + typed event emitter. verify: `cd client && npx tsc --noEmit`
 - [x] 103. sdk/client.ts send intents (join/move/say/interact/leave). verify: `cd client && npx tsc --noEmit`
 - [x] 104. sdk/client.ts auto-reconnect + backoff. verify: `cd client && npx tsc --noEmit`
-- [ ] 105. sdk/index.ts exports. verify: `cd client && npx tsc --noEmit`
+- [x] 105. sdk/index.ts exports. verify: `cd client && npx tsc --noEmit`
 
 ## Three.js demo
 - [ ] 106. scene.ts ground + lighting + props/obstacles. verify: `cd client && npm run build`

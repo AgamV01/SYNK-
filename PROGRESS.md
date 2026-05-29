@@ -542,3 +542,8 @@ verify: `cd client && npx tsc --noEmit`
 result: TASK104_PASS. connect() stores url + reconnect flag; onclose schedules reconnect with exponential backoff (base 250ms, cap 10s, reset on open); disconnect() stops it. SynkClientOptions for tuning.
 files: client/src/sdk/client.ts, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 105 SDK index exports
+verify: `cd client && npx tsc --noEmit`
+result: TASK105_PASS. sdk/index.ts re-exports SynkClient, SynkClientOptions, and all protocol types. TS SDK phase (101-105) complete.
+files: client/src/sdk/index.ts, fix_plan.md, PROGRESS.md
+
