@@ -253,3 +253,8 @@ verify: `cd server && pytest tests/test_reactive.py -q`
 result: 7 passed. decide(): within arrive_radius of nearest player -> Face(player.id); beyond -> MoveTo (steer).
 files: server/synk/brains/reactive.py, server/tests/test_reactive.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 48 templated greeting converse
+verify: `cd server && pytest tests/test_reactive.py -q`
+result: 9 passed. converse() templated greeting using name + personality + echo of utterance; default question on empty input. No LLM (zero-key path).
+files: server/synk/brains/reactive.py, server/tests/test_reactive.py, fix_plan.md, PROGRESS.md
+

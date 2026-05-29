@@ -81,3 +81,21 @@ def test_moves_when_player_outside_arrive_radius() -> None:
     player = Player(id="p1", position=Vec3(5.0, 0, 0))  # beyond 1.5
     assert isinstance(brain.decide(agent, _percept(agent, nearby=[player])), MoveTo)
 
+
+async def test_converse_greets_by_name_and_echoes() -> None:
+    brain = ReactiveBrain()
+    agent = Agent(id="npc1", name="Gus", personality="a gruff barkeep")
+    result = await brain.converse(agent, _percept(agent), "hello there")
+    assert "Gus" in result.text
+    assert "hello there" in result.text
+    assert "gruff barkeep" in result.text
+    assert result.action is None
+
+
+async def test_converse_handles_empty_utterance() -> None:
+    brain = ReactiveBrain()
+    agent = Agent(id="npc1", name="Gus")
+    result = await brain.converse(agent, _percept(agent), "   ")
+    assert "Gus" in result.text
+    assert "What brings you here?" in result.text
+

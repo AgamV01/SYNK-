@@ -66,7 +66,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 45. Detect nearby player -> approach + test. verify: `cd server && pytest tests/test_reactive.py -q`
 - [x] 46. Steering toward target using path + test. verify: `cd server && pytest tests/test_reactive.py -q`
 - [x] 47. Face entity + test. verify: `cd server && pytest tests/test_reactive.py -q`
-- [ ] 48. Templated greeting dialogue (converse) + test. verify: `cd server && pytest tests/test_reactive.py -q`
+- [x] 48. Templated greeting dialogue (converse) + test. verify: `cd server && pytest tests/test_reactive.py -q`
 - [ ] 49. Utility scoring to choose behavior + test. verify: `cd server && pytest tests/test_reactive.py -q`
 - [ ] 50. Emote on event + test. verify: `cd server && pytest tests/test_reactive.py -q`
 

@@ -69,5 +69,13 @@ class ReactiveBrain:
     async def converse(
         self, agent: Agent, percept: Percept, utterance: str
     ) -> ConverseResult:
+        """Templated dialogue, no LLM. Greets by name (and personality if set) and
+        acknowledges what the player said, so the demo works with zero API keys."""
         name = agent.name or "The figure"
-        return ConverseResult(text=f"{name} acknowledges you.")
+        flavor = f" {agent.personality}." if agent.personality else ""
+        said = utterance.strip()
+        if said:
+            text = f'{name}: Well met.{flavor} You said, "{said}".'
+        else:
+            text = f"{name}: Well met.{flavor} What brings you here?"
+        return ConverseResult(text=text)
