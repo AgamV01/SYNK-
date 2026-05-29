@@ -27,12 +27,13 @@ def test_e2e_join_move_say() -> None:
         agent_ids = {a["id"] for a in welcome["snapshot"]["agents"]}
         assert "npc_gus" in agent_ids  # state: the agent is in the snapshot
         player_id = welcome["player_id"]
+        token = welcome["token"]
 
-        # move -> authoritative position update.
-        ws.send_json({"type": "move", "v": 1, "position": [2.0, 0.0, 0.0], "facing": 0.0})
+        # move -> authoritative position update (token-authenticated).
+        ws.send_json({"type": "move", "v": 1, "position": [2.0, 0.0, 0.0], "facing": 0.0, "token": token})
 
         # say -> dialogue. Receiving this proves the prior move was processed (in-order).
-        ws.send_json({"type": "say", "v": 1, "target": "npc_gus", "text": "good evening"})
+        ws.send_json({"type": "say", "v": 1, "target": "npc_gus", "text": "good evening", "token": token})
         dialogue = ws.receive_json()
         assert dialogue["type"] == "dialogue"
         assert dialogue["agent_id"] == "npc_gus"

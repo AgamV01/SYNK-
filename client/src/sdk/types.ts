@@ -18,6 +18,7 @@ export interface MoveMessage {
   v: number;
   position: Vec3;
   facing?: number;
+  token?: string;
 }
 
 export interface SayMessage {
@@ -25,6 +26,7 @@ export interface SayMessage {
   v: number;
   target: string;
   text: string;
+  token?: string;
 }
 
 export interface InteractMessage {
@@ -33,11 +35,13 @@ export interface InteractMessage {
   target: string;
   kind: string;
   payload?: Record<string, unknown>;
+  token?: string;
 }
 
 export interface LeaveMessage {
   type: "leave";
   v: number;
+  token?: string;
 }
 
 export type ClientMessage =

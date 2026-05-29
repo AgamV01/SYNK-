@@ -34,6 +34,7 @@ export class SynkClient {
   private reconnectAttempts = 0;
   private readonly baseBackoffMs: number;
   private readonly maxBackoffMs: number;
+  private sessionToken: string | null = null;
   private listeners: { [K in keyof ServerMessageMap]: Listener<K>[] } = {
     welcome: [],
     world_state: [],
@@ -63,6 +64,7 @@ export class SynkClient {
   protected dispatch(msg: ServerMessage): void {
     switch (msg.type) {
       case "welcome":
+        this.sessionToken = msg.token; // capture for authenticated intents
         this.listeners.welcome.forEach((fn) => fn(msg));
         break;
       case "world_state":
@@ -136,19 +138,23 @@ export class SynkClient {
     this.send({ type: "join", v: PROTOCOL_VERSION, name, zone });
   }
 
+  private get token(): string | undefined {
+    return this.sessionToken ?? undefined;
+  }
+
   move(position: Vec3, facing?: number): void {
-    this.send({ type: "move", v: PROTOCOL_VERSION, position, facing });
+    this.send({ type: "move", v: PROTOCOL_VERSION, position, facing, token: this.token });
   }
 
   say(target: string, text: string): void {
-    this.send({ type: "say", v: PROTOCOL_VERSION, target, text });
+    this.send({ type: "say", v: PROTOCOL_VERSION, target, text, token: this.token });
   }
 
   interact(target: string, kind: string, payload?: Record<string, unknown>): void {
-    this.send({ type: "interact", v: PROTOCOL_VERSION, target, kind, payload });
+    this.send({ type: "interact", v: PROTOCOL_VERSION, target, kind, payload, token: this.token });
   }
 
   leave(): void {
-    this.send({ type: "leave", v: PROTOCOL_VERSION });
+    this.send({ type: "leave", v: PROTOCOL_VERSION, token: this.token });
   }
 }

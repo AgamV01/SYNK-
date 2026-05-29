@@ -15,6 +15,12 @@ Coordinates are `[x, y, z]` arrays of three floats. `y` is up; spatial queries (
 
 The player's client sends *intents*. The server is authoritative and may reject or clamp them.
 
+**Authentication.** Every intent after `join` (`move`, `say`, `interact`, `leave`) MUST carry
+the `token` returned in `welcome`. The server validates it against the connection's player
+(`AuthManager.is_for`) and replies with an `error` of code `unauthorized` if it is missing or
+invalid, or `not_joined` if no `join` has occurred yet. The token is omitted from the example
+bodies below for brevity but is required on the wire (the TypeScript SDK attaches it automatically).
+
 ### `join`
 Sent once on connect. The server replies with `welcome` (which carries the session token).
 
@@ -134,7 +140,7 @@ Fields:
 Sent when the server rejects input or hits a recoverable problem.
 
 Fields:
-- `code` (string) — machine-readable code, e.g. `"bad_message"`, `"unknown_agent"`, `"unauthorized"`.
+- `code` (string) — machine-readable code, e.g. `"bad_message"`, `"unknown_agent"`, `"unauthorized"`, `"not_joined"`, `"unsupported_version"`.
 - `message` (string) — human-readable detail.
 
 ```json

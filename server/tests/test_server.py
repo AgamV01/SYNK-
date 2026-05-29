@@ -42,8 +42,9 @@ def test_ws_move_updates_player() -> None:
     client = TestClient(app)
     with client.websocket_connect("/ws") as ws:
         ws.send_json({"type": "join", "v": 1, "name": "Ada", "zone": "tavern"})
-        pid = ws.receive_json()["player_id"]
-        ws.send_json({"type": "move", "v": 1, "position": [1.0, 0.0, 2.0], "facing": 1.5})
+        welcome = ws.receive_json()
+        pid, token = welcome["player_id"], welcome["token"]
+        ws.send_json({"type": "move", "v": 1, "position": [1.0, 0.0, 2.0], "facing": 1.5, "token": token})
         # A second join forces in-order processing; receiving its welcome guarantees
         # the move above was already handled.
         ws.send_json({"type": "join", "v": 1, "name": "sync"})
@@ -53,6 +54,30 @@ def test_ws_move_updates_player() -> None:
         assert player.facing == 1.5
 
 
+def test_ws_move_without_token_is_unauthorized() -> None:
+    app = create_app()
+    client = TestClient(app)
+    with client.websocket_connect("/ws") as ws:
+        ws.send_json({"type": "join", "v": 1, "name": "Ada", "zone": "tavern"})
+        pid = ws.receive_json()["player_id"]
+        ws.send_json({"type": "move", "v": 1, "position": [9.0, 0.0, 9.0]})  # no token
+        err = ws.receive_json()
+        assert err["type"] == "error"
+        assert err["code"] == "unauthorized"
+        assert app.state.world.get(pid).position == Vec3(0, 0, 0)  # unchanged
+
+
+def test_ws_forged_token_is_unauthorized() -> None:
+    app = create_app()
+    client = TestClient(app)
+    with client.websocket_connect("/ws") as ws:
+        ws.send_json({"type": "join", "v": 1, "name": "Ada", "zone": "tavern"})
+        ws.receive_json()
+        ws.send_json({"type": "move", "v": 1, "position": [9.0, 0.0, 9.0], "token": "forged"})
+        err = ws.receive_json()
+        assert err["code"] == "unauthorized"
+
+
 def test_ws_say_returns_dialogue() -> None:
     app = create_app()
     app.state.world.add(Agent(id="npc_gus", name="Gus", zone="tavern", personality="a barkeep"))
@@ -60,8 +85,8 @@ def test_ws_say_returns_dialogue() -> None:
     client = TestClient(app)
     with client.websocket_connect("/ws") as ws:
         ws.send_json({"type": "join", "v": 1, "name": "Ada", "zone": "tavern"})
-        ws.receive_json()  # welcome
-        ws.send_json({"type": "say", "v": 1, "target": "npc_gus", "text": "hello"})
+        token = ws.receive_json()["token"]
+        ws.send_json({"type": "say", "v": 1, "target": "npc_gus", "text": "hello", "token": token})
         reply = ws.receive_json()
         assert reply["type"] == "dialogue"
         assert reply["agent_id"] == "npc_gus"
@@ -76,9 +101,9 @@ def test_ws_interact_returns_agent_event() -> None:
     client = TestClient(app)
     with client.websocket_connect("/ws") as ws:
         ws.send_json({"type": "join", "v": 1, "name": "Ada", "zone": "tavern"})
-        ws.receive_json()  # welcome
+        token = ws.receive_json()["token"]
         ws.send_json(
-            {"type": "interact", "v": 1, "target": "npc_gus", "kind": "give_item", "payload": {"item": "coin"}}
+            {"type": "interact", "v": 1, "target": "npc_gus", "kind": "give_item", "payload": {"item": "coin"}, "token": token}
         )
         event = ws.receive_json()
         assert event["type"] == "agent_event"
@@ -140,9 +165,10 @@ def test_ws_leave_cleans_up() -> None:
     client = TestClient(app)
     with client.websocket_connect("/ws") as ws:
         ws.send_json({"type": "join", "v": 1, "name": "Ada"})
-        pid = ws.receive_json()["player_id"]
+        welcome = ws.receive_json()
+        pid = welcome["player_id"]
         assert pid in app.state.world
-        ws.send_json({"type": "leave", "v": 1})
+        ws.send_json({"type": "leave", "v": 1, "token": welcome["token"]})
     # After leave the server removes the player and its connection.
     assert pid not in app.state.world
     assert pid not in app.state.connections
@@ -163,8 +189,8 @@ def test_ws_say_unknown_agent_returns_error() -> None:
     client = TestClient(create_app())
     with client.websocket_connect("/ws") as ws:
         ws.send_json({"type": "join", "v": 1, "name": "Ada"})
-        ws.receive_json()  # welcome
-        ws.send_json({"type": "say", "v": 1, "target": "ghost", "text": "hi"})
+        token = ws.receive_json()["token"]
+        ws.send_json({"type": "say", "v": 1, "target": "ghost", "text": "hi", "token": token})
         err = ws.receive_json()
         assert err["type"] == "error"
         assert err["code"] == "unknown_agent"
@@ -174,8 +200,8 @@ def test_ws_unknown_message_returns_error() -> None:
     client = TestClient(create_app())
     with client.websocket_connect("/ws") as ws:
         ws.send_json({"type": "join", "v": 1, "name": "Ada"})
-        ws.receive_json()  # welcome
-        ws.send_json({"type": "frobnicate", "v": 1})
+        token = ws.receive_json()["token"]
+        ws.send_json({"type": "frobnicate", "v": 1, "token": token})
         err = ws.receive_json()
         assert err["type"] == "error"
         assert err["code"] == "bad_message"

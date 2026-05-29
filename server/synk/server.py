@@ -157,7 +157,9 @@ def create_app(demo: bool = False) -> FastAPI:
         try:
             while True:
                 msg = await websocket.receive_json()
-                if msg.get("type") == "join":
+                mtype = msg.get("type")
+
+                if mtype == "join":
                     name = msg.get("name", "anon")
                     zone = msg.get("zone") or DEFAULT_ZONE
                     player_id = f"player_{secrets.token_hex(4)}"
@@ -175,7 +177,17 @@ def create_app(demo: bool = False) -> FastAPI:
                             "snapshot": zone_snapshot(world, zone),
                         }
                     )
-                elif msg.get("type") == "move" and player_id is not None:
+                    continue
+
+                # Every other intent requires a prior join and a valid session token.
+                if player_id is None:
+                    await send_error(websocket, "not_joined", "send join before any intent")
+                    continue
+                if not auth.is_for(msg.get("token", ""), player_id):
+                    await send_error(websocket, "unauthorized", "missing or invalid session token")
+                    continue
+
+                if mtype == "move":
                     player = world.try_get(player_id)
                     if isinstance(player, Player):
                         position = msg.get("position")
@@ -184,7 +196,7 @@ def create_app(demo: bool = False) -> FastAPI:
                         facing = msg.get("facing")
                         if facing is not None:
                             player.facing = float(facing)
-                elif msg.get("type") == "say" and player_id is not None:
+                elif mtype == "say":
                     target_id = msg.get("target")
                     text = msg.get("text", "")
                     agent = world.try_get(target_id) if target_id else None
@@ -210,7 +222,7 @@ def create_app(demo: bool = False) -> FastAPI:
                         await send_error(
                             websocket, "unknown_agent", f"no agent {target_id!r}"
                         )
-                elif msg.get("type") == "interact" and player_id is not None:
+                elif mtype == "interact":
                     target_id = msg.get("target")
                     kind = msg.get("kind", "")
                     agent = world.try_get(target_id) if target_id else None
@@ -229,11 +241,11 @@ def create_app(demo: bool = False) -> FastAPI:
                         await send_error(
                             websocket, "unknown_agent", f"no agent {target_id!r}"
                         )
-                elif msg.get("type") == "leave":
+                elif mtype == "leave":
                     break
                 else:
                     await send_error(
-                        websocket, "bad_message", f"unhandled message: {msg.get('type')!r}"
+                        websocket, "bad_message", f"unhandled message: {mtype!r}"
                     )
         except WebSocketDisconnect:
             pass
