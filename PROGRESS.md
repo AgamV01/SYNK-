@@ -445,3 +445,8 @@ verify: `cd server && pytest tests/test_auth.py -q`
 result: 8 passed. is_for(token, player_id) True only if live AND bound to that player; expired -> False. Auth phase (83-85) complete.
 files: server/synk/auth.py, server/tests/test_auth.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 86 simulation loop scaffold
+verify: `cd server && pytest tests/test_simulation.py -q`
+result: 3 passed. NEW synk/simulation.py: Simulation(world, dt) with register(agent_id, brain), step() (advances clock for now), async run(max_ticks) loop + stop(). dt<=0 -> ValueError. step() gains perceive/decide/apply at task 87.
+files: server/synk/simulation.py, server/tests/test_simulation.py, fix_plan.md, PROGRESS.md
+
