@@ -119,7 +119,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 ## Auth
 - [x] 83. Issue anonymous short-lived session token + test. verify: `cd server && pytest tests/test_auth.py -q`
 - [x] 84. Validate token + expiry + test. verify: `cd server && pytest tests/test_auth.py -q`
-- [ ] 85. Token scoped to player id + test. verify: `cd server && pytest tests/test_auth.py -q`
+- [x] 85. Token scoped to player id + test. verify: `cd server && pytest tests/test_auth.py -q`
 
 ## Simulation loop
 - [ ] 86. Fixed-timestep loop scaffold (start/stop, dt) + test. verify: `cd server && pytest tests/test_simulation.py -q`

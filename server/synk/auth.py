@@ -45,3 +45,9 @@ class AuthManager:
             del self._sessions[token]
             return None
         return session
+
+    def is_for(self, token: str, player_id: str) -> bool:
+        """True only if `token` is live AND bound to `player_id`. Use this to reject
+        a client trying to act as a player whose token it does not hold."""
+        session = self.validate(token)
+        return session is not None and session.player_id == player_id

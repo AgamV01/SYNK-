@@ -440,3 +440,8 @@ verify: `cd server && pytest tests/test_auth.py -q`
 result: 6 passed. validate(token) returns live Session or None (unknown/expired); expired tokens evicted on access. FakeClock drives expiry deterministically.
 files: server/synk/auth.py, server/tests/test_auth.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 85 token scoped to player
+verify: `cd server && pytest tests/test_auth.py -q`
+result: 8 passed. is_for(token, player_id) True only if live AND bound to that player; expired -> False. Auth phase (83-85) complete.
+files: server/synk/auth.py, server/tests/test_auth.py, fix_plan.md, PROGRESS.md
+

@@ -56,3 +56,18 @@ def test_validate_expired_token_returns_none() -> None:
 def test_validate_unknown_token() -> None:
     auth = AuthManager()
     assert auth.validate("not-a-real-token") is None
+
+
+def test_token_is_scoped_to_player() -> None:
+    auth = AuthManager()
+    session = auth.issue("player_1")
+    assert auth.is_for(session.token, "player_1") is True
+    assert auth.is_for(session.token, "player_2") is False
+
+
+def test_is_for_expired_token_is_false() -> None:
+    clock = FakeClock()
+    auth = AuthManager(ttl=10.0, clock=clock)
+    session = auth.issue("player_1")
+    clock.t = 10.0
+    assert auth.is_for(session.token, "player_1") is False
