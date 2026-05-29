@@ -360,3 +360,8 @@ verify: `cd server && pytest tests/test_structured_actions.py -q`
 result: 16 passed. give_item->"gave_item"{item,to}; set_goal sets agent.goal + "goal_changed"{goal}; handoff->"handoff"{to,topic}. Idle/unhandled -> None. Structured actions phase (64-68) complete.
 files: server/synk/actions.py, server/tests/test_structured_actions.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 69 reflection scheduler
+verify: `cd server && pytest tests/test_reflection.py -q`
+result: 4 passed. NEW synk/reflection.py: ReflectionScheduler(interval) per-agent due()/mark(); first call schedules (not due), independent per agent.
+files: server/synk/reflection.py, server/tests/test_reflection.py, fix_plan.md, PROGRESS.md
+
