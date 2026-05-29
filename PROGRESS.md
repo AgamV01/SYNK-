@@ -415,3 +415,8 @@ verify: `cd server && pytest tests/test_persistence.py -q`
 result: 6 passed. save_world(world) enqueues world_meta (tick, sim_time) + upserts every entity (kind=class name lower, duck-typed name/facing/current_action/goal). Tick-safe enqueue; flush persists.
 files: server/synk/persistence.py, server/tests/test_persistence.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 80 load world on boot
+verify: `cd server && pytest tests/test_persistence.py -q`
+result: 7 passed. load_world() rebuilds World (Player/Agent/Entity by kind) + restores tick/sim_time from world_meta. Round-trip across separate connections (tmp file) verified.
+files: server/synk/persistence.py, server/tests/test_persistence.py, fix_plan.md, PROGRESS.md
+

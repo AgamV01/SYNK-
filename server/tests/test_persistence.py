@@ -87,3 +87,32 @@ async def test_save_world_snapshot() -> None:
         assert tick == "1"
     finally:
         await p.close()
+
+
+async def test_save_then_load_world_on_boot(tmp_path) -> None:
+    db_path = str(tmp_path / "synk.db")
+    world = World()
+    world.add(Agent(id="npc1", name="Gus", position=Vec3(1, 0, 2), zone="tavern", goal="serve"))
+    world.add(Player(id="p1", name="Ada", position=Vec3(3, 0, 4), zone="tavern"))
+    for _ in range(7):
+        world.advance(0.1)
+
+    writer = Persistence(db_path)
+    await writer.connect()
+    writer.save_world(world)
+    await writer.flush()
+    await writer.close()
+
+    # Fresh process / connection.
+    booted = Persistence(db_path)
+    await booted.connect()
+    try:
+        loaded = await booted.load_world()
+        assert loaded.tick == 7
+        npc = loaded.get("npc1")
+        assert isinstance(npc, Agent)
+        assert npc.name == "Gus" and npc.goal == "serve"
+        assert npc.position == Vec3(1, 0, 2)
+        assert isinstance(loaded.get("p1"), Player)
+    finally:
+        await booted.close()

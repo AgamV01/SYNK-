@@ -5,6 +5,9 @@ from __future__ import annotations
 
 import aiosqlite
 
+from .geometry import Vec3
+from .world import Agent, Entity, Player, World
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS world_meta (
     key   TEXT PRIMARY KEY,
@@ -103,6 +106,40 @@ class Persistence:
                     getattr(entity, "goal", None),
                 ),
             )
+
+    async def load_world(self) -> World:
+        """Reconstruct a World from the database (entities + meta). The inverse of
+        save_world; used on boot so the world survives restarts."""
+        world = World()
+        cursor = await self.db.execute(
+            "SELECT id, kind, name, x, y, z, facing, zone, current_action, goal FROM entities"
+        )
+        for row in await cursor.fetchall():
+            id_, kind, name, x, y, z, facing, zone, current_action, goal = row
+            pos = Vec3(x, y, z)
+            entity: Entity
+            if kind == "player":
+                entity = Player(
+                    id=id_, position=pos, zone=zone, name=name or "", facing=facing or 0.0
+                )
+            elif kind == "agent":
+                entity = Agent(
+                    id=id_,
+                    position=pos,
+                    zone=zone,
+                    name=name or "",
+                    facing=facing or 0.0,
+                    current_action=current_action or "idle",
+                    goal=goal,
+                )
+            else:
+                entity = Entity(id=id_, position=pos, zone=zone)
+            world.add(entity)
+        cursor = await self.db.execute("SELECT key, value FROM world_meta")
+        meta = {key: value for key, value in await cursor.fetchall()}
+        world.tick = int(meta.get("tick", 0))
+        world.sim_time = float(meta.get("sim_time", 0.0))
+        return world
 
     async def table_names(self) -> set[str]:
         cursor = await self.db.execute(
