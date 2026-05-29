@@ -176,3 +176,8 @@ verify: `cd server && pytest tests/test_pathfinding.py -q`
 result: 16 passed. Goal walled off on all 8 neighbors -> astar returns []. Pathfinding phase (27-32) complete.
 files: server/tests/test_pathfinding.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 33 MemoryItem dataclass
+verify: `cd server && pytest tests/test_memory.py -q`
+result: 2 passed. MemoryItem{text, ts (sim seconds), salience=1.0}.
+files: server/synk/memory.py, server/tests/test_memory.py, fix_plan.md, PROGRESS.md
+

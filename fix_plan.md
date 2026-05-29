@@ -47,7 +47,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 32. No-path case returns empty + test. verify: `cd server && pytest tests/test_pathfinding.py -q`
 
 ## Memory
-- [ ] 33. MemoryItem dataclass (text, ts, salience) + test. verify: `cd server && pytest tests/test_memory.py -q`
+- [x] 33. MemoryItem dataclass (text, ts, salience) + test. verify: `cd server && pytest tests/test_memory.py -q`
 - [ ] 34. Memory store add + capacity cap + test. verify: `cd server && pytest tests/test_memory.py -q`
 - [ ] 35. Salience scoring helper + test. verify: `cd server && pytest tests/test_memory.py -q`
 - [ ] 36. Decay over time + test. verify: `cd server && pytest tests/test_memory.py -q`
