@@ -365,3 +365,8 @@ verify: `cd server && pytest tests/test_reflection.py -q`
 result: 4 passed. NEW synk/reflection.py: ReflectionScheduler(interval) per-agent due()/mark(); first call schedules (not due), independent per agent.
 files: server/synk/reflection.py, server/tests/test_reflection.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 70 reflect summarizes memory
+verify: `cd server && pytest tests/test_reflection.py -q`
+result: 6 passed. async reflect(memory, now, provider=None, recent_n=5): summarizes recall_recent into a MemoryItem with salience = max(constituent)+1; provider path uses an LLM summary prompt, no-provider path templates "Reflection: ...". Empty memory -> None.
+files: server/synk/reflection.py, server/tests/test_reflection.py, fix_plan.md, PROGRESS.md
+

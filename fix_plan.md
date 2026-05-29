@@ -98,7 +98,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 
 ## Reflection
 - [x] 69. Reflection timer scheduling (low freq, per-agent) + test. verify: `cd server && pytest tests/test_reflection.py -q`
-- [ ] 70. Reflection summarizes recent memory -> salient memory + test. verify: `cd server && pytest tests/test_reflection.py -q`
+- [x] 70. Reflection summarizes recent memory -> salient memory + test. verify: `cd server && pytest tests/test_reflection.py -q`
 - [ ] 71. Reflection runs off-tick (async) + test. verify: `cd server && pytest tests/test_reflection.py -q`
 
 ## Dialogue
