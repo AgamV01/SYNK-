@@ -55,16 +55,24 @@ class ReactiveBrain:
             return MoveTo(target=self.grid.cell_center(path[1]))
         return MoveTo(target=target)
 
-    def decide(self, agent: Agent, percept: Percept) -> Action:
+    def _candidates(self, agent: Agent, percept: Percept) -> list[tuple[float, Action]]:
+        """Score candidate behaviors. Highest utility wins. Social behaviors
+        (face/approach) outrank ambient ones (wander/idle)."""
+        cands: list[tuple[float, Action]] = [
+            (1.0 if self.restless else 0.2, Wander()),
+            (0.1 if self.restless else 0.5, Idle()),
+        ]
         player = self._nearest_player(agent, percept)
         if player is not None:
             if agent.position.distance_to(player.position) <= self.arrive_radius:
-                # Close enough: stop and face the player rather than crowd them.
-                return Face(target_id=player.id)
-            # Otherwise steer toward them, routing around obstacles.
-            return self._steer_towards(agent, player.position)
-        # Ambient behavior when nothing demands attention: wander, or idle if calm.
-        return Wander() if self.restless else Idle()
+                cands.append((3.0, Face(target_id=player.id)))
+            else:
+                cands.append((2.0, self._steer_towards(agent, player.position)))
+        return cands
+
+    def decide(self, agent: Agent, percept: Percept) -> Action:
+        candidates = self._candidates(agent, percept)
+        return max(candidates, key=lambda c: c[0])[1]
 
     async def converse(
         self, agent: Agent, percept: Percept, utterance: str

@@ -99,3 +99,21 @@ async def test_converse_handles_empty_utterance() -> None:
     assert "Gus" in result.text
     assert "What brings you here?" in result.text
 
+
+def test_social_behavior_outscores_ambient() -> None:
+    brain = ReactiveBrain()
+    agent = Agent(id="npc1", position=Vec3(0, 0, 0))
+    player = Player(id="p1", position=Vec3(5, 0, 0))
+    scored = brain._candidates(agent, _percept(agent, nearby=[player]))
+    by_kind = {type(action).__name__: score for score, action in scored}
+    assert by_kind["MoveTo"] > by_kind["Wander"]
+    assert by_kind["MoveTo"] > by_kind["Idle"]
+
+
+def test_decide_picks_highest_utility() -> None:
+    brain = ReactiveBrain()
+    agent = Agent(id="npc1", position=Vec3(0, 0, 0))
+    player = Player(id="p1", position=Vec3(1.0, 0, 0))  # within arrive radius
+    # Face (3.0) should beat approach/wander/idle.
+    assert isinstance(brain.decide(agent, _percept(agent, nearby=[player])), Face)
+
