@@ -20,7 +20,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 13. messages.md: version field + a JSON example per message. verify: `grep -c '"v":' protocol/messages.md`
 
 ## Geometry
-- [ ] 14. Vec3 dataclass + add/sub/mul + test. verify: `cd server && pytest tests/test_geometry.py -q`
+- [x] 14. Vec3 dataclass + add/sub/mul + test. verify: `cd server && pytest tests/test_geometry.py -q`
 - [ ] 15. Vec3 length, length_xz, normalize + test. verify: `cd server && pytest tests/test_geometry.py -q`
 - [ ] 16. Vec3 distance_to (xz), to/from list + test. verify: `cd server && pytest tests/test_geometry.py -q`
 

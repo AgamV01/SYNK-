@@ -80,3 +80,8 @@ verify: `grep -c '"v":' protocol/messages.md`
 result: TASK13_PASS, count=11 (every message example carries "v": 1). Added Versioning section: v required both directions, unknown v -> error "unsupported_version", additive-only within major.
 files: protocol/messages.md, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 14 Vec3 dataclass + add/sub/mul
+verify: `cd server && pytest tests/test_geometry.py -q` (via `python -m pytest`, venv active)
+result: 5 passed. Vec3 frozen+slots dataclass, defaults 0; __add__/__sub__/__mul__/__rmul__.
+files: server/synk/geometry.py, server/tests/test_geometry.py, fix_plan.md, PROGRESS.md
+
