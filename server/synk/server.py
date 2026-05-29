@@ -11,6 +11,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from .auth import AuthManager
 from .dialogue import DialogueManager
+from .geometry import Vec3
 from .simulation import Simulation
 from .world import Agent, Player, World
 
@@ -77,6 +78,15 @@ def create_app() -> FastAPI:
                             "snapshot": zone_snapshot(world, zone),
                         }
                     )
+                elif msg.get("type") == "move" and player_id is not None:
+                    player = world.try_get(player_id)
+                    if isinstance(player, Player):
+                        position = msg.get("position")
+                        if position is not None:
+                            player.position = Vec3.from_list(position)
+                        facing = msg.get("facing")
+                        if facing is not None:
+                            player.facing = float(facing)
         except WebSocketDisconnect:
             if player_id is not None:
                 connections.pop(player_id, None)

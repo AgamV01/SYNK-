@@ -486,3 +486,8 @@ verify: `cd server && pytest tests/test_server.py -q`
 result: 3 passed. /ws endpoint: accept, receive_json loop; join -> issue token, add Player to world, register connection, send welcome{player_id, token, tick_rate=round(1/dt)=10, zone, snapshot}. zone_snapshot() helper. PROTOCOL_VERSION=1, DEFAULT_ZONE="default". WebSocketDisconnect cleans up connection. State on app.state (world/auth/dialogue/sim/connections).
 files: server/synk/server.py, server/tests/test_server.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 94 WS move intent
+verify: `cd server && pytest tests/test_server.py -q`
+result: 4 passed. move handler updates player.position (Vec3.from_list) + optional facing. Test sync trick: send move then a 2nd join and receive its welcome (in-order processing guarantees move applied), then assert via app.state.world.
+files: server/synk/server.py, server/tests/test_server.py, fix_plan.md, PROGRESS.md
+
