@@ -430,3 +430,8 @@ verify: `cd server && pytest tests/test_persistence.py -q`
 result: 11 passed. Asserted enqueue/save_world/save_memory are NOT coroutine functions (can't await on tick); save_world defers I/O — entities table stays empty until flush(). Persistence phase (77-82) complete.
 files: server/tests/test_persistence.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 83 issue session token
+verify: `cd server && pytest tests/test_auth.py -q`
+result: 3 passed. NEW synk/auth.py: AuthManager(ttl, clock injectable for tests). Session{token,player_id,expires_at}. issue() mints secrets.token_urlsafe(24), unique, scoped to player. ttl<=0 -> ValueError.
+files: server/synk/auth.py, server/tests/test_auth.py, fix_plan.md, PROGRESS.md
+

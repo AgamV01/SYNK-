@@ -117,7 +117,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 82. Persistence write stays off the tick path + test. verify: `cd server && pytest tests/test_persistence.py -q`
 
 ## Auth
-- [ ] 83. Issue anonymous short-lived session token + test. verify: `cd server && pytest tests/test_auth.py -q`
+- [x] 83. Issue anonymous short-lived session token + test. verify: `cd server && pytest tests/test_auth.py -q`
 - [ ] 84. Validate token + expiry + test. verify: `cd server && pytest tests/test_auth.py -q`
 - [ ] 85. Token scoped to player id + test. verify: `cd server && pytest tests/test_auth.py -q`
 
