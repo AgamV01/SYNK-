@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import pytest
 
 from synk.brains.base import (
@@ -64,3 +66,25 @@ def test_parse_json_embedded_in_prose() -> None:
     assert speech == "Off I go."
     assert isinstance(action, MoveTo)
     assert action.target == Vec3(3, 0, 4)
+
+
+def test_malformed_action_falls_back_to_speech_only(caplog) -> None:
+    with caplog.at_level(logging.WARNING, logger="synk.brains"):
+        speech, action = parse_llm_output(
+            '{"speech": "I would, but...", "action": {"type": "teleport"}}'
+        )
+    assert speech == "I would, but..."
+    assert action is None  # bad action dropped
+    assert any("malformed" in r.message.lower() for r in caplog.records)
+
+
+def test_non_json_text_is_speech_only_no_raise() -> None:
+    speech, action = parse_llm_output("Just an ordinary sentence, no JSON here.")
+    assert speech == "Just an ordinary sentence, no JSON here."
+    assert action is None
+
+
+def test_garbage_braces_do_not_raise() -> None:
+    speech, action = parse_llm_output("here is some {not valid json at all")
+    assert action is None
+    assert "here is some" in speech

@@ -345,3 +345,8 @@ verify: `cd server && pytest tests/test_structured_actions.py -q`
 result: 7 passed. parse_llm_output(text)->(speech, action|None); never raises. _extract_json_object tolerates ``` fences/prose (first { .. last }). speech defaults to whole text if no speech field; malformed action dropped+logged (logger "synk.brains").
 files: server/synk/brains/base.py, server/tests/test_structured_actions.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 66 malformed -> speech-only fallback
+verify: `cd server && pytest tests/test_structured_actions.py -q`
+result: 10 passed. Tests (caplog): bad action type -> speech kept, action None, WARNING logged; non-JSON text -> speech-only; unbalanced braces -> no raise. Invariant: bad LLM output never crashes a tick.
+files: server/tests/test_structured_actions.py, fix_plan.md, PROGRESS.md
+
