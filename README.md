@@ -99,8 +99,8 @@ set_goal, handoff) parsed from its output — malformed output safely degrades t
 
 ## Documentation
 
-- _TODO (task 118): writing a custom brain._
-- _TODO (task 118): adding a custom structured action._
+- [Writing a custom brain](docs/writing-a-brain.md)
+- [Adding a custom structured action](docs/custom-actions.md)
 
 ## License
 

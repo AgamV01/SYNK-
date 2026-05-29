@@ -613,3 +613,8 @@ verify: `grep -qi mermaid README.md && grep -qi hybrid README.md` -> TASK117_PAS
 result: README gains a mermaid flowchart (client/server/sim/reactive/LLM/world/memory/persist), the hybrid-brain explanation (reactive every tick vs LLM on events + the no-LLM-on-tick invariant), and the upgrade-to-LLM steps (install [llm] + set key; select_provider precedence).
 files: README.md, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 118 developer docs
+verify: `test -f docs/writing-a-brain.md && test -f docs/custom-actions.md` -> TASK118_PASS
+result: docs/writing-a-brain.md (Brain protocol, decide/converse contract + invariant, minimal + reactive-delegating examples) and docs/custom-actions.md (3-step add: dataclass+union, ACTION_SCHEMA+action_from_dict, apply_action; protocol sync checklist). README Documentation links them.
+files: docs/writing-a-brain.md, docs/custom-actions.md, README.md, fix_plan.md, PROGRESS.md
+
