@@ -53,8 +53,20 @@ class World:
 
     def __init__(self) -> None:
         self._entities: dict[str, Entity] = {}
+        self._events: list[WorldEvent] = []
         self.tick: int = 0
         self.sim_time: float = 0.0
+
+    def emit_event(self, event: WorldEvent) -> None:
+        self._events.append(event)
+
+    def recent_events(self, within_ticks: int | None = None) -> list[WorldEvent]:
+        """Events emitted recently. With `within_ticks`, only those whose tick is
+        within that many ticks of the current tick; otherwise all buffered events."""
+        if within_ticks is None:
+            return list(self._events)
+        cutoff = self.tick - within_ticks
+        return [e for e in self._events if e.tick >= cutoff]
 
     def advance(self, dt: float) -> None:
         """Advance the clock by one tick of `dt` seconds."""

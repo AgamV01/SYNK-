@@ -8,6 +8,7 @@ from .geometry import Vec3
 from .world import Entity, World, WorldEvent
 
 DEFAULT_SENSE_RADIUS = 10.0
+DEFAULT_EVENT_RECENCY_TICKS = 2
 
 
 @dataclass
@@ -25,17 +26,31 @@ def perceive(
     world: World,
     agent: Entity,
     sense_radius: float = DEFAULT_SENSE_RADIUS,
+    event_recency_ticks: int = DEFAULT_EVENT_RECENCY_TICKS,
 ) -> Percept:
-    """Build a `Percept` for `agent`: entities within `sense_radius` (xz), excluding self."""
+    """Build a `Percept` for `agent`.
+
+    `nearby` is every entity within `sense_radius` (xz) in the agent's zone, self
+    excluded. `events` is recent world events in the same zone, within sense radius,
+    not sourced by the agent itself.
+    """
     nearby = world.within_radius(
         agent.position,
         sense_radius,
         zone=agent.zone,
         exclude_id=agent.id,
     )
+    events = [
+        e
+        for e in world.recent_events(within_ticks=event_recency_ticks)
+        if e.zone == agent.zone
+        and e.source_id != agent.id
+        and agent.position.distance_to(e.position) <= sense_radius
+    ]
     return Percept(
         agent_id=agent.id,
         position=agent.position,
         tick=world.tick,
         nearby=nearby,
+        events=events,
     )

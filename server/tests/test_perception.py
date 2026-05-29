@@ -50,3 +50,27 @@ def test_perceive_excludes_other_zones() -> None:
     p = perceive(w, me, sense_radius=50.0)
     assert {e.id for e in p.nearby} == {"same_zone"}
 
+
+def test_perceive_includes_recent_nearby_events() -> None:
+    w = World()
+    me = Entity(id="me", position=Vec3(0, 0, 0), zone="tavern")
+    w.add(me)
+    w.advance(0.1)  # tick = 1
+    w.emit_event(WorldEvent(kind="spoke", source_id="bob", zone="tavern", tick=1, position=Vec3(2, 0, 0)))
+    w.emit_event(WorldEvent(kind="spoke", source_id="far", zone="tavern", tick=1, position=Vec3(99, 0, 0)))
+    w.emit_event(WorldEvent(kind="spoke", source_id="elsewhere", zone="market", tick=1, position=Vec3(1, 0, 0)))
+    w.emit_event(WorldEvent(kind="spoke", source_id="me", zone="tavern", tick=1, position=Vec3(0, 0, 0)))
+    p = perceive(w, me, sense_radius=5.0)
+    assert {e.source_id for e in p.events} == {"bob"}  # far/other-zone/self filtered
+
+
+def test_perceive_drops_stale_events() -> None:
+    w = World()
+    me = Entity(id="me", position=Vec3(0, 0, 0), zone="tavern")
+    w.add(me)
+    w.emit_event(WorldEvent(kind="spoke", source_id="bob", zone="tavern", tick=0, position=Vec3(1, 0, 0)))
+    for _ in range(5):
+        w.advance(0.1)  # tick now 5
+    p = perceive(w, me, sense_radius=5.0, event_recency_ticks=2)
+    assert p.events == []  # event at tick 0 is older than 2 ticks
+

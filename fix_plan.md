@@ -36,7 +36,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 23. Percept dataclass (nearby entities, events) + test. verify: `cd server && pytest tests/test_perception.py -q`
 - [x] 24. Build percept within sense radius + test. verify: `cd server && pytest tests/test_perception.py -q`
 - [x] 25. Perception zone-scoping (exclude other zones) + test. verify: `cd server && pytest tests/test_perception.py -q`
-- [ ] 26. Recent perceivable events feed + test. verify: `cd server && pytest tests/test_perception.py -q`
+- [x] 26. Recent perceivable events feed + test. verify: `cd server && pytest tests/test_perception.py -q`
 
 ## Pathfinding
 - [ ] 27. Grid from obstacle list + test. verify: `cd server && pytest tests/test_pathfinding.py -q`

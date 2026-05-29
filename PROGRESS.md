@@ -141,3 +141,8 @@ verify: `cd server && pytest tests/test_perception.py -q`
 result: 4 passed. Added test: entity at identical position but different zone is NOT perceived (enforced by within_radius zone filter). No impl change needed.
 files: server/tests/test_perception.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 26 recent perceivable events feed
+verify: `cd server && pytest tests/test_perception.py -q` (+ test_world.py regression, 22 passed total)
+result: 6 perception passed. World.emit_event / recent_events(within_ticks). perceive() now includes events filtered by zone + sense radius + recency (DEFAULT_EVENT_RECENCY_TICKS=2), excluding self-sourced. Perception phase (23-26) complete.
+files: server/synk/world.py, server/synk/perception.py, server/tests/test_perception.py, fix_plan.md, PROGRESS.md
+
