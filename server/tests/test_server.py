@@ -157,3 +157,25 @@ def test_ws_disconnect_cleans_up() -> None:
     # Abrupt close (no leave) also cleans up.
     assert pid not in app.state.world
     assert pid not in app.state.connections
+
+
+def test_ws_say_unknown_agent_returns_error() -> None:
+    client = TestClient(create_app())
+    with client.websocket_connect("/ws") as ws:
+        ws.send_json({"type": "join", "v": 1, "name": "Ada"})
+        ws.receive_json()  # welcome
+        ws.send_json({"type": "say", "v": 1, "target": "ghost", "text": "hi"})
+        err = ws.receive_json()
+        assert err["type"] == "error"
+        assert err["code"] == "unknown_agent"
+
+
+def test_ws_unknown_message_returns_error() -> None:
+    client = TestClient(create_app())
+    with client.websocket_connect("/ws") as ws:
+        ws.send_json({"type": "join", "v": 1, "name": "Ada"})
+        ws.receive_json()  # welcome
+        ws.send_json({"type": "frobnicate", "v": 1})
+        err = ws.receive_json()
+        assert err["type"] == "error"
+        assert err["code"] == "bad_message"

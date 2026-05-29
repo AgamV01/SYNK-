@@ -84,6 +84,12 @@ def zone_snapshot(world: World, zone: str) -> dict:
     return {"tick": world.tick, "agents": agents}
 
 
+async def send_error(ws: object, code: str, message: str) -> None:
+    await ws.send_json(
+        {"type": "error", "v": PROTOCOL_VERSION, "code": code, "message": message}
+    )
+
+
 def create_app() -> FastAPI:
     app = FastAPI(title="SYNK")
     world = World()
@@ -158,6 +164,10 @@ def create_app() -> FastAPI:
                         )
                         if result.action is not None:
                             actions.apply_action(world, agent, result.action)
+                    else:
+                        await send_error(
+                            websocket, "unknown_agent", f"no agent {target_id!r}"
+                        )
                 elif msg.get("type") == "interact" and player_id is not None:
                     target_id = msg.get("target")
                     kind = msg.get("kind", "")
@@ -173,8 +183,16 @@ def create_app() -> FastAPI:
                                 "payload": {"emote": "nod", "in_response_to": kind},
                             }
                         )
+                    else:
+                        await send_error(
+                            websocket, "unknown_agent", f"no agent {target_id!r}"
+                        )
                 elif msg.get("type") == "leave":
                     break
+                else:
+                    await send_error(
+                        websocket, "bad_message", f"unhandled message: {msg.get('type')!r}"
+                    )
         except WebSocketDisconnect:
             pass
         finally:

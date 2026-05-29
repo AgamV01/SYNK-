@@ -512,3 +512,8 @@ verify: `cd server && pytest tests/test_server.py -q`
 result: 10 passed. "leave" breaks the loop; finally block removes player from world + connections. WebSocketDisconnect (abrupt close) hits the same finally. Both paths verified via app.state.
 files: server/synk/server.py, server/tests/test_server.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 99 WS error on bad input
+verify: `cd server && pytest tests/test_server.py -q`
+result: 12 passed. send_error() helper -> error{code,message}. say/interact to unknown agent -> "unknown_agent"; unhandled message type -> "bad_message".
+files: server/synk/server.py, server/tests/test_server.py, fix_plan.md, PROGRESS.md
+
