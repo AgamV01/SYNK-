@@ -319,3 +319,8 @@ verify: `cd server && pytest tests/test_llm_brain.py -q`
 result: 1 passed. LLMBrain(provider=None, reactive=ReactiveBrain()). decide() delegates to reactive (no provider touch) — proven with an ExplodingProvider that asserts if called. converse currently defers to reactive (provider path added task 61).
 files: server/synk/brains/llm.py, server/tests/test_llm_brain.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 61 LLMBrain.converse via provider
+verify: `cd server && pytest tests/test_llm_brain.py -q`
+result: 2 passed. converse() with provider builds prompt (build_prompt) + system prompt, calls provider.generate, returns trimmed ConverseResult. Verified prompt carries the utterance.
+files: server/synk/brains/llm.py, server/tests/test_llm_brain.py, fix_plan.md, PROGRESS.md
+

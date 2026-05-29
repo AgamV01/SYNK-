@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .base import Action, ConverseResult
-from .providers import Provider
+from .providers import Provider, build_prompt
 from .reactive import ReactiveBrain
 
 if TYPE_CHECKING:
@@ -35,5 +35,18 @@ class LLMBrain:
     async def converse(
         self, agent: Agent, percept: Percept, utterance: str
     ) -> ConverseResult:
-        # Filled in subsequent tasks; for now defer to the reactive templated line.
-        return await self.reactive.converse(agent, percept, utterance)
+        if self.provider is None:
+            return await self.reactive.converse(agent, percept, utterance)
+        prompt = build_prompt(
+            personality=agent.personality,
+            memories=[],
+            history=[],
+            utterance=utterance,
+        )
+        text = await self.provider.generate(prompt, system=self._system_prompt(agent))
+        return ConverseResult(text=text.strip())
+
+    @staticmethod
+    def _system_prompt(agent: Agent) -> str:
+        name = agent.name or "an NPC"
+        return f"You are {name}, a character in a 3D world. Speak in character, briefly."

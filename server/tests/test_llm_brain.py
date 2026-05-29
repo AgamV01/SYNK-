@@ -16,6 +16,17 @@ class ExplodingProvider:
         raise AssertionError("provider must never be called from decide()")
 
 
+class StubProvider:
+    name = "stub"
+
+    def __init__(self) -> None:
+        self.last_prompt: str | None = None
+
+    async def generate(self, prompt: str, *, system: str | None = None) -> str:
+        self.last_prompt = prompt
+        return "  A stubbed line of dialogue.  "
+
+
 def _percept(agent: Agent) -> Percept:
     return Percept(agent_id=agent.id, position=agent.position, tick=0)
 
@@ -25,3 +36,13 @@ def test_decide_delegates_to_reactive_without_io() -> None:
     agent = Agent(id="npc1", position=Vec3(0, 0, 0))
     # Alone + restless reactive default -> Wander, and the provider is never touched.
     assert isinstance(brain.decide(agent, _percept(agent)), Wander)
+
+
+async def test_converse_uses_provider_when_present() -> None:
+    provider = StubProvider()
+    brain = LLMBrain(provider=provider)
+    agent = Agent(id="npc1", name="Gus", personality="a gruff barkeep")
+    result = await brain.converse(agent, _percept(agent), "what's on tap?")
+    assert result.text == "A stubbed line of dialogue."  # provider output, trimmed
+    assert provider.last_prompt is not None
+    assert "what's on tap?" in provider.last_prompt
