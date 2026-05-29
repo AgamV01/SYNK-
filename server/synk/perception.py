@@ -27,19 +27,26 @@ def perceive(
     agent: Entity,
     sense_radius: float = DEFAULT_SENSE_RADIUS,
     event_recency_ticks: int = DEFAULT_EVENT_RECENCY_TICKS,
+    index: object | None = None,
 ) -> Percept:
     """Build a `Percept` for `agent`.
 
     `nearby` is every entity within `sense_radius` (xz) in the agent's zone, self
     excluded. `events` is recent world events in the same zone, within sense radius,
-    not sourced by the agent itself.
+    not sourced by the agent itself. Pass a `SpatialIndex` (`index`) to answer the
+    neighborhood query in ~O(1); otherwise the world is scanned linearly.
     """
-    nearby = world.within_radius(
-        agent.position,
-        sense_radius,
-        zone=agent.zone,
-        exclude_id=agent.id,
-    )
+    if index is not None:
+        nearby = index.within_radius(
+            agent.position, sense_radius, zone=agent.zone, exclude_id=agent.id
+        )
+    else:
+        nearby = world.within_radius(
+            agent.position,
+            sense_radius,
+            zone=agent.zone,
+            exclude_id=agent.id,
+        )
     events = [
         e
         for e in world.recent_events(within_ticks=event_recency_ticks)

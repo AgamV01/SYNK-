@@ -18,6 +18,7 @@ from .geometry import Vec3
 from .memory import MemoryItem, score_event_salience
 from .perception import DEFAULT_SENSE_RADIUS, perceive
 from .reflection import reflect
+from .spatial import SpatialIndex
 from .world import Agent, World, WorldEvent
 
 
@@ -358,11 +359,13 @@ class Simulation:
     def step(self) -> None:
         """One tick: drain off-tick results, then perceive -> decide -> apply, then advance."""
         self.drain_results()
+        # Build the spatial index once per tick so each agent's perception is ~O(1).
+        index = SpatialIndex(self.world.all(), cell_size=DEFAULT_SENSE_RADIUS)
         for agent_id, brain in self.brains.items():
             agent = self.world.try_get(agent_id)
             if not isinstance(agent, Agent):
                 continue
-            percept = perceive(self.world, agent, self._sense_radius(brain))
+            percept = perceive(self.world, agent, self._sense_radius(brain), index=index)
             action = brain.decide(agent, percept)
             self._apply(agent, action)
             self._form_memories(agent, percept)
