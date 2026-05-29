@@ -214,6 +214,11 @@ def create_app(
                 if not limiter.allow():
                     await send_error(websocket, "rate_limited", "slow down")
                     continue
+                if msg.get("v") != PROTOCOL_VERSION:
+                    await send_error(
+                        websocket, "unsupported_version", f"unsupported protocol version {msg.get('v')!r}"
+                    )
+                    continue
                 mtype = msg.get("type")
 
                 if mtype == "join":

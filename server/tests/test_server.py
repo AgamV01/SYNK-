@@ -248,6 +248,15 @@ def test_ws_rate_limited_error() -> None:
         assert err["code"] == "rate_limited"
 
 
+def test_ws_unsupported_version_returns_error() -> None:
+    client = TestClient(create_app())
+    with client.websocket_connect("/ws") as ws:
+        ws.send_json({"type": "join", "v": 2, "name": "Ada"})
+        err = ws.receive_json()
+        assert err["type"] == "error"
+        assert err["code"] == "unsupported_version"
+
+
 def test_ws_unknown_message_returns_error() -> None:
     client = TestClient(create_app())
     with client.websocket_connect("/ws") as ws:
