@@ -62,7 +62,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 43. Goal representation + test. verify: `cd server && pytest tests/test_brain_contract.py -q`
 
 ## Reactive brain
-- [ ] 44. Idle/wander selection + test. verify: `cd server && pytest tests/test_reactive.py -q`
+- [x] 44. Idle/wander selection + test. verify: `cd server && pytest tests/test_reactive.py -q`
 - [ ] 45. Detect nearby player -> approach + test. verify: `cd server && pytest tests/test_reactive.py -q`
 - [ ] 46. Steering toward target using path + test. verify: `cd server && pytest tests/test_reactive.py -q`
 - [ ] 47. Face entity + test. verify: `cd server && pytest tests/test_reactive.py -q`

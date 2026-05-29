@@ -233,3 +233,8 @@ verify: `cd server && pytest tests/test_brain_contract.py -q`
 result: 10 passed. Goal{description, priority=1.0, created_ts=0.0, done=False}.complete(). Brain interface phase (40-43) complete. (Agent.goal stays a simple str label; Goal is the richer structured form for brains.)
 files: server/synk/brains/base.py, server/tests/test_brain_contract.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 44 reactive idle/wander selection
+verify: `cd server && pytest tests/test_reactive.py -q`
+result: 2 passed. ReactiveBrain(sense_radius, arrive_radius, restless, grid). decide() ambient: Wander if restless else Idle. Minimal templated converse() (enriched at task 48). Helper _percept in test.
+files: server/synk/brains/reactive.py, server/tests/test_reactive.py, fix_plan.md, PROGRESS.md
+
