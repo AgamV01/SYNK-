@@ -77,7 +77,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 
 ## LLM providers
 - [x] 54. Provider interface (generate) + test. verify: `cd server && pytest tests/test_providers.py -q`
-- [ ] 55. MockProvider context-flavored lines + test. verify: `cd server && pytest tests/test_providers.py -q`
+- [x] 55. MockProvider context-flavored lines + test. verify: `cd server && pytest tests/test_providers.py -q`
 - [ ] 56. Provider selection by env, default Mock, no keys. verify: `cd server && pytest tests/test_providers.py -q` (must pass with no keys set)
 - [ ] 57. Guarded AnthropicProvider (no crash without sdk/key) + test. verify: `cd server && pytest tests/test_providers.py -q`
 - [ ] 58. Guarded OpenAIProvider + test. verify: `cd server && pytest tests/test_providers.py -q`
