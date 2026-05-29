@@ -61,3 +61,18 @@ class DialogueManager:
         convo = self.start(player_id, agent_id)
         convo.add_turn(player_id, text, ts)
         return convo
+
+    def append_agent_reply(
+        self, player_id: str, agent_id: str, text: str, ts: float = 0.0
+    ) -> Conversation:
+        """Record the agent's reply in the conversation with this player."""
+        convo = self.start(player_id, agent_id)
+        convo.add_turn(agent_id, text, ts)
+        return convo
+
+    def history(
+        self, player_id: str, agent_id: str, limit: int | None = None
+    ) -> list[Turn]:
+        """Turn history for a (player, agent) pair; empty if no conversation yet."""
+        convo = self._conversations.get(self._key(player_id, agent_id))
+        return convo.history(limit) if convo is not None else []

@@ -385,3 +385,8 @@ verify: `cd server && pytest tests/test_dialogue.py -q`
 result: 4 passed. DialogueManager keyed "player->agent"; start() reuses/creates, route_player_message() appends player turn. Distinct convos per pair.
 files: server/synk/dialogue.py, server/tests/test_dialogue.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 74 append reply + fetch history
+verify: `cd server && pytest tests/test_dialogue.py -q`
+result: 6 passed. append_agent_reply() adds agent turn; history(player,agent,limit) returns ordered turns, [] for unknown pair.
+files: server/synk/dialogue.py, server/tests/test_dialogue.py, fix_plan.md, PROGRESS.md
+

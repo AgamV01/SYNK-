@@ -104,7 +104,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 ## Dialogue
 - [x] 72. Conversation object + history + test. verify: `cd server && pytest tests/test_dialogue.py -q`
 - [x] 73. DialogueManager start/route player->agent + test. verify: `cd server && pytest tests/test_dialogue.py -q`
-- [ ] 74. DialogueManager append turns, fetch history + test. verify: `cd server && pytest tests/test_dialogue.py -q`
+- [x] 74. DialogueManager append turns, fetch history + test. verify: `cd server && pytest tests/test_dialogue.py -q`
 - [ ] 75. Multi-party NPC->NPC conversation + test. verify: `cd server && pytest tests/test_dialogue.py -q`
 - [ ] 76. Overhearing: nearby players receive dialogue (flag) + test. verify: `cd server && pytest tests/test_dialogue.py -q`
 

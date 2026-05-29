@@ -38,3 +38,19 @@ def test_manager_reuses_conversation_per_pair() -> None:
     assert a is b
     c = dm.start("player_1", "npc_bo")
     assert c is not a
+
+
+def test_manager_append_reply_and_fetch_history() -> None:
+    dm = DialogueManager()
+    dm.route_player_message("player_1", "npc_gus", "hello", ts=1.0)
+    dm.append_agent_reply("player_1", "npc_gus", "well met", ts=2.0)
+    hist = dm.history("player_1", "npc_gus")
+    assert [(t.speaker, t.text) for t in hist] == [
+        ("player_1", "hello"),
+        ("npc_gus", "well met"),
+    ]
+
+
+def test_manager_history_unknown_pair_is_empty() -> None:
+    dm = DialogueManager()
+    assert dm.history("nobody", "noone") == []
