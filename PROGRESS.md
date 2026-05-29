@@ -279,3 +279,8 @@ verify: `cd server && python examples/headless_demo.py --selftest`
 result: both selftests PASS. Added build_obstacle_scene (wall col3 rows0-5, gap row6) + _selftest_obstacle: agent reaches player around the wall within 400 ticks, never enters a blocked cell, max_z>5 proves detour toward the gap.
 files: server/examples/headless_demo.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 53 headless scripted greeting
+verify: `cd server && python examples/headless_demo.py --selftest`
+result: all 3 selftests PASS (greeting -> 'Gus: Well met. You said, "hello, barkeep".'). _selftest_greeting uses asyncio.run on brain.converse. Headless sanity phase (51-53) complete.
+files: server/examples/headless_demo.py, fix_plan.md, PROGRESS.md
+

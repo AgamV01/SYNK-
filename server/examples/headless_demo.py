@@ -13,6 +13,7 @@ is a minimal stand-in; the authoritative per-tick apply lives in the Simulation 
 from __future__ import annotations
 
 import argparse
+import asyncio
 import math
 import sys
 
@@ -140,9 +141,22 @@ def _selftest_obstacle() -> None:
     print("SELFTEST PASS: agent navigated around the obstacle")
 
 
+def _selftest_greeting() -> None:
+    world, agents, player = build_approach_scene()
+    agent, brain = agents[0]
+    # Move the player adjacent and have them speak; the agent should greet back.
+    player.position = Vec3(1.0, 0, 0)
+    percept = perceive(world, agent, brain.sense_radius)
+    result = asyncio.run(brain.converse(agent, percept, "hello, barkeep"))
+    assert "Gus" in result.text, f"greeting should name the agent: {result.text!r}"
+    assert "hello, barkeep" in result.text, f"greeting should echo the player: {result.text!r}"
+    print(f"SELFTEST PASS: agent greeted the player -> {result.text!r}")
+
+
 def run_selftest() -> None:
     _selftest_approach()
     _selftest_obstacle()
+    _selftest_greeting()
 
 
 def main(argv: list[str] | None = None) -> int:
