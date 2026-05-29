@@ -350,3 +350,8 @@ verify: `cd server && pytest tests/test_structured_actions.py -q`
 result: 10 passed. Tests (caplog): bad action type -> speech kept, action None, WARNING logged; non-JSON text -> speech-only; unbalanced braces -> no raise. Invariant: bad LLM output never crashes a tick.
 files: server/tests/test_structured_actions.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 67 apply action (move_to, emote)
+verify: `cd server && pytest tests/test_structured_actions.py -q`
+result: 12 passed. NEW module synk/actions.py: apply_action(world, agent, action) -> WorldEvent|None. move_to -> "moved" {to:[x,y,z]}, emote -> "emoted" {emote}; sets current_action; emits to world. Salience via score_event_salience. Other kinds return None (task 68).
+files: server/synk/actions.py, server/tests/test_structured_actions.py, fix_plan.md, PROGRESS.md
+

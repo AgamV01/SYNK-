@@ -4,6 +4,7 @@ import logging
 
 import pytest
 
+from synk.actions import apply_action
 from synk.brains.base import (
     Emote,
     Face,
@@ -15,6 +16,7 @@ from synk.brains.base import (
     parse_llm_output,
 )
 from synk.geometry import Vec3
+from synk.world import Agent, World
 
 
 def test_action_from_dict_move_to() -> None:
@@ -88,3 +90,30 @@ def test_garbage_braces_do_not_raise() -> None:
     speech, action = parse_llm_output("here is some {not valid json at all")
     assert action is None
     assert "here is some" in speech
+
+
+def _agent_in_world() -> tuple[World, Agent]:
+    world = World()
+    agent = Agent(id="npc1", zone="tavern")
+    world.add(agent)
+    world.advance(0.1)
+    return world, agent
+
+
+def test_apply_move_to_emits_moved_event() -> None:
+    world, agent = _agent_in_world()
+    event = apply_action(world, agent, MoveTo(target=Vec3(3, 0, 4)))
+    assert event is not None
+    assert event.kind == "moved"
+    assert event.payload == {"to": [3.0, 0.0, 4.0]}
+    assert agent.current_action == "move_to"
+    assert event in world.recent_events()
+
+
+def test_apply_emote_emits_emoted_event() -> None:
+    world, agent = _agent_in_world()
+    event = apply_action(world, agent, Emote(emote="wave"))
+    assert event is not None
+    assert event.kind == "emoted"
+    assert event.payload == {"emote": "wave"}
+    assert agent.current_action == "wave"
