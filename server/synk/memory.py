@@ -82,3 +82,12 @@ class MemoryStore:
         if k <= 0:
             return []
         return sorted(self._items, key=lambda m: (m.salience, m.ts), reverse=True)[:k]
+
+    def recall(self, recent_n: int = 5, salient_k: int = 5) -> list[MemoryItem]:
+        """Recall = recent ∪ salient. The union of the most recent and the most
+        salient memories, deduplicated, returned newest-first. This is what an
+        agent's brain reads when forming a response."""
+        chosen: dict[int, MemoryItem] = {id(m): m for m in self.recall_recent(recent_n)}
+        for m in self.recall_salient(salient_k):
+            chosen.setdefault(id(m), m)
+        return sorted(chosen.values(), key=lambda m: m.ts, reverse=True)

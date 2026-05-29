@@ -207,3 +207,8 @@ verify: `cd server && pytest tests/test_memory.py -q`
 result: 14 passed. recall_salient(k) returns k highest-salience (ties: newer ts first); k<=0 -> [].
 files: server/synk/memory.py, server/tests/test_memory.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 39 recall union + dedupe + ordering
+verify: `cd server && pytest tests/test_memory.py -q`
+result: 16 passed. recall(recent_n=5, salient_k=5) = recent ∪ salient, deduped by id, newest-first. Memory phase (33-39) complete.
+files: server/synk/memory.py, server/tests/test_memory.py, fix_plan.md, PROGRESS.md
+

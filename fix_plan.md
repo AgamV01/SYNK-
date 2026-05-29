@@ -53,7 +53,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 36. Decay over time + test. verify: `cd server && pytest tests/test_memory.py -q`
 - [x] 37. Recall recent N + test. verify: `cd server && pytest tests/test_memory.py -q`
 - [x] 38. Recall top-salient K + test. verify: `cd server && pytest tests/test_memory.py -q`
-- [ ] 39. Recall union + dedupe + ordering + test. verify: `cd server && pytest tests/test_memory.py -q`
+- [x] 39. Recall union + dedupe + ordering + test. verify: `cd server && pytest tests/test_memory.py -q`
 
 ## Brain interface & actions
 - [ ] 40. Action types: idle, wander, move_to, face, emote + test. verify: `cd server && pytest tests/test_brain_contract.py -q`

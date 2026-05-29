@@ -110,3 +110,29 @@ def test_recall_salient_nonpositive_is_empty() -> None:
     s.add(MemoryItem("x", ts=1.0, salience=5.0))
     assert s.recall_salient(0) == []
 
+
+def test_recall_union_dedupes_and_orders() -> None:
+    s = MemoryStore()
+    # An old-but-salient memory and several recent low-salience ones.
+    s.add(MemoryItem("ancient_vital", ts=1.0, salience=100.0))
+    s.add(MemoryItem("r1", ts=10.0, salience=1.0))
+    s.add(MemoryItem("r2", ts=11.0, salience=1.0))
+    s.add(MemoryItem("r3", ts=12.0, salience=1.0))
+    out = s.recall(recent_n=2, salient_k=1)
+    texts = [m.text for m in out]
+    # union = {r3, r2} (recent) ∪ {ancient_vital} (salient)
+    assert set(texts) == {"r3", "r2", "ancient_vital"}
+    # no duplicates
+    assert len(texts) == len(set(texts))
+    # newest-first ordering by ts
+    assert texts == ["r3", "r2", "ancient_vital"]
+
+
+def test_recall_union_no_duplicate_when_recent_is_salient() -> None:
+    s = MemoryStore()
+    item = MemoryItem("both", ts=5.0, salience=9.0)
+    s.add(item)
+    s.add(MemoryItem("other", ts=4.0, salience=1.0))
+    out = s.recall(recent_n=5, salient_k=5)
+    assert [m.text for m in out].count("both") == 1
+
