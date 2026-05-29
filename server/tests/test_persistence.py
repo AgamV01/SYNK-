@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from synk.geometry import Vec3
+from synk.memory import MemoryItem, MemoryStore
 from synk.persistence import Persistence
 from synk.world import Agent, Player, World
 
@@ -116,3 +117,46 @@ async def test_save_then_load_world_on_boot(tmp_path) -> None:
         assert isinstance(loaded.get("p1"), Player)
     finally:
         await booted.close()
+
+
+async def test_memory_roundtrip(tmp_path) -> None:
+    db_path = str(tmp_path / "mem.db")
+    mem = MemoryStore()
+    mem.add(MemoryItem("met a traveler", ts=1.0, salience=2.0))
+    mem.add(MemoryItem("a brawl broke out", ts=2.0, salience=5.0))
+
+    writer = Persistence(db_path)
+    await writer.connect()
+    writer.save_memory("npc1", mem)
+    await writer.flush()
+    await writer.close()
+
+    booted = Persistence(db_path)
+    await booted.connect()
+    try:
+        loaded = await booted.load_memory("npc1")
+        pairs = {(m.text, m.salience) for m in loaded.items}
+        assert pairs == {("met a traveler", 2.0), ("a brawl broke out", 5.0)}
+        assert await booted.load_memory("unknown") is not None
+        assert len(await booted.load_memory("unknown")) == 0
+    finally:
+        await booted.close()
+
+
+async def test_save_memory_replaces_prior(tmp_path) -> None:
+    db_path = str(tmp_path / "mem2.db")
+    p = Persistence(db_path)
+    await p.connect()
+    try:
+        first = MemoryStore()
+        first.add(MemoryItem("old", ts=1.0, salience=1.0))
+        p.save_memory("npc1", first)
+        await p.flush()
+        second = MemoryStore()
+        second.add(MemoryItem("new", ts=2.0, salience=1.0))
+        p.save_memory("npc1", second)
+        await p.flush()
+        loaded = await p.load_memory("npc1")
+        assert [m.text for m in loaded.items] == ["new"]  # replaced, not appended
+    finally:
+        await p.close()

@@ -420,3 +420,8 @@ verify: `cd server && pytest tests/test_persistence.py -q`
 result: 7 passed. load_world() rebuilds World (Player/Agent/Entity by kind) + restores tick/sim_time from world_meta. Round-trip across separate connections (tmp file) verified.
 files: server/synk/persistence.py, server/tests/test_persistence.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 81 memory roundtrip
+verify: `cd server && pytest tests/test_persistence.py -q`
+result: 9 passed. save_memory(agent_id, store) = DELETE then INSERT all (replace semantics, tick-safe); load_memory(agent_id) rebuilds MemoryStore oldest-first; unknown agent -> empty store.
+files: server/synk/persistence.py, server/tests/test_persistence.py, fix_plan.md, PROGRESS.md
+

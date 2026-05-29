@@ -6,6 +6,7 @@ from __future__ import annotations
 import aiosqlite
 
 from .geometry import Vec3
+from .memory import MemoryItem, MemoryStore
 from .world import Agent, Entity, Player, World
 
 SCHEMA = """
@@ -106,6 +107,26 @@ class Persistence:
                     getattr(entity, "goal", None),
                 ),
             )
+
+    def save_memory(self, agent_id: str, memory: MemoryStore) -> None:
+        """Queue a replace of all memories for an agent. Tick-safe; flush off-tick."""
+        self.enqueue("DELETE FROM memories WHERE agent_id = ?", (agent_id,))
+        for item in memory.items:
+            self.enqueue(
+                "INSERT INTO memories(agent_id, text, ts, salience) VALUES (?,?,?,?)",
+                (agent_id, item.text, item.ts, item.salience),
+            )
+
+    async def load_memory(self, agent_id: str, capacity: int = 100) -> MemoryStore:
+        """Rebuild an agent's MemoryStore from the database (oldest-first)."""
+        store = MemoryStore(capacity=capacity)
+        cursor = await self.db.execute(
+            "SELECT text, ts, salience FROM memories WHERE agent_id = ? ORDER BY ts",
+            (agent_id,),
+        )
+        for text, ts, salience in await cursor.fetchall():
+            store.add(MemoryItem(text=text, ts=ts, salience=salience))
+        return store
 
     async def load_world(self) -> World:
         """Reconstruct a World from the database (entities + meta). The inverse of
