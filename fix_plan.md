@@ -10,7 +10,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 5. Installable package; import works. verify: `cd server && pip install -e . -q && python -c "import synk"`
 - [x] 6. client/package.json (vite+three+typescript). verify: `cd client && node -e "require('./package.json')"`
 - [x] 7. npm install. verify: `cd client && npm install && test -d node_modules`
-- [ ] 8. tsconfig strict + vite.config.ts; empty src type-checks. verify: `cd client && npx tsc --noEmit`
+- [x] 8. tsconfig strict + vite.config.ts; empty src type-checks. verify: `cd client && npx tsc --noEmit`
 - [ ] 9. README skeleton (title + section stubs). verify: `grep -qi synk README.md`
 
 ## Protocol contract

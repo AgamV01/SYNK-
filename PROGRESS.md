@@ -50,3 +50,8 @@ verify: `cd client && npm install && test -d node_modules`
 result: TASK7_PASS. NOTE: user's ~/.npm cache has root-owned files (npm bug) → plain `npm install` fails EACCES. Workaround used: `npm install --cache /tmp/synk-npm-cache`. Future npm installs must use that flag (do NOT sudo chown the user's cache).
 files: client/package-lock.json (new), node_modules/ (gitignored), fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 8 tsconfig strict + vite.config.ts
+verify: `cd client && npx tsc --noEmit`
+result: TASK8_PASS. tsconfig strict + noUnused* + bundler resolution, include=["src"]. vite.config.ts port 5173, outDir dist.
+files: client/tsconfig.json (new), client/vite.config.ts (new), fix_plan.md, PROGRESS.md
+
