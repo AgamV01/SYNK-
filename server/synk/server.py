@@ -93,11 +93,14 @@ async def broadcast_world_state(
     the number of clients sent to (0 if throttled). Scoped to each player's zone."""
     if not throttle.ready():
         return 0
+    snapshots: dict[str, dict] = {}  # built once per zone, reused across clients
     sent = 0
     for player_id, ws in list(connections.items()):
         player = world.try_get(player_id)
         zone = player.zone if player is not None else DEFAULT_ZONE
-        snap = zone_snapshot(world, zone)
+        if zone not in snapshots:
+            snapshots[zone] = zone_snapshot(world, zone)
+        snap = snapshots[zone]
         await ws.send_json(
             {
                 "type": "world_state",

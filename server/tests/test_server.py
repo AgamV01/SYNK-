@@ -251,6 +251,27 @@ async def test_broadcast_events_dialogue_and_agent_event_zone_scoped() -> None:
     assert len(conns["p_in"].sent) == 2  # unchanged
 
 
+async def test_broadcast_builds_snapshot_once_per_zone(monkeypatch) -> None:
+    import synk.server as srv
+
+    world = World()
+    world.add(Agent(id="g", name="G", zone="tavern"))
+    world.add(Player(id="p1", zone="tavern"))
+    world.add(Player(id="p2", zone="tavern"))  # second client in the SAME zone
+    real = srv.zone_snapshot
+    calls = {"n": 0}
+
+    def counting(w, z):
+        calls["n"] += 1
+        return real(w, z)
+
+    monkeypatch.setattr(srv, "zone_snapshot", counting)
+    conns = {"p1": FakeWS(), "p2": FakeWS()}
+    sent = await srv.broadcast_world_state(world, conns, srv.Throttle(0.0))
+    assert sent == 2
+    assert calls["n"] == 1  # one snapshot reused for both same-zone clients
+
+
 async def test_broadcast_is_throttled() -> None:
     world = World()
     world.add(Player(id="p1", zone="default"))
