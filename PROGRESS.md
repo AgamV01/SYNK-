@@ -314,3 +314,8 @@ verify: `cd server && pytest tests/test_providers.py -q`
 result: 17 passed. build_prompt(personality, memories, history[(speaker,text)], utterance) -> plain-text prompt with persona line, remembered facts, conversation, and the current utterance; empty personality -> "nondescript character". LLM providers phase (54-59) complete.
 files: server/synk/brains/providers.py, server/tests/test_providers.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 60 LLMBrain.decide delegates to reactive
+verify: `cd server && pytest tests/test_llm_brain.py -q`
+result: 1 passed. LLMBrain(provider=None, reactive=ReactiveBrain()). decide() delegates to reactive (no provider touch) — proven with an ExplodingProvider that asserts if called. converse currently defers to reactive (provider path added task 61).
+files: server/synk/brains/llm.py, server/tests/test_llm_brain.py, fix_plan.md, PROGRESS.md
+
