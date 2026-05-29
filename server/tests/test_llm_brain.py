@@ -46,3 +46,12 @@ async def test_converse_uses_provider_when_present() -> None:
     assert result.text == "A stubbed line of dialogue."  # provider output, trimmed
     assert provider.last_prompt is not None
     assert "what's on tap?" in provider.last_prompt
+
+
+async def test_converse_degrades_to_reactive_without_provider() -> None:
+    brain = LLMBrain(provider=None)  # zero-key path
+    agent = Agent(id="npc1", name="Gus", personality="a gruff barkeep")
+    result = await brain.converse(agent, _percept(agent), "hello there")
+    # Falls back to the reactive templated greeting.
+    assert "Gus" in result.text
+    assert "hello there" in result.text

@@ -86,7 +86,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 ## LLM brain
 - [x] 60. LLMBrain.decide delegates to reactive, no I/O + test. verify: `cd server && pytest tests/test_llm_brain.py -q`
 - [x] 61. LLMBrain.converse via provider + test. verify: `cd server && pytest tests/test_llm_brain.py -q`
-- [ ] 62. LLMBrain degrades to reactive dialogue without provider + test. verify: `cd server && pytest tests/test_llm_brain.py -q`
+- [x] 62. LLMBrain degrades to reactive dialogue without provider + test. verify: `cd server && pytest tests/test_llm_brain.py -q`
 - [ ] 63. Conversation-context assembly for converse + test. verify: `cd server && pytest tests/test_llm_brain.py -q`
 
 ## Structured actions

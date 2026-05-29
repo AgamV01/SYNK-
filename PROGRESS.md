@@ -324,3 +324,8 @@ verify: `cd server && pytest tests/test_llm_brain.py -q`
 result: 2 passed. converse() with provider builds prompt (build_prompt) + system prompt, calls provider.generate, returns trimmed ConverseResult. Verified prompt carries the utterance.
 files: server/synk/brains/llm.py, server/tests/test_llm_brain.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 62 LLMBrain degrades without provider
+verify: `cd server && pytest tests/test_llm_brain.py -q`
+result: 3 passed. provider=None -> converse delegates to reactive templated greeting (name + echo). Zero-key dialogue confirmed. Test-only.
+files: server/tests/test_llm_brain.py, fix_plan.md, PROGRESS.md
+
