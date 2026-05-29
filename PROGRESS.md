@@ -567,3 +567,8 @@ verify: `cd client && npm run build`
 result: built OK. showSpeech(id, text, dur) adds a fading canvas bubble sprite; playEmote(id, emote, dur) sets a bounce window; animate() (per frame) expires bubbles + bounces body. NPCView tracks body/bubble/expiry/emoteUntil.
 files: client/src/demo/npc.ts, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 110 UI proximity + chat
+verify: `cd client && npm run build`
+result: built OK. DemoUI(root, {onSay}): proximity prompt div + chat input form (bottom). setNearbyAgent(id,name) toggles prompt; submit calls onSay(text) when a target is in range. currentTarget getter.
+files: client/src/demo/ui.ts, fix_plan.md, PROGRESS.md
+
