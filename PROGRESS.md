@@ -562,3 +562,8 @@ verify: `cd client && npm run build`
 result: built OK. NPCManager(scene).update(agents): creates capsule + canvas-texture name-label sprite per agent, positions/rotates from snapshot, removes vanished agents. Keyed by agent id.
 files: client/src/demo/npc.ts, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 109 speech bubbles + emote
+verify: `cd client && npm run build`
+result: built OK. showSpeech(id, text, dur) adds a fading canvas bubble sprite; playEmote(id, emote, dur) sets a bounce window; animate() (per frame) expires bubbles + bounces body. NPCView tracks body/bubble/expiry/emoteUntil.
+files: client/src/demo/npc.ts, fix_plan.md, PROGRESS.md
+

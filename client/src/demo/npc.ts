@@ -6,6 +6,10 @@ import type { AgentSnapshot } from "../sdk/types";
 
 interface NPCView {
   group: THREE.Group;
+  body: THREE.Mesh;
+  bubble: THREE.Sprite | null;
+  bubbleExpiry: number;
+  emoteUntil: number;
 }
 
 function makeLabel(text: string): THREE.Sprite {
@@ -28,6 +32,29 @@ function makeLabel(text: string): THREE.Sprite {
   );
   sprite.scale.set(2.2, 0.55, 1);
   sprite.position.set(0, 1.7, 0);
+  return sprite;
+}
+
+function makeBubble(text: string): THREE.Sprite {
+  const clipped = text.length > 48 ? `${text.slice(0, 47)}…` : text;
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 96;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.font = "26px system-ui, sans-serif";
+    ctx.fillStyle = "#14141c";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(clipped, canvas.width / 2, canvas.height / 2);
+  }
+  const sprite = new THREE.Sprite(
+    new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true }),
+  );
+  sprite.scale.set(4, 0.75, 1);
+  sprite.position.set(0, 2.4, 0);
   return sprite;
 }
 
@@ -61,8 +88,48 @@ export class NPCManager {
     group.add(body);
     group.add(makeLabel(agent.name || agent.id));
     this.scene.add(group);
-    const view: NPCView = { group };
+    const view: NPCView = {
+      group,
+      body,
+      bubble: null,
+      bubbleExpiry: 0,
+      emoteUntil: 0,
+    };
     this.views.set(agent.id, view);
     return view;
+  }
+
+  /** Show a speech bubble above an agent for `durationMs`. */
+  showSpeech(agentId: string, text: string, durationMs = 4000): void {
+    const view = this.views.get(agentId);
+    if (!view) return;
+    if (view.bubble) view.group.remove(view.bubble);
+    const bubble = makeBubble(text);
+    view.group.add(bubble);
+    view.bubble = bubble;
+    view.bubbleExpiry = performance.now() + durationMs;
+  }
+
+  /** Trigger a brief emote bounce on an agent. */
+  playEmote(agentId: string, _emote: string, durationMs = 600): void {
+    const view = this.views.get(agentId);
+    if (!view) return;
+    view.emoteUntil = performance.now() + durationMs;
+  }
+
+  /** Advance per-frame animations: expire bubbles, animate emote bounces. */
+  animate(): void {
+    const now = performance.now();
+    for (const view of this.views.values()) {
+      if (view.bubble && now > view.bubbleExpiry) {
+        view.group.remove(view.bubble);
+        view.bubble = null;
+      }
+      if (now < view.emoteUntil) {
+        view.body.position.y = Math.abs(Math.sin(now * 0.02)) * 0.3;
+      } else if (view.body.position.y !== 0) {
+        view.body.position.y = 0;
+      }
+    }
   }
 }
