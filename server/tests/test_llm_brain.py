@@ -3,6 +3,7 @@ from __future__ import annotations
 from synk.brains.base import Wander
 from synk.brains.llm import LLMBrain
 from synk.geometry import Vec3
+from synk.memory import MemoryItem, MemoryStore
 from synk.perception import Percept
 from synk.world import Agent
 
@@ -55,3 +56,15 @@ async def test_converse_degrades_to_reactive_without_provider() -> None:
     # Falls back to the reactive templated greeting.
     assert "Gus" in result.text
     assert "hello there" in result.text
+
+
+async def test_converse_assembles_memory_context_into_prompt() -> None:
+    provider = StubProvider()
+    brain = LLMBrain(provider=provider)
+    agent = Agent(id="npc1", name="Gus", personality="a gruff barkeep")
+    memory = MemoryStore()
+    memory.add(MemoryItem(text="the player gave me a gold coin", ts=1.0, salience=5.0))
+    agent.memory = memory  # duck-typed attachment
+    await brain.converse(agent, _percept(agent), "remember me?")
+    assert provider.last_prompt is not None
+    assert "the player gave me a gold coin" in provider.last_prompt

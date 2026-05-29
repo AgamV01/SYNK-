@@ -329,3 +329,9 @@ verify: `cd server && pytest tests/test_llm_brain.py -q`
 result: 3 passed. provider=None -> converse delegates to reactive templated greeting (name + echo). Zero-key dialogue confirmed. Test-only.
 files: server/tests/test_llm_brain.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 63 conversation-context assembly
+verify: `cd server && pytest tests/test_llm_brain.py -q`
+result: 4 passed. _assemble_context(agent) duck-types agent.memory (.recall()) -> memory texts and agent.conversation (.turns) -> history; fed into build_prompt. LLM brain phase (60-63) complete.
+notes: memory/conversation are duck-typed attachments (not Agent dataclass fields) so the sim/dialogue layers can wire them later without changing Brain protocol.
+files: server/synk/brains/llm.py, server/tests/test_llm_brain.py, fix_plan.md, PROGRESS.md
+

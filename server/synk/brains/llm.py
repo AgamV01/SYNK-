@@ -37,14 +37,29 @@ class LLMBrain:
     ) -> ConverseResult:
         if self.provider is None:
             return await self.reactive.converse(agent, percept, utterance)
+        memories, history = self._assemble_context(agent)
         prompt = build_prompt(
             personality=agent.personality,
-            memories=[],
-            history=[],
+            memories=memories,
+            history=history,
             utterance=utterance,
         )
         text = await self.provider.generate(prompt, system=self._system_prompt(agent))
         return ConverseResult(text=text.strip())
+
+    @staticmethod
+    def _assemble_context(agent: Agent) -> tuple[list[str], list[tuple[str, str]]]:
+        """Gather recalled memories and conversation history from the agent, if it
+        carries them. Duck-typed so memory/dialogue can be attached independently."""
+        memories: list[str] = []
+        memory = getattr(agent, "memory", None)
+        if memory is not None and hasattr(memory, "recall"):
+            memories = [item.text for item in memory.recall()]
+        history: list[tuple[str, str]] = []
+        conversation = getattr(agent, "conversation", None)
+        if conversation is not None and hasattr(conversation, "turns"):
+            history = [(turn.speaker, turn.text) for turn in conversation.turns]
+        return memories, history
 
     @staticmethod
     def _system_prompt(agent: Agent) -> str:
