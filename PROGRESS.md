@@ -238,3 +238,8 @@ verify: `cd server && pytest tests/test_reactive.py -q`
 result: 2 passed. ReactiveBrain(sense_radius, arrive_radius, restless, grid). decide() ambient: Wander if restless else Idle. Minimal templated converse() (enriched at task 48). Helper _percept in test.
 files: server/synk/brains/reactive.py, server/tests/test_reactive.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 45 approach nearby player
+verify: `cd server && pytest tests/test_reactive.py -q`
+result: 4 passed. _nearest_player() finds closest Player in percept; decide() returns MoveTo(player.position) when one is present, else ambient.
+files: server/synk/brains/reactive.py, server/tests/test_reactive.py, fix_plan.md, PROGRESS.md
+

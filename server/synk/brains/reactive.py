@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .base import Action, ConverseResult, Idle, Wander
+from ..world import Player
+from .base import Action, ConverseResult, Idle, MoveTo, Wander
 
 if TYPE_CHECKING:
     from ..pathfinding import Grid
@@ -32,7 +33,17 @@ class ReactiveBrain:
         self.restless = restless
         self.grid = grid
 
+    def _nearest_player(self, agent: Agent, percept: Percept) -> Player | None:
+        players = [e for e in percept.nearby if isinstance(e, Player)]
+        if not players:
+            return None
+        return min(players, key=lambda p: agent.position.distance_to(p.position))
+
     def decide(self, agent: Agent, percept: Percept) -> Action:
+        player = self._nearest_player(agent, percept)
+        if player is not None:
+            # A player is nearby: approach them.
+            return MoveTo(target=player.position)
         # Ambient behavior when nothing demands attention: wander, or idle if calm.
         return Wander() if self.restless else Idle()
 
