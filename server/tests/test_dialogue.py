@@ -1,6 +1,14 @@
 from __future__ import annotations
 
-from synk.dialogue import Conversation, DialogueManager, Turn
+from synk.dialogue import (
+    NEARBY_RADIUS,
+    Conversation,
+    DialogueManager,
+    Turn,
+    overhearers,
+)
+from synk.geometry import Vec3
+from synk.world import Agent, Player, World
 
 
 def test_add_turn_records_history_and_participants() -> None:
@@ -65,3 +73,20 @@ def test_multiparty_npc_conversation() -> None:
     assert set(convo.participants) == {"npc_gus", "npc_bo"}
     assert [t.speaker for t in convo.turns] == ["npc_gus", "npc_bo"]
     assert convo.turns[1].text == "aye, too quiet"
+
+
+def test_overhearers_nearby_players_excluding_addressed() -> None:
+    world = World()
+    gus = Agent(id="npc_gus", position=Vec3(0, 0, 0), zone="tavern")
+    addressed = Player(id="p1", position=Vec3(1, 0, 0), zone="tavern")
+    bystander = Player(id="p2", position=Vec3(3, 0, 0), zone="tavern")
+    far = Player(id="p3", position=Vec3(50, 0, 0), zone="tavern")
+    other_zone = Player(id="p4", position=Vec3(1, 0, 0), zone="market")
+    for e in (gus, addressed, bystander, far, other_zone):
+        world.add(e)
+    heard = {p.id for p in overhearers(world, gus, exclude_id="p1")}
+    assert heard == {"p2"}  # not addressed p1, not far p3, not other-zone p4, not self
+
+
+def test_overhearers_default_radius() -> None:
+    assert NEARBY_RADIUS == 12.0

@@ -5,6 +5,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from .world import Entity, Player, World
+
+# Players within this xz radius of a speaker overhear dialogue (protocol/messages.md).
+NEARBY_RADIUS = 12.0
+
 
 @dataclass
 class Turn:
@@ -33,6 +38,21 @@ class Conversation:
         if limit <= 0:
             return []
         return self.turns[-limit:]
+
+
+def overhearers(
+    world: World,
+    speaker: Entity,
+    radius: float = NEARBY_RADIUS,
+    exclude_id: str | None = None,
+) -> list[Player]:
+    """Players who overhear `speaker`: within `radius` (xz, same zone), excluding the
+    speaker and the directly-addressed player (`exclude_id`). These receive the
+    `dialogue` message with overheard=True."""
+    nearby = world.within_radius(
+        speaker.position, radius, zone=speaker.zone, exclude_id=speaker.id
+    )
+    return [e for e in nearby if isinstance(e, Player) and e.id != exclude_id]
 
 
 class DialogueManager:

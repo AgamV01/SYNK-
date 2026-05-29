@@ -395,3 +395,8 @@ verify: `cd server && pytest tests/test_dialogue.py -q`
 result: 7 passed. group(conv_id, participants) + route_group_message() support NPC<->NPC multi-party conversations keyed by id.
 files: server/synk/dialogue.py, server/tests/test_dialogue.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 76 overhearing
+verify: `cd server && pytest tests/test_dialogue.py -q`
+result: 9 passed. overhearers(world, speaker, radius=NEARBY_RADIUS=12.0, exclude_id) returns nearby Players (same zone, within radius) minus speaker + addressed player. Dialogue phase (72-76) complete.
+files: server/synk/dialogue.py, server/tests/test_dialogue.py, fix_plan.md, PROGRESS.md
+
