@@ -41,6 +41,17 @@ def test_normalize_zero_is_zero() -> None:
     assert Vec3(0, 0, 0).normalize() == Vec3(0, 0, 0)
 
 
+def test_distance_to_is_xz() -> None:
+    assert Vec3(0, 0, 0).distance_to(Vec3(3, 999, 4)) == 5.0
+
+
+def test_to_from_list_roundtrip() -> None:
+    v = Vec3(1.5, -2.0, 3.25)
+    assert v.to_list() == [1.5, -2.0, 3.25]
+    assert Vec3.from_list(v.to_list()) == v
+    assert Vec3.from_list((1, 2, 3)) == Vec3(1.0, 2.0, 3.0)
+
+
 def test_is_frozen() -> None:
     import dataclasses
 

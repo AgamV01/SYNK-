@@ -35,3 +35,15 @@ class Vec3:
         if n == 0.0:
             return Vec3(0.0, 0.0, 0.0)
         return Vec3(self.x / n, self.y / n, self.z / n)
+
+    def distance_to(self, other: Vec3) -> float:
+        """Ground-plane (xz) distance, ignoring height."""
+        return (self - other).length_xz()
+
+    def to_list(self) -> list[float]:
+        return [self.x, self.y, self.z]
+
+    @classmethod
+    def from_list(cls, values: list[float] | tuple[float, float, float]) -> Vec3:
+        x, y, z = values
+        return cls(float(x), float(y), float(z))

@@ -90,3 +90,8 @@ verify: `cd server && pytest tests/test_geometry.py -q`
 result: 9 passed. length (3D), length_xz (ignores y), normalize (zero->zero).
 files: server/synk/geometry.py, server/tests/test_geometry.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 16 Vec3 distance_to (xz) + to/from list
+verify: `cd server && pytest tests/test_geometry.py -q`
+result: 11 passed. distance_to = xz distance; to_list/from_list roundtrip. Geometry phase (14-16) complete.
+files: server/synk/geometry.py, server/tests/test_geometry.py, fix_plan.md, PROGRESS.md
+
