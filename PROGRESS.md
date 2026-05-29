@@ -491,3 +491,8 @@ verify: `cd server && pytest tests/test_server.py -q`
 result: 4 passed. move handler updates player.position (Vec3.from_list) + optional facing. Test sync trick: send move then a 2nd join and receive its welcome (in-order processing guarantees move applied), then assert via app.state.world.
 files: server/synk/server.py, server/tests/test_server.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 95 WS say -> dialogue
+verify: `cd server && pytest tests/test_server.py -q`
+result: 5 passed. say handler: route to DialogueManager, await brain.converse (off the SIM tick -> allowed in WS coroutine), send dialogue{agent_id,text,overheard:false}, apply any structured action. Uses sim.brains[agent] or a default ReactiveBrain.
+files: server/synk/server.py, server/tests/test_server.py, fix_plan.md, PROGRESS.md
+

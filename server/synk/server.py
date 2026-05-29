@@ -9,9 +9,12 @@ import secrets
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
+from . import actions
 from .auth import AuthManager
+from .brains.reactive import ReactiveBrain
 from .dialogue import DialogueManager
 from .geometry import Vec3
+from .perception import perceive
 from .simulation import Simulation
 from .world import Agent, Player, World
 
@@ -87,6 +90,28 @@ def create_app() -> FastAPI:
                         facing = msg.get("facing")
                         if facing is not None:
                             player.facing = float(facing)
+                elif msg.get("type") == "say" and player_id is not None:
+                    target_id = msg.get("target")
+                    text = msg.get("text", "")
+                    agent = world.try_get(target_id) if target_id else None
+                    if isinstance(agent, Agent):
+                        brain = sim.brains.get(agent.id) or ReactiveBrain()
+                        percept = perceive(world, agent)
+                        dialogue.route_player_message(player_id, agent.id, text)
+                        # Deliberative reply: off the sim tick, so awaiting is fine here.
+                        result = await brain.converse(agent, percept, text)
+                        dialogue.append_agent_reply(player_id, agent.id, result.text)
+                        await websocket.send_json(
+                            {
+                                "type": "dialogue",
+                                "v": PROTOCOL_VERSION,
+                                "agent_id": agent.id,
+                                "text": result.text,
+                                "overheard": False,
+                            }
+                        )
+                        if result.action is not None:
+                            actions.apply_action(world, agent, result.action)
         except WebSocketDisconnect:
             if player_id is not None:
                 connections.pop(player_id, None)
