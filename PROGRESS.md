@@ -557,3 +557,8 @@ verify: `cd client && npm run build`
 result: built OK. PlayerController(camera, {speed, emitIntervalMs, onMove}): capsule mesh, WASD/arrow keys, normalized movement, follow camera, throttled onMove([x,0,z], facing) at ~10Hz. facing=atan2(dz,dx) matches server convention.
 files: client/src/demo/player.ts, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 108 NPC avatars + labels
+verify: `cd client && npm run build`
+result: built OK. NPCManager(scene).update(agents): creates capsule + canvas-texture name-label sprite per agent, positions/rotates from snapshot, removes vanished agents. Keyed by agent id.
+files: client/src/demo/npc.ts, fix_plan.md, PROGRESS.md
+
