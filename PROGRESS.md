@@ -547,3 +547,8 @@ verify: `cd client && npx tsc --noEmit`
 result: TASK105_PASS. sdk/index.ts re-exports SynkClient, SynkClientOptions, and all protocol types. TS SDK phase (101-105) complete.
 files: client/src/sdk/index.ts, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 106 Three.js scene
+verify: `cd client && npm run build`
+result: built OK (tsc + vite). NEW client/index.html (vite entry: canvas#scene + #ui overlay + main.ts). scene.ts createScene(canvas, obstacles) -> {scene, camera, renderer, resize}: ground plane, grid, ambient+directional light, cylinder props for obstacles, fog. Vite bundled 4 modules (main.ts still empty; scene wired at task 114).
+files: client/index.html, client/src/demo/scene.ts, fix_plan.md, PROGRESS.md
+

@@ -148,7 +148,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 105. sdk/index.ts exports. verify: `cd client && npx tsc --noEmit`
 
 ## Three.js demo
-- [ ] 106. scene.ts ground + lighting + props/obstacles. verify: `cd client && npm run build`
+- [x] 106. scene.ts ground + lighting + props/obstacles. verify: `cd client && npm run build`
 - [ ] 107. player.ts WASD + camera, emits move. verify: `cd client && npm run build`
 - [ ] 108. npc.ts avatars from world_state + name labels. verify: `cd client && npm run build`
 - [ ] 109. npc.ts speech bubbles + emote animation. verify: `cd client && npm run build`
