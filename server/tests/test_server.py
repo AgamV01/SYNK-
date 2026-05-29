@@ -1,10 +1,17 @@
 from __future__ import annotations
 
+import pytest
 from fastapi.testclient import TestClient
 
 from synk.brains.reactive import ReactiveBrain
 from synk.geometry import Vec3
-from synk.server import Throttle, broadcast_world_state, create_app
+from synk.server import (
+    RateLimiter,
+    Throttle,
+    broadcast_world_state,
+    create_app,
+    origin_allowed,
+)
 from synk.world import Agent, Player, World
 
 
@@ -194,6 +201,51 @@ def test_ws_say_unknown_agent_returns_error() -> None:
         err = ws.receive_json()
         assert err["type"] == "error"
         assert err["code"] == "unknown_agent"
+
+
+def test_rate_limiter_burst_then_blocks_then_refills() -> None:
+    clock = FakeClock()
+    rl = RateLimiter(rate=10.0, burst=3.0, clock=clock)
+    assert rl.allow() and rl.allow() and rl.allow()  # 3-token burst
+    assert rl.allow() is False  # exhausted
+    clock.t = 0.1  # +0.1s * 10/s = 1 token
+    assert rl.allow() is True
+    assert rl.allow() is False
+
+
+def test_origin_allowed_rules() -> None:
+    assert origin_allowed(None, []) is True  # no allowlist -> open (dev)
+    assert origin_allowed("http://evil.com", []) is True
+    assert origin_allowed(None, ["http://good.com"]) is True  # non-browser, no Origin
+    assert origin_allowed("http://good.com", ["http://good.com"]) is True
+    assert origin_allowed("http://evil.com", ["http://good.com"]) is False
+
+
+def test_ws_rejects_disallowed_origin() -> None:
+    client = TestClient(create_app(allowed_origins=["http://good.com"]))
+    with pytest.raises(Exception):  # server closes (1008) before accept
+        with client.websocket_connect("/ws", headers={"origin": "http://evil.com"}) as ws:
+            ws.receive_json()
+
+
+def test_ws_allows_listed_origin() -> None:
+    client = TestClient(create_app(allowed_origins=["http://good.com"]))
+    with client.websocket_connect("/ws", headers={"origin": "http://good.com"}) as ws:
+        ws.send_json({"type": "join", "v": 1, "name": "Ada"})
+        assert ws.receive_json()["type"] == "welcome"
+
+
+def test_ws_rate_limited_error() -> None:
+    # burst of 1 so the second message in the same tick is rate-limited.
+    app = create_app(msg_rate=0.0, msg_burst=1.0)
+    client = TestClient(app)
+    with client.websocket_connect("/ws") as ws:
+        ws.send_json({"type": "join", "v": 1, "name": "Ada"})
+        assert ws.receive_json()["type"] == "welcome"  # consumes the 1 token
+        ws.send_json({"type": "move", "v": 1, "position": [1, 0, 1]})
+        err = ws.receive_json()
+        assert err["type"] == "error"
+        assert err["code"] == "rate_limited"
 
 
 def test_ws_unknown_message_returns_error() -> None:

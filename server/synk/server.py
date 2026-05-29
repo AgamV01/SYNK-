@@ -6,12 +6,14 @@ streams welcome/world_state/agent_event/dialogue/error back."""
 from __future__ import annotations
 
 import asyncio
+import os
 import secrets
 import time
 from collections.abc import AsyncIterator, Callable, Mapping
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 
 from . import actions
 from .auth import AuthManager
@@ -42,6 +44,40 @@ class Throttle:
             self._last = now
             return True
         return False
+
+
+class RateLimiter:
+    """Token-bucket rate limiter (per connection). `allow()` returns False when the
+    caller is sending faster than `rate` msgs/sec sustained (with `burst` headroom)."""
+
+    def __init__(self, rate: float, burst: float, clock: Callable[[], float] | None = None) -> None:
+        self.rate = rate
+        self.burst = burst
+        self._clock = clock or time.monotonic
+        self._tokens = float(burst)
+        self._last = self._clock()
+
+    def allow(self) -> bool:
+        now = self._clock()
+        self._tokens = min(self.burst, self._tokens + (now - self._last) * self.rate)
+        self._last = now
+        if self._tokens >= 1.0:
+            self._tokens -= 1.0
+            return True
+        return False
+
+
+def _env_allowed_origins() -> list[str]:
+    raw = os.environ.get("ALLOWED_ORIGINS", "")
+    return [o.strip() for o in raw.split(",") if o.strip()]
+
+
+def origin_allowed(origin: str | None, allowed: list[str]) -> bool:
+    """Allow if no allowlist is configured (dev), if the request has no Origin
+    (non-browser clients), or if the Origin is explicitly allowed."""
+    if not allowed or origin is None:
+        return True
+    return origin in allowed
 
 
 async def broadcast_world_state(
@@ -109,13 +145,19 @@ def populate_demo(world: World, sim: Simulation) -> None:
         sim.register(npc.id, ReactiveBrain(grid=grid, arrive_radius=1.5))
 
 
-def create_app(demo: bool = False) -> FastAPI:
+def create_app(
+    demo: bool = False,
+    allowed_origins: list[str] | None = None,
+    msg_rate: float = 50.0,
+    msg_burst: float = 100.0,
+) -> FastAPI:
     world = World()
     auth = AuthManager()
     dialogue = DialogueManager()
     sim = Simulation(world, dt=SNAPSHOT_INTERVAL)
     connections: dict[str, WebSocket] = {}
     broadcast_throttle = Throttle(0.0)
+    allowed = allowed_origins if allowed_origins is not None else _env_allowed_origins()
 
     if demo:
         populate_demo(world, sim)
@@ -140,7 +182,15 @@ def create_app(demo: bool = False) -> FastAPI:
                 task.cancel()
 
     app = FastAPI(title="SYNK", lifespan=lifespan)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed or ["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     app.state.world = world
+    app.state.allowed_origins = allowed
     app.state.auth = auth
     app.state.dialogue = dialogue
     app.state.sim = sim
@@ -152,11 +202,18 @@ def create_app(demo: bool = False) -> FastAPI:
 
     @app.websocket("/ws")
     async def ws(websocket: WebSocket) -> None:
+        if not origin_allowed(websocket.headers.get("origin"), allowed):
+            await websocket.close(code=1008)  # policy violation
+            return
         await websocket.accept()
         player_id: str | None = None
+        limiter = RateLimiter(rate=msg_rate, burst=msg_burst)
         try:
             while True:
                 msg = await websocket.receive_json()
+                if not limiter.allow():
+                    await send_error(websocket, "rate_limited", "slow down")
+                    continue
                 mtype = msg.get("type")
 
                 if mtype == "join":
