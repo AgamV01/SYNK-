@@ -33,7 +33,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 22. World tick counter + sim time + test. verify: `cd server && pytest tests/test_world.py -q`
 
 ## Perception
-- [ ] 23. Percept dataclass (nearby entities, events) + test. verify: `cd server && pytest tests/test_perception.py -q`
+- [x] 23. Percept dataclass (nearby entities, events) + test. verify: `cd server && pytest tests/test_perception.py -q`
 - [ ] 24. Build percept within sense radius + test. verify: `cd server && pytest tests/test_perception.py -q`
 - [ ] 25. Perception zone-scoping (exclude other zones) + test. verify: `cd server && pytest tests/test_perception.py -q`
 - [ ] 26. Recent perceivable events feed + test. verify: `cd server && pytest tests/test_perception.py -q`

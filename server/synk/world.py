@@ -17,6 +17,19 @@ class Entity:
 
 
 @dataclass
+class WorldEvent:
+    """Something that happened in the world, perceivable by nearby agents."""
+
+    kind: str
+    source_id: str
+    zone: str
+    tick: int
+    position: Vec3 = field(default_factory=Vec3)
+    salience: float = 0.0
+    payload: dict = field(default_factory=dict)
+
+
+@dataclass
 class Player(Entity):
     """A connected human player. The server owns the authoritative copy."""
 
