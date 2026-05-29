@@ -93,11 +93,48 @@ class AnthropicProvider:
         )
 
 
-# Registry of provider factories by name. Real providers register themselves as
-# they are defined (see OpenAIProvider). Mock is always present.
+class OpenAIProvider:
+    """OpenAI-backed provider. Guarded exactly like AnthropicProvider: lazy SDK
+    import, constructs without a key, clear error from `generate` if unavailable."""
+
+    name = "openai"
+
+    def __init__(
+        self,
+        api_key: str | None = None,
+        model: str = "gpt-4o-mini",
+        max_tokens: int = 256,
+    ) -> None:
+        self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
+        self.model = model
+        self.max_tokens = max_tokens
+
+    async def generate(self, prompt: str, *, system: str | None = None) -> str:
+        try:
+            import openai
+        except ImportError as exc:  # pragma: no cover - exercised only without the SDK
+            raise RuntimeError(
+                "OpenAIProvider requires the 'openai' package; install synk[llm]."
+            ) from exc
+        if not self.api_key:
+            raise RuntimeError("OpenAIProvider requires OPENAI_API_KEY to be set.")
+        client = openai.AsyncOpenAI(api_key=self.api_key)
+        messages: list[dict] = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+        response = await client.chat.completions.create(
+            model=self.model, max_tokens=self.max_tokens, messages=messages
+        )
+        return response.choices[0].message.content or ""
+
+
+# Registry of provider factories by name. Mock is always present; the guarded LLM
+# providers are registered too and only touch their SDKs lazily in `generate`.
 _PROVIDERS: dict[str, Callable[[], Provider]] = {
     "mock": MockProvider,
     "anthropic": AnthropicProvider,
+    "openai": OpenAIProvider,
 }
 
 

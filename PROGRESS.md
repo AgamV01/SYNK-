@@ -304,3 +304,8 @@ verify: `cd server && env -u ANTHROPIC_API_KEY -u OPENAI_API_KEY pytest tests/te
 result: 12 passed. AnthropicProvider(api_key, model="claude-sonnet-4-6", max_tokens) — lazy `import anthropic` inside generate; constructs fine without sdk/key; generate raises clear RuntimeError when sdk (this env) or key missing. Registered as "anthropic". Uses AsyncAnthropic.
 files: server/synk/brains/providers.py, server/tests/test_providers.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 58 guarded OpenAIProvider
+verify: `cd server && env -u ANTHROPIC_API_KEY -u OPENAI_API_KEY pytest tests/test_providers.py -q`
+result: 15 passed. OpenAIProvider mirrors Anthropic guard (lazy AsyncOpenAI chat.completions, model gpt-4o-mini). Registered "openai".
+files: server/synk/brains/providers.py, server/tests/test_providers.py, fix_plan.md, PROGRESS.md
+

@@ -5,6 +5,7 @@ import pytest
 from synk.brains.providers import (
     AnthropicProvider,
     MockProvider,
+    OpenAIProvider,
     Provider,
     select_provider,
 )
@@ -77,3 +78,18 @@ async def test_anthropic_generate_raises_clearly_without_sdk_or_key() -> None:
     # In this env the 'anthropic' SDK is not installed -> clear RuntimeError, no crash on import.
     with pytest.raises(RuntimeError):
         await AnthropicProvider(api_key=None).generate("hello")
+
+
+def test_openai_constructs_without_key_or_sdk() -> None:
+    p = OpenAIProvider(api_key=None)
+    assert p.name == "openai"
+    assert isinstance(p, Provider)
+
+
+def test_openai_is_selectable() -> None:
+    assert isinstance(select_provider({"SYNK_PROVIDER": "openai"}), OpenAIProvider)
+
+
+async def test_openai_generate_raises_clearly_without_sdk_or_key() -> None:
+    with pytest.raises(RuntimeError):
+        await OpenAIProvider(api_key=None).generate("hello")
