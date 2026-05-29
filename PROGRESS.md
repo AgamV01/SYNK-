@@ -380,3 +380,8 @@ verify: `cd server && pytest tests/test_dialogue.py -q`
 result: 2 passed. NEW synk/dialogue.py: Turn{speaker,text,ts}, Conversation{id,participants,turns} with add_turn (auto-tracks participants) and history(limit). Matches the .turns shape LLMBrain._assemble_context expects.
 files: server/synk/dialogue.py, server/tests/test_dialogue.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 73 DialogueManager route player->agent
+verify: `cd server && pytest tests/test_dialogue.py -q`
+result: 4 passed. DialogueManager keyed "player->agent"; start() reuses/creates, route_player_message() appends player turn. Distinct convos per pair.
+files: server/synk/dialogue.py, server/tests/test_dialogue.py, fix_plan.md, PROGRESS.md
+

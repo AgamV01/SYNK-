@@ -33,3 +33,31 @@ class Conversation:
         if limit <= 0:
             return []
         return self.turns[-limit:]
+
+
+class DialogueManager:
+    """Owns conversations, keyed by (player, agent) pair, and routes messages."""
+
+    def __init__(self) -> None:
+        self._conversations: dict[str, Conversation] = {}
+
+    @staticmethod
+    def _key(player_id: str, agent_id: str) -> str:
+        return f"{player_id}->{agent_id}"
+
+    def start(self, player_id: str, agent_id: str) -> Conversation:
+        """Get the existing conversation between player and agent, or start one."""
+        key = self._key(player_id, agent_id)
+        convo = self._conversations.get(key)
+        if convo is None:
+            convo = Conversation(id=key, participants=[player_id, agent_id])
+            self._conversations[key] = convo
+        return convo
+
+    def route_player_message(
+        self, player_id: str, agent_id: str, text: str, ts: float = 0.0
+    ) -> Conversation:
+        """Record a player utterance directed at an agent and return the conversation."""
+        convo = self.start(player_id, agent_id)
+        convo.add_turn(player_id, text, ts)
+        return convo

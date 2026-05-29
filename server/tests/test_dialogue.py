@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from synk.dialogue import Conversation, Turn
+from synk.dialogue import Conversation, DialogueManager, Turn
 
 
 def test_add_turn_records_history_and_participants() -> None:
@@ -21,3 +21,20 @@ def test_history_limit() -> None:
     assert [t.text for t in c.history(limit=2)] == ["msg 3", "msg 4"]
     assert len(c.history()) == 5
     assert c.history(limit=0) == []
+
+
+def test_manager_routes_player_message() -> None:
+    dm = DialogueManager()
+    convo = dm.route_player_message("player_1", "npc_gus", "hello", ts=1.0)
+    assert convo.participants == ["player_1", "npc_gus"]
+    assert convo.turns[-1].speaker == "player_1"
+    assert convo.turns[-1].text == "hello"
+
+
+def test_manager_reuses_conversation_per_pair() -> None:
+    dm = DialogueManager()
+    a = dm.start("player_1", "npc_gus")
+    b = dm.start("player_1", "npc_gus")
+    assert a is b
+    c = dm.start("player_1", "npc_bo")
+    assert c is not a
