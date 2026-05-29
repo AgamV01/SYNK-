@@ -40,6 +40,15 @@ class World:
 
     def __init__(self) -> None:
         self._entities: dict[str, Entity] = {}
+        self.tick: int = 0
+        self.sim_time: float = 0.0
+
+    def advance(self, dt: float) -> None:
+        """Advance the clock by one tick of `dt` seconds."""
+        if dt < 0.0:
+            raise ValueError("dt must be non-negative")
+        self.tick += 1
+        self.sim_time += dt
 
     def add(self, entity: Entity) -> None:
         if entity.id in self._entities:

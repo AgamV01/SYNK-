@@ -121,3 +121,8 @@ verify: `cd server && pytest tests/test_world.py -q`
 result: 13 passed. within_radius(center, radius, zone, exclude_id) — xz distance, boundary inclusive, never leaks across zones, optional self-exclude.
 files: server/synk/world.py, server/tests/test_world.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 22 World tick counter + sim time
+verify: `cd server && pytest tests/test_world.py -q`
+result: 16 passed. tick:int + sim_time:float start at 0; advance(dt) increments tick and accrues sim_time; rejects negative dt. World & entities phase (17-22) complete.
+files: server/synk/world.py, server/tests/test_world.py, fix_plan.md, PROGRESS.md
+

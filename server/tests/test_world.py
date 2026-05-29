@@ -109,3 +109,23 @@ def test_within_radius_excludes_self() -> None:
     hits = {e.id for e in w.within_radius(Vec3(0, 0, 0), 10.0, "tavern", exclude_id="me")}
     assert hits == {"you"}
 
+
+def test_world_clock_starts_at_zero() -> None:
+    w = World()
+    assert w.tick == 0
+    assert w.sim_time == 0.0
+
+
+def test_world_advance() -> None:
+    w = World()
+    w.advance(0.1)
+    w.advance(0.1)
+    assert w.tick == 2
+    assert w.sim_time == pytest.approx(0.2)
+
+
+def test_world_advance_rejects_negative_dt() -> None:
+    w = World()
+    with pytest.raises(ValueError):
+        w.advance(-1.0)
+

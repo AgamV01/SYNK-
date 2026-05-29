@@ -30,7 +30,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 19. World add/remove entity + test. verify: `cd server && pytest tests/test_world.py -q`
 - [x] 20. World get-by-id, list-by-zone + test. verify: `cd server && pytest tests/test_world.py -q`
 - [x] 21. World radius query (xz, zone-scoped) + test. verify: `cd server && pytest tests/test_world.py -q`
-- [ ] 22. World tick counter + sim time + test. verify: `cd server && pytest tests/test_world.py -q`
+- [x] 22. World tick counter + sim time + test. verify: `cd server && pytest tests/test_world.py -q`
 
 ## Perception
 - [ ] 23. Percept dataclass (nearby entities, events) + test. verify: `cd server && pytest tests/test_perception.py -q`
