@@ -294,3 +294,8 @@ verify: `cd server && pytest tests/test_providers.py -q`
 result: 6 passed. MockProvider (name="mock"): deterministic, offline; picks a template by sha256(prompt) and flavors it with the longest salient word from the prompt; empty -> "this".
 files: server/synk/brains/providers.py, server/tests/test_providers.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 56 provider selection by env
+verify: `cd server && env -u ANTHROPIC_API_KEY -u OPENAI_API_KEY pytest tests/test_providers.py -q`
+result: 9 passed (with keys unset). select_provider(env): SYNK_PROVIDER override > key auto-detect > mock default; unknown -> mock. Uses _PROVIDERS registry {"mock":...}; anthropic/openai register in tasks 57/58.
+files: server/synk/brains/providers.py, server/tests/test_providers.py, fix_plan.md, PROGRESS.md
+

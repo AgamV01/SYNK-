@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from synk.brains.providers import MockProvider, Provider
+from synk.brains.providers import MockProvider, Provider, select_provider
 
 
 class EchoProvider:
@@ -41,3 +41,15 @@ async def test_mock_provider_handles_empty_prompt() -> None:
     p = MockProvider()
     out = await p.generate("")
     assert "this" in out
+
+
+def test_select_defaults_to_mock_with_no_keys() -> None:
+    assert isinstance(select_provider({}), MockProvider)
+
+
+def test_select_explicit_mock() -> None:
+    assert isinstance(select_provider({"SYNK_PROVIDER": "mock"}), MockProvider)
+
+
+def test_select_unknown_choice_falls_back_to_mock() -> None:
+    assert isinstance(select_provider({"SYNK_PROVIDER": "nonsense"}), MockProvider)

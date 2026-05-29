@@ -4,6 +4,8 @@ no provider installed and no API key, using MockProvider by default."""
 from __future__ import annotations
 
 import hashlib
+import os
+from collections.abc import Callable, Mapping
 from typing import Protocol, runtime_checkable
 
 
@@ -48,3 +50,27 @@ class MockProvider:
             return "this"
         # Longest word as a cheap proxy for the most salient term.
         return max(words, key=len)
+
+
+# Registry of provider factories by name. Real providers register themselves as
+# they are defined (see AnthropicProvider/OpenAIProvider). Mock is always present.
+_PROVIDERS: dict[str, Callable[[], Provider]] = {"mock": MockProvider}
+
+
+def select_provider(env: Mapping[str, str] | None = None) -> Provider:
+    """Choose a provider from the environment.
+
+    Explicit `SYNK_PROVIDER` wins. Otherwise auto-detect from API keys. With no
+    keys and no override, fall back to MockProvider, so the package runs with zero
+    configuration. An unknown or unavailable choice also falls back to Mock."""
+    env = os.environ if env is None else env
+    choice = env.get("SYNK_PROVIDER", "").strip().lower()
+    if not choice:
+        if env.get("ANTHROPIC_API_KEY"):
+            choice = "anthropic"
+        elif env.get("OPENAI_API_KEY"):
+            choice = "openai"
+        else:
+            choice = "mock"
+    factory = _PROVIDERS.get(choice, MockProvider)
+    return factory()
