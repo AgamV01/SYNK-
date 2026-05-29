@@ -6,10 +6,14 @@ may additionally produce give_item/set_goal/handoff (see task 41)."""
 
 from __future__ import annotations
 
+import json
+import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
 from ..geometry import Vec3
+
+logger = logging.getLogger("synk.brains")
 
 if TYPE_CHECKING:
     from ..perception import Percept
@@ -140,3 +144,43 @@ def action_from_dict(data: dict) -> Action:
     except (KeyError, TypeError, ValueError) as exc:
         raise ValueError(f"malformed action object for type {kind!r}: {exc}") from exc
     raise ValueError(f"unknown action type: {kind!r}")
+
+
+def _extract_json_object(text: str) -> dict | None:
+    """Pull a JSON object out of `text`, tolerating prose or ``` fences around it."""
+    text = text.strip()
+    try:
+        obj = json.loads(text)
+        return obj if isinstance(obj, dict) else None
+    except json.JSONDecodeError:
+        pass
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end > start:
+        try:
+            obj = json.loads(text[start : end + 1])
+            return obj if isinstance(obj, dict) else None
+        except json.JSONDecodeError:
+            return None
+    return None
+
+
+def parse_llm_output(text: str) -> tuple[str, Action | None]:
+    """Safely parse an LLM reply into (speech, optional action).
+
+    Never raises. If the output is not the expected JSON, the whole text becomes
+    the spoken line and the action is None. A malformed action object is dropped
+    (logged) and degrades to speech-only — so bad model output can't crash a tick."""
+    data = _extract_json_object(text)
+    if data is None:
+        return text.strip(), None
+    speech = str(data.get("speech", "")).strip() or text.strip()
+    action: Action | None = None
+    action_obj = data.get("action")
+    if isinstance(action_obj, dict):
+        try:
+            action = action_from_dict(action_obj)
+        except ValueError:
+            logger.warning("discarding malformed structured action: %r", action_obj)
+            action = None
+    return speech, action

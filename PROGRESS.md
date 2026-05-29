@@ -340,3 +340,8 @@ verify: `cd server && pytest tests/test_structured_actions.py -q`
 result: 4 passed. ACTION_SCHEMA documents fields per type. action_from_dict(data) maps move_to/face/emote/give_item/set_goal/handoff to typed Actions; ValueError on unknown type or missing/ill-typed field. give_item/handoff use "to" key (per protocol payload).
 files: server/synk/brains/base.py, server/tests/test_structured_actions.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 65 safe parse of LLM output
+verify: `cd server && pytest tests/test_structured_actions.py -q`
+result: 7 passed. parse_llm_output(text)->(speech, action|None); never raises. _extract_json_object tolerates ``` fences/prose (first { .. last }). speech defaults to whole text if no speech field; malformed action dropped+logged (logger "synk.brains").
+files: server/synk/brains/base.py, server/tests/test_structured_actions.py, fix_plan.md, PROGRESS.md
+
