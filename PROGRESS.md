@@ -527,3 +527,8 @@ verify: `cd client && npx tsc --noEmit`
 result: TASK101_PASS. client/src/sdk/types.ts mirrors protocol: Vec3, Client/Server message interfaces + unions, AgentSnapshot/ZoneSnapshot, PROTOCOL_VERSION=1.
 files: client/src/sdk/types.ts, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 102 SDK client connect + emitter
+verify: `cd client && npx tsc --noEmit`
+result: TASK102_PASS. SynkClient: connect(url) opens WebSocket, parses messages, dispatch() fans out to typed listeners via on(type, handler) (mapped-type, no any). socket getter.
+files: client/src/sdk/client.ts, fix_plan.md, PROGRESS.md
+
