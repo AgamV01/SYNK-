@@ -55,3 +55,8 @@ verify: `cd client && npx tsc --noEmit`
 result: TASK8_PASS. tsconfig strict + noUnused* + bundler resolution, include=["src"]. vite.config.ts port 5173, outDir dist.
 files: client/tsconfig.json (new), client/vite.config.ts (new), fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 9 README skeleton
+verify: `grep -qi synk README.md`
+result: TASK9_PASS. Title + section stubs (Quickstart, Architecture, hybrid brain, Upgrading, Docs, License) with TODO markers pointing at tasks 116-118.
+files: README.md, fix_plan.md, PROGRESS.md
+

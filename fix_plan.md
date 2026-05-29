@@ -11,7 +11,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 6. client/package.json (vite+three+typescript). verify: `cd client && node -e "require('./package.json')"`
 - [x] 7. npm install. verify: `cd client && npm install && test -d node_modules`
 - [x] 8. tsconfig strict + vite.config.ts; empty src type-checks. verify: `cd client && npx tsc --noEmit`
-- [ ] 9. README skeleton (title + section stubs). verify: `grep -qi synk README.md`
+- [x] 9. README skeleton (title + section stubs). verify: `grep -qi synk README.md`
 
 ## Protocol contract
 - [ ] 10. messages.md: client->server messages documented with field shapes. verify: `grep -q '"type": "join"' protocol/messages.md`
