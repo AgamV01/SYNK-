@@ -17,6 +17,7 @@ venv/
 # Node
 node_modules/
 client/dist/
+client/dist-sdk/
 *.tsbuildinfo
 npm-debug.log*
 

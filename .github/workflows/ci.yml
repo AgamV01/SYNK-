@@ -47,6 +47,7 @@ jobs:
         run: |
           npx tsc --noEmit
           npm run build
+          npm run build:sdk
       - name: Tests
         working-directory: client
         run: npm test --if-present

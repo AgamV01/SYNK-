@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "dist-sdk",
+    "rootDir": "src/sdk",
+    "types": []
+  },
+  "include": ["src/sdk/index.ts", "src/sdk/client.ts", "src/sdk/types.ts"],
+  "exclude": ["src/**/*.test.ts"]
+}

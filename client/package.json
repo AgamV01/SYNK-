@@ -1,12 +1,31 @@
 {
-  "name": "synk-client",
+  "name": "synk-sdk",
   "version": "0.1.0",
-  "description": "SYNK TypeScript SDK + Three.js demo client.",
+  "description": "TypeScript SDK for SYNK — typed WebSocket client for LLM-driven NPC worlds.",
   "type": "module",
   "license": "MIT",
+  "main": "dist-sdk/index.js",
+  "module": "dist-sdk/index.js",
+  "types": "dist-sdk/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist-sdk/index.d.ts",
+      "import": "./dist-sdk/index.js"
+    }
+  },
+  "files": ["dist-sdk"],
+  "keywords": ["synk", "npc", "llm", "game-ai", "websocket", "sdk"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AgamV01/SYNK-.git"
+  },
+  "homepage": "https://github.com/AgamV01/SYNK-",
+  "bugs": "https://github.com/AgamV01/SYNK-/issues",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "build:sdk": "tsc -p tsconfig.sdk.json",
+    "prepublishOnly": "tsc -p tsconfig.sdk.json",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
