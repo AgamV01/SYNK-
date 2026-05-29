@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import pytest
 
-from synk.memory import MemoryItem, MemoryStore
+from synk.memory import (
+    DEFAULT_SALIENCE,
+    MemoryItem,
+    MemoryStore,
+    score_event_salience,
+)
 
 
 def test_memory_item_fields() -> None:
@@ -40,4 +45,13 @@ def test_store_evicts_least_salient_when_full() -> None:
     assert len(s) == 3
     assert "low" not in texts  # least salient evicted
     assert {"mid", "high", "new"} == texts
+
+
+def test_salience_known_kinds_ordered() -> None:
+    assert score_event_salience("gave_item") > score_event_salience("spoke")
+    assert score_event_salience("spoke") > score_event_salience("moved")
+
+
+def test_salience_unknown_kind_is_default() -> None:
+    assert score_event_salience("teleported") == DEFAULT_SALIENCE
 

@@ -186,3 +186,8 @@ verify: `cd server && pytest tests/test_memory.py -q`
 result: 5 passed. MemoryStore(capacity) rejects <=0; add() appends and, when over capacity, evicts least-salient (tie -> oldest ts). items property returns a copy.
 files: server/synk/memory.py, server/tests/test_memory.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 35 salience scoring helper
+verify: `cd server && pytest tests/test_memory.py -q`
+result: 7 passed. SALIENCE_BY_KIND table + score_event_salience(kind) with DEFAULT_SALIENCE=1.0 fallback (gave_item>spoke>moved).
+files: server/synk/memory.py, server/tests/test_memory.py, fix_plan.md, PROGRESS.md
+

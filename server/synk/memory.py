@@ -4,6 +4,23 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+# How memorable each kind of event is. Higher = more likely to be recalled and
+# to survive decay. Unknown kinds fall back to DEFAULT_SALIENCE.
+SALIENCE_BY_KIND: dict[str, float] = {
+    "gave_item": 3.0,
+    "goal_changed": 2.5,
+    "handoff": 2.0,
+    "spoke": 1.5,
+    "emoted": 1.0,
+    "moved": 0.5,
+}
+DEFAULT_SALIENCE = 1.0
+
+
+def score_event_salience(kind: str) -> float:
+    """Baseline salience for a memory formed from an event of the given kind."""
+    return SALIENCE_BY_KIND.get(kind, DEFAULT_SALIENCE)
+
 
 @dataclass
 class MemoryItem:
