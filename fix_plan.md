@@ -39,7 +39,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 26. Recent perceivable events feed + test. verify: `cd server && pytest tests/test_perception.py -q`
 
 ## Pathfinding
-- [ ] 27. Grid from obstacle list + test. verify: `cd server && pytest tests/test_pathfinding.py -q`
+- [x] 27. Grid from obstacle list + test. verify: `cd server && pytest tests/test_pathfinding.py -q`
 - [ ] 28. A* core (open/closed set, heuristic) + test. verify: `cd server && pytest tests/test_pathfinding.py -q`
 - [ ] 29. Straight path on empty grid + test. verify: `cd server && pytest tests/test_pathfinding.py -q`
 - [ ] 30. Path around an obstacle + test. verify: `cd server && pytest tests/test_pathfinding.py -q`

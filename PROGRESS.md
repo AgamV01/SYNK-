@@ -146,3 +146,8 @@ verify: `cd server && pytest tests/test_perception.py -q` (+ test_world.py regre
 result: 6 perception passed. World.emit_event / recent_events(within_ticks). perceive() now includes events filtered by zone + sense radius + recency (DEFAULT_EVENT_RECENCY_TICKS=2), excluding self-sourced. Perception phase (23-26) complete.
 files: server/synk/world.py, server/synk/perception.py, server/tests/test_perception.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 27 pathfinding Grid from obstacles
+verify: `cd server && pytest tests/test_pathfinding.py -q`
+result: 5 passed. Grid(min_x,min_z,cols,rows,cell_size) with world_to_cell/cell_center/in_bounds/is_blocked/block. Obstacle(center,radius). from_obstacles blocks cells whose center is within an obstacle radius.
+files: server/synk/pathfinding.py, server/tests/test_pathfinding.py, fix_plan.md, PROGRESS.md
+
