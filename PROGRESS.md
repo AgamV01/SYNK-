@@ -40,3 +40,8 @@ result: TASK5_PASS. Removed `readme = "../README.md"` from pyproject (setuptools
 files: server/pyproject.toml, fix_plan.md, PROGRESS.md
 notes: pytest is 9.0.3 (very new); watch pytest-asyncio compatibility when async tests start (~task 71+).
 
+## 2026-05-28 — task 6 client/package.json
+verify: `cd client && node -e "require('./package.json')"`
+result: TASK6_PASS. three ^0.160 dep; vite/typescript/@types/three dev. scripts: dev, build (tsc --noEmit && vite build), preview, typecheck.
+files: client/package.json (new), fix_plan.md, PROGRESS.md
+
