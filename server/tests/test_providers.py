@@ -1,6 +1,13 @@
 from __future__ import annotations
 
-from synk.brains.providers import MockProvider, Provider, select_provider
+import pytest
+
+from synk.brains.providers import (
+    AnthropicProvider,
+    MockProvider,
+    Provider,
+    select_provider,
+)
 
 
 class EchoProvider:
@@ -53,3 +60,20 @@ def test_select_explicit_mock() -> None:
 
 def test_select_unknown_choice_falls_back_to_mock() -> None:
     assert isinstance(select_provider({"SYNK_PROVIDER": "nonsense"}), MockProvider)
+
+
+def test_anthropic_constructs_without_key_or_sdk() -> None:
+    # Must not crash even with no key and the SDK absent.
+    p = AnthropicProvider(api_key=None)
+    assert p.name == "anthropic"
+    assert isinstance(p, Provider)
+
+
+def test_anthropic_is_selectable() -> None:
+    assert isinstance(select_provider({"SYNK_PROVIDER": "anthropic"}), AnthropicProvider)
+
+
+async def test_anthropic_generate_raises_clearly_without_sdk_or_key() -> None:
+    # In this env the 'anthropic' SDK is not installed -> clear RuntimeError, no crash on import.
+    with pytest.raises(RuntimeError):
+        await AnthropicProvider(api_key=None).generate("hello")

@@ -52,9 +52,53 @@ class MockProvider:
         return max(words, key=len)
 
 
+class AnthropicProvider:
+    """Claude-backed provider. Guarded: importing this module never requires the
+    `anthropic` SDK, and constructing the provider never needs a key. The SDK is
+    imported lazily in `generate`, which raises a clear error if it or the key is
+    missing — so the package always imports and runs (falling back to Mock)."""
+
+    name = "anthropic"
+
+    def __init__(
+        self,
+        api_key: str | None = None,
+        model: str = "claude-sonnet-4-6",
+        max_tokens: int = 256,
+    ) -> None:
+        self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+        self.model = model
+        self.max_tokens = max_tokens
+
+    async def generate(self, prompt: str, *, system: str | None = None) -> str:
+        try:
+            import anthropic
+        except ImportError as exc:  # pragma: no cover - exercised only without the SDK
+            raise RuntimeError(
+                "AnthropicProvider requires the 'anthropic' package; install synk[llm]."
+            ) from exc
+        if not self.api_key:
+            raise RuntimeError("AnthropicProvider requires ANTHROPIC_API_KEY to be set.")
+        client = anthropic.AsyncAnthropic(api_key=self.api_key)
+        kwargs: dict = {
+            "model": self.model,
+            "max_tokens": self.max_tokens,
+            "messages": [{"role": "user", "content": prompt}],
+        }
+        if system:
+            kwargs["system"] = system
+        message = await client.messages.create(**kwargs)
+        return "".join(
+            block.text for block in message.content if getattr(block, "type", None) == "text"
+        )
+
+
 # Registry of provider factories by name. Real providers register themselves as
-# they are defined (see AnthropicProvider/OpenAIProvider). Mock is always present.
-_PROVIDERS: dict[str, Callable[[], Provider]] = {"mock": MockProvider}
+# they are defined (see OpenAIProvider). Mock is always present.
+_PROVIDERS: dict[str, Callable[[], Provider]] = {
+    "mock": MockProvider,
+    "anthropic": AnthropicProvider,
+}
 
 
 def select_provider(env: Mapping[str, str] | None = None) -> Provider:
