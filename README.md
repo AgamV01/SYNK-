@@ -12,12 +12,12 @@
 
 Open-source framework for intelligent, LLM-driven NPCs in web-based 3D worlds. A server-authoritative Python runtime drives agent behavior, memory, and dialogue; a TypeScript SDK plus a Three.js demo render the world so a player can walk up, talk, and interact in real time.
 
-<!-- Demo placeholder: record the tavern demo and save it as docs/demo.gif, then uncomment. -->
-<!-- ![SYNK tavern demo](docs/demo.gif) -->
+![SYNK tavern demo](docs/demo.gif)
 
-> 🎥 **Demo (placeholder):** record a short screen capture of the tavern demo — walk up to
-> Gus with **WASD** and type to talk — save it as `docs/demo.gif`, and replace this note with
-> `![SYNK tavern demo](docs/demo.gif)`.
+> 🎥 Engine-rendered top-down view of the tavern: the player (blue) walks up to Gus, the
+> NPCs react and converge, and Gus greets back in a speech bubble — all driven by the real
+> `Simulation` + reactive brains. Regenerate with `python tools/render_demo_gif.py`.
+> _(Swap in a screen capture of the 3D Three.js client for the full effect.)_
 
 The headline idea is the **hybrid brain**: a cheap reactive layer runs every tick with no network I/O, and the expensive LLM layer fires only on meaningful events. An idle world costs near zero; adding an API key upgrades NPC dialogue to real LLM reasoning.
 
