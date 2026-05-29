@@ -44,15 +44,58 @@ cd server && python examples/headless_demo.py --selftest
 
 ## Architecture
 
-_TODO (task 117): mermaid diagram of World / Agent / Brain / Simulation / Server layers._
+The server is authoritative: clients send intents and render snapshots; all agent
+state lives server-side.
+
+```mermaid
+flowchart TD
+    Client["TS SDK + Three.js client"] -- "intents: join/move/say/interact" --> Server
+    Server["FastAPI WebSocket server"] -- "welcome / world_state / agent_event / dialogue" --> Client
+    Server --> Sim["Simulation (fixed 10 Hz tick)"]
+    Sim -- "every tick (cheap, no I/O)" --> Reactive["ReactiveBrain: perceive -> decide -> act"]
+    Reactive --> World["World: entities, zones, A* pathfinding, events"]
+    Reactive --> Memory["Memory: salience, decay, recall"]
+    Sim -. "off-tick, on events only" .-> LLM["LLMBrain.converse -> Provider"]
+    LLM -. "results re-enter as events" .-> World
+    Sim --> Persist["SQLite (async, batched)"]
+```
+
+Layers: **World** (entities, zones, xz spatial queries, tick clock, event buffer),
+**Perception** (sense-radius, zone-scoped percepts), **Pathfinding** (grid A* around
+obstacles), **Memory** (salience + decay + recall), **Brain** (reactive `decide` +
+deliberative `converse`), **Simulation** (the loop), **Server** (the protocol).
 
 ## The hybrid brain
 
-_TODO (task 117): reactive-every-tick vs. LLM-on-events, and why it keeps idle worlds cheap._
+The whole point of SYNK is that intelligence is **two layers**:
+
+- **Reactive layer** — runs *every tick*, synchronously, with zero network I/O.
+  Wander, steer toward targets, pathfind around obstacles, face entities, emote.
+  This drives continuous behavior for free.
+- **Deliberative (LLM) layer** — fires *only on meaningful events*: a player speaks to
+  the agent, a salient event crosses a threshold, or a low-frequency reflection timer.
+  It runs **off the tick** as an async task; its result is injected back into the world
+  as events on a later tick.
+
+The hard invariant: **the LLM is never called on the per-tick path and never awaited on
+the tick** (enforced by a test). So an idle world with 100 NPCs costs essentially zero —
+you only spend tokens when something worth thinking about happens.
 
 ## Upgrading to real LLM dialogue
 
-_TODO (task 117): set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` to swap MockProvider for a real provider._
+By default `SYNK_PROVIDER` is unset and no keys are present, so the **MockProvider**
+serves deterministic, offline lines. To use a real model, install the extra and set a key:
+
+```bash
+pip install -e ".[llm]"          # installs anthropic + openai SDKs
+export ANTHROPIC_API_KEY=sk-...  # or: export OPENAI_API_KEY=sk-...
+uvicorn synk.server:app --port 8000
+```
+
+Provider selection (`synk.brains.providers.select_provider`): explicit `SYNK_PROVIDER`
+(`mock`/`anthropic`/`openai`) wins; otherwise a present key auto-selects; otherwise Mock.
+NPC dialogue then comes from the LLM, with structured actions (move_to, give_item, emote,
+set_goal, handoff) parsed from its output — malformed output safely degrades to speech.
 
 ## Documentation
 

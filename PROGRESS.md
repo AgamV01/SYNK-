@@ -608,3 +608,8 @@ result: CLOSED the clone-and-run gap. server.py: create_app(demo=False default; 
 notes: did NOT run a live browser screenshot (would require creating/altering ARIA's .claude/launch.json = user WIP). Verified server-side serving + broadcast programmatically + both client builds + both Python selftests.
 files: server/synk/server.py, README.md, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 117 README architecture/hybrid/upgrade
+verify: `grep -qi mermaid README.md && grep -qi hybrid README.md` -> TASK117_PASS
+result: README gains a mermaid flowchart (client/server/sim/reactive/LLM/world/memory/persist), the hybrid-brain explanation (reactive every tick vs LLM on events + the no-LLM-on-tick invariant), and the upgrade-to-LLM steps (install [llm] + set key; select_provider precedence).
+files: README.md, fix_plan.md, PROGRESS.md
+
