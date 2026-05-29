@@ -32,3 +32,27 @@ def test_issued_tokens_are_unique() -> None:
     a = auth.issue("p1")
     b = auth.issue("p1")
     assert a.token != b.token
+
+
+def test_validate_live_token() -> None:
+    clock = FakeClock()
+    auth = AuthManager(ttl=100.0, clock=clock)
+    session = auth.issue("p1")
+    clock.t = 50.0
+    assert auth.validate(session.token) is session
+
+
+def test_validate_expired_token_returns_none() -> None:
+    clock = FakeClock()
+    auth = AuthManager(ttl=100.0, clock=clock)
+    session = auth.issue("p1")
+    clock.t = 100.0  # exactly at expiry -> expired
+    assert auth.validate(session.token) is None
+    # Evicted, so a later check is still None.
+    clock.t = 50.0
+    assert auth.validate(session.token) is None
+
+
+def test_validate_unknown_token() -> None:
+    auth = AuthManager()
+    assert auth.validate("not-a-real-token") is None

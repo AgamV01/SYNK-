@@ -34,3 +34,14 @@ class AuthManager:
         )
         self._sessions[token] = session
         return session
+
+    def validate(self, token: str) -> Session | None:
+        """Return the live Session for `token`, or None if unknown or expired.
+        Expired tokens are evicted on access."""
+        session = self._sessions.get(token)
+        if session is None:
+            return None
+        if self._clock() >= session.expires_at:
+            del self._sessions[token]
+            return None
+        return session

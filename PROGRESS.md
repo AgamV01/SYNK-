@@ -435,3 +435,8 @@ verify: `cd server && pytest tests/test_auth.py -q`
 result: 3 passed. NEW synk/auth.py: AuthManager(ttl, clock injectable for tests). Session{token,player_id,expires_at}. issue() mints secrets.token_urlsafe(24), unique, scoped to player. ttl<=0 -> ValueError.
 files: server/synk/auth.py, server/tests/test_auth.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 84 validate token + expiry
+verify: `cd server && pytest tests/test_auth.py -q`
+result: 6 passed. validate(token) returns live Session or None (unknown/expired); expired tokens evicted on access. FakeClock drives expiry deterministically.
+files: server/synk/auth.py, server/tests/test_auth.py, fix_plan.md, PROGRESS.md
+
