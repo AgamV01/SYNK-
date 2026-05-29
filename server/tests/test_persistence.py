@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import inspect
+
 from synk.geometry import Vec3
 from synk.memory import MemoryItem, MemoryStore
 from synk.persistence import Persistence
@@ -158,5 +160,35 @@ async def test_save_memory_replaces_prior(tmp_path) -> None:
         await p.flush()
         loaded = await p.load_memory("npc1")
         assert [m.text for m in loaded.items] == ["new"]  # replaced, not appended
+    finally:
+        await p.close()
+
+
+def test_tick_path_writers_are_synchronous() -> None:
+    # enqueue/save_* are the calls made on the tick: they must be plain sync functions,
+    # never coroutines, so the tick can't accidentally await disk I/O.
+    p = Persistence(":memory:")
+    assert not inspect.iscoroutinefunction(p.enqueue)
+    assert not inspect.iscoroutinefunction(p.save_world)
+    assert not inspect.iscoroutinefunction(p.save_memory)
+
+
+async def test_save_world_defers_io_until_flush() -> None:
+    world = World()
+    world.add(Agent(id="npc1", position=Vec3(0, 0, 0), zone="tavern"))
+    p = Persistence(":memory:")
+    await p.connect()
+    try:
+        p.save_world(world)  # tick-path call
+        assert p.pending > 0
+        # Nothing written to disk yet — the tick did no I/O.
+        cursor = await p.db.execute("SELECT COUNT(*) FROM entities")
+        (count,) = await cursor.fetchone()
+        assert count == 0
+        # Off-tick flush actually persists.
+        await p.flush()
+        cursor = await p.db.execute("SELECT COUNT(*) FROM entities")
+        (count,) = await cursor.fetchone()
+        assert count == 1
     finally:
         await p.close()

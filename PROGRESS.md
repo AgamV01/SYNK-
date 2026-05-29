@@ -425,3 +425,8 @@ verify: `cd server && pytest tests/test_persistence.py -q`
 result: 9 passed. save_memory(agent_id, store) = DELETE then INSERT all (replace semantics, tick-safe); load_memory(agent_id) rebuilds MemoryStore oldest-first; unknown agent -> empty store.
 files: server/synk/persistence.py, server/tests/test_persistence.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 82 persistence off tick path
+verify: `cd server && pytest tests/test_persistence.py -q`
+result: 11 passed. Asserted enqueue/save_world/save_memory are NOT coroutine functions (can't await on tick); save_world defers I/O — entities table stays empty until flush(). Persistence phase (77-82) complete.
+files: server/tests/test_persistence.py, fix_plan.md, PROGRESS.md
+
