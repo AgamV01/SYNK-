@@ -123,7 +123,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 
 ## Simulation loop
 - [x] 86. Fixed-timestep loop scaffold (start/stop, dt) + test. verify: `cd server && pytest tests/test_simulation.py -q`
-- [ ] 87. Per-tick perceive -> decide -> apply action + test. verify: `cd server && pytest tests/test_simulation.py -q`
+- [x] 87. Per-tick perceive -> decide -> apply action + test. verify: `cd server && pytest tests/test_simulation.py -q`
 - [ ] 88. Async LLM dispatch queue off-tick + test. verify: `cd server && pytest tests/test_simulation.py -q`
 - [ ] 89. Drain completed LLM results into world events + test. verify: `cd server && pytest tests/test_simulation.py -q`
 - [ ] 90. Invariant test: no LLM call on the tick path (assert). verify: `cd server && pytest tests/test_simulation.py -q`

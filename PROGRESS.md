@@ -450,3 +450,8 @@ verify: `cd server && pytest tests/test_simulation.py -q`
 result: 3 passed. NEW synk/simulation.py: Simulation(world, dt) with register(agent_id, brain), step() (advances clock for now), async run(max_ticks) loop + stop(). dt<=0 -> ValueError. step() gains perceive/decide/apply at task 87.
 files: server/synk/simulation.py, server/tests/test_simulation.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 87 per-tick perceive/decide/apply
+verify: `cd server && pytest tests/test_simulation.py -q`
+result: 5 passed. step() now perceives (sense radius from brain/.reactive), decides, applies per registered agent then advances. _apply integrates MoveTo locomotion (AGENT_SPEED=2.0/s), Face turns, Wander/Idle set label, discrete actions -> actions.apply_action (events). decide() is sync (reactive) so still no LLM on tick.
+files: server/synk/simulation.py, server/tests/test_simulation.py, fix_plan.md, PROGRESS.md
+
