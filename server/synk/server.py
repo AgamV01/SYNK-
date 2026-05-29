@@ -173,9 +173,15 @@ def create_app() -> FastAPI:
                                 "payload": {"emote": "nod", "in_response_to": kind},
                             }
                         )
+                elif msg.get("type") == "leave":
+                    break
         except WebSocketDisconnect:
+            pass
+        finally:
             if player_id is not None:
                 connections.pop(player_id, None)
+                if player_id in world:
+                    world.remove(player_id)
 
     return app
 

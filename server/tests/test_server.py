@@ -133,3 +133,27 @@ async def test_broadcast_is_throttled() -> None:
     clock.t = 0.15  # past the interval
     assert await broadcast_world_state(world, conns, throttle) == 1
     assert len(conns["p1"].sent) == 2
+
+
+def test_ws_leave_cleans_up() -> None:
+    app = create_app()
+    client = TestClient(app)
+    with client.websocket_connect("/ws") as ws:
+        ws.send_json({"type": "join", "v": 1, "name": "Ada"})
+        pid = ws.receive_json()["player_id"]
+        assert pid in app.state.world
+        ws.send_json({"type": "leave", "v": 1})
+    # After leave the server removes the player and its connection.
+    assert pid not in app.state.world
+    assert pid not in app.state.connections
+
+
+def test_ws_disconnect_cleans_up() -> None:
+    app = create_app()
+    client = TestClient(app)
+    with client.websocket_connect("/ws") as ws:
+        ws.send_json({"type": "join", "v": 1, "name": "Ada"})
+        pid = ws.receive_json()["player_id"]
+    # Abrupt close (no leave) also cleans up.
+    assert pid not in app.state.world
+    assert pid not in app.state.connections
