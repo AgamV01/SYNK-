@@ -69,3 +69,25 @@ def test_world_remove_missing_raises() -> None:
     with pytest.raises(KeyError):
         w.remove("ghost")
 
+
+def test_world_get_and_try_get() -> None:
+    w = World()
+    e = Entity(id="e1")
+    w.add(e)
+    assert w.get("e1") is e
+    assert w.try_get("e1") is e
+    assert w.try_get("ghost") is None
+    with pytest.raises(KeyError):
+        w.get("ghost")
+
+
+def test_world_by_zone() -> None:
+    w = World()
+    w.add(Entity(id="a", zone="tavern"))
+    w.add(Entity(id="b", zone="tavern"))
+    w.add(Entity(id="c", zone="market"))
+    tavern_ids = {e.id for e in w.by_zone("tavern")}
+    assert tavern_ids == {"a", "b"}
+    assert len(w.all()) == 3
+    assert w.by_zone("empty") == []
+

@@ -111,3 +111,8 @@ verify: `cd server && pytest tests/test_world.py -q`
 result: 9 passed. World holds dict by id; add (ValueError on dup), remove (returns entity, KeyError if missing), __contains__, __len__.
 files: server/synk/world.py, server/tests/test_world.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 20 World get-by-id + list-by-zone
+verify: `cd server && pytest tests/test_world.py -q`
+result: 11 passed. get (KeyError if missing), try_get (None), all(), by_zone(zone).
+files: server/synk/world.py, server/tests/test_world.py, fix_plan.md, PROGRESS.md
+

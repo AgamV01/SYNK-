@@ -57,3 +57,18 @@ class World:
 
     def __len__(self) -> int:
         return len(self._entities)
+
+    def get(self, entity_id: str) -> Entity:
+        try:
+            return self._entities[entity_id]
+        except KeyError:
+            raise KeyError(f"no entity with id {entity_id!r}") from None
+
+    def try_get(self, entity_id: str) -> Entity | None:
+        return self._entities.get(entity_id)
+
+    def all(self) -> list[Entity]:
+        return list(self._entities.values())
+
+    def by_zone(self, zone: str) -> list[Entity]:
+        return [e for e in self._entities.values() if e.zone == zone]
