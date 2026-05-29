@@ -593,3 +593,8 @@ result: main.ts wires SynkClient + scene + player + NPCManager + DemoUI + Voice;
 notes: GAP for clone-and-run — server create_app() starts with an EMPTY world and does NOT run the sim loop/broadcast. Need server-startup wiring (populate tavern + run Simulation.run + periodic broadcast_world_state) to actually show NPCs. Plan to add in task 115/116. Skipped live browser check until then (nothing to render yet); did not touch ARIA's .claude/launch.json (user WIP).
 files: client/src/demo/main.ts, client/src/sdk/client.ts, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 115 tavern example
+verify: `cd server && python examples/tavern.py --selftest`
+result: SELFTEST PASS. build_tavern() -> Tavern{world, brains, obstacles, grid}: 3 NPCs (Gus gruff barkeep / Mira curious bard / Tomas suspicious guard), 2 table/hearth obstacles, grid for pathfinding. selftest runs 80 sim ticks with a player near Gus -> Gus engages (move_to/face). build_tavern is reusable by the server (task 116).
+files: server/examples/tavern.py, fix_plan.md, PROGRESS.md
+
