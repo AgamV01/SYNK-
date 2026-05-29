@@ -80,3 +80,18 @@ def test_decay_rejects_negative_dt() -> None:
     with pytest.raises(ValueError):
         s.decay(dt=-1.0)
 
+
+def test_recall_recent_newest_first() -> None:
+    s = MemoryStore()
+    s.add(MemoryItem("old", ts=1.0))
+    s.add(MemoryItem("mid", ts=2.0))
+    s.add(MemoryItem("new", ts=3.0))
+    recent = s.recall_recent(2)
+    assert [m.text for m in recent] == ["new", "mid"]
+
+
+def test_recall_recent_nonpositive_is_empty() -> None:
+    s = MemoryStore()
+    s.add(MemoryItem("x", ts=1.0))
+    assert s.recall_recent(0) == []
+

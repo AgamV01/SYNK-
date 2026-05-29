@@ -51,7 +51,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 34. Memory store add + capacity cap + test. verify: `cd server && pytest tests/test_memory.py -q`
 - [x] 35. Salience scoring helper + test. verify: `cd server && pytest tests/test_memory.py -q`
 - [x] 36. Decay over time + test. verify: `cd server && pytest tests/test_memory.py -q`
-- [ ] 37. Recall recent N + test. verify: `cd server && pytest tests/test_memory.py -q`
+- [x] 37. Recall recent N + test. verify: `cd server && pytest tests/test_memory.py -q`
 - [ ] 38. Recall top-salient K + test. verify: `cd server && pytest tests/test_memory.py -q`
 - [ ] 39. Recall union + dedupe + ordering + test. verify: `cd server && pytest tests/test_memory.py -q`
 

@@ -197,3 +197,8 @@ result: 10 passed. MemoryStore.decay(dt, rate=0.05, floor=0.05) multiplies salie
 notes: decay is multiplicative PER CALL (not based on item.ts age) so periodic calls compose correctly; exp(-rate*dt) with large dt*rate annihilates everything — keep test params modest.
 files: server/synk/memory.py, server/tests/test_memory.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 37 recall recent N
+verify: `cd server && pytest tests/test_memory.py -q`
+result: 12 passed. recall_recent(n) returns n newest by ts (desc); n<=0 -> [].
+files: server/synk/memory.py, server/tests/test_memory.py, fix_plan.md, PROGRESS.md
+

@@ -70,3 +70,9 @@ class MemoryStore:
         for item in self._items:
             item.salience *= factor
         self._items = [m for m in self._items if m.salience >= floor]
+
+    def recall_recent(self, n: int) -> list[MemoryItem]:
+        """The `n` most recently formed memories, newest first."""
+        if n <= 0:
+            return []
+        return sorted(self._items, key=lambda m: m.ts, reverse=True)[:n]
