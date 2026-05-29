@@ -7,9 +7,13 @@ may additionally produce give_item/set_goal/handoff (see task 41)."""
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
 from ..geometry import Vec3
+
+if TYPE_CHECKING:
+    from ..perception import Percept
+    from ..world import Agent
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,3 +65,27 @@ class Handoff:
 
 
 Action = Idle | Wander | MoveTo | Face | Emote | GiveItem | SetGoal | Handoff
+
+
+@dataclass(frozen=True, slots=True)
+class ConverseResult:
+    """The output of the deliberative layer: a spoken line plus an optional action."""
+
+    text: str
+    action: Action | None = None
+
+
+@runtime_checkable
+class Brain(Protocol):
+    """An agent's decision-maker.
+
+    `decide` is the hot path: synchronous, no I/O, called every tick. `converse`
+    is off-tick: it may call an LLM and so is async; its result is injected back
+    into the world as events on a later tick. An LLM must never be awaited from
+    `decide`."""
+
+    def decide(self, agent: Agent, percept: Percept) -> Action: ...
+
+    async def converse(
+        self, agent: Agent, percept: Percept, utterance: str
+    ) -> ConverseResult: ...
