@@ -104,3 +104,25 @@ async def test_drain_results_emits_spoke_and_action_events() -> None:
     spoke = next(e for e in events if e.kind == "spoke")
     assert spoke.payload["text"] == "Take this!"
     assert sim._results == []  # drained
+
+
+class ExplodingProvider:
+    """Raises if the tick ever calls an LLM."""
+
+    name = "exploding"
+
+    async def generate(self, prompt: str, *, system: str | None = None) -> str:
+        raise AssertionError("LLM provider must never be called on the tick path")
+
+
+def test_no_llm_call_on_tick_path() -> None:
+    world = World()
+    world.add(Agent(id="npc1", position=Vec3(0, 0, 0), zone="room"))
+    world.add(Player(id="p1", position=Vec3(3, 0, 0), zone="room"))
+    sim = Simulation(world, dt=0.1)
+    sim.register("npc1", LLMBrain(provider=ExplodingProvider()))
+    # Many ticks with a player present (which drives decide()): the provider that
+    # explodes-on-call is never invoked, proving the tick path does zero LLM I/O.
+    for _ in range(50):
+        sim.step()
+    assert world.tick == 50

@@ -465,3 +465,8 @@ verify: `cd server && pytest tests/test_simulation.py tests/test_llm_brain.py -q
 result: 11 passed. drain_results() emits a "spoke" event per result + applies any structured action (its event); clears _results, prunes done tasks; step() drains first each tick. ALSO wired parse_llm_output into LLMBrain.converse -> ConverseResult(speech, action) (plain text still speech-only, task 61 test green).
 files: server/synk/simulation.py, server/synk/brains/llm.py, server/tests/test_simulation.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 90 invariant: no LLM on tick
+verify: `cd server && pytest tests/test_simulation.py -q`
+result: 8 passed. ExplodingProvider (raises in generate) registered via LLMBrain; 50 ticks with a player present never trigger it -> tick path does zero LLM I/O. Core cost invariant guarded by test.
+files: server/tests/test_simulation.py, fix_plan.md, PROGRESS.md
+
