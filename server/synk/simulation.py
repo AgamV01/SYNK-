@@ -14,10 +14,22 @@ from typing import TYPE_CHECKING
 from . import actions
 from .brains.base import ConverseResult, Face, Idle, MoveTo, Wander
 from .geometry import Vec3
-from .memory import score_event_salience
+from .memory import MemoryItem, score_event_salience
 from .perception import DEFAULT_SENSE_RADIUS, perceive
 from .reflection import reflect
 from .world import Agent, World, WorldEvent
+
+
+def describe_event(event: WorldEvent) -> str:
+    """Human/LLM-readable one-liner for a perceived event, used as a memory text."""
+    if event.kind == "spoke":
+        text = event.payload.get("text", "")
+        return f'{event.source_id} said: "{text}"'
+    if event.kind == "emoted":
+        return f"{event.source_id} emoted {event.payload.get('emote', '')}".strip()
+    if event.kind == "gave_item":
+        return f"{event.source_id} gave {event.payload.get('item', 'something')}"
+    return f"{event.source_id} {event.kind}"
 
 if TYPE_CHECKING:
     from .brains.base import Brain
@@ -37,6 +49,7 @@ class Simulation:
         reflection: ReflectionScheduler | None = None,
         reflection_provider: Provider | None = None,
         save_every: int = 50,
+        memory_decay_every: int = 100,
     ) -> None:
         if dt <= 0:
             raise ValueError("dt must be positive")
@@ -47,6 +60,7 @@ class Simulation:
         self.reflection = reflection
         self.reflection_provider = reflection_provider
         self.save_every = save_every
+        self.memory_decay_every = memory_decay_every
         self._running = False
         self._pending: list[asyncio.Task] = []
         self._results: list[tuple[str, ConverseResult]] = []
@@ -169,6 +183,34 @@ class Simulation:
         if self.persistence is not None and self.world.tick % self.save_every == 0:
             self.persistence.save_world(self.world)
 
+    def _form_memories(self, agent: Agent, percept) -> None:
+        """Record this-tick perceived events into the agent's memory (if it has one).
+        Only events emitted on the current tick are recorded, so the recency window
+        doesn't create duplicates across ticks."""
+        memory = getattr(agent, "memory", None)
+        if memory is None or not hasattr(memory, "add"):
+            return
+        for event in percept.events:
+            if event.tick == self.world.tick:
+                memory.add(
+                    MemoryItem(
+                        text=describe_event(event),
+                        ts=self.world.sim_time,
+                        salience=event.salience,
+                    )
+                )
+
+    def _maybe_decay(self) -> None:
+        """Periodically decay every agent's memory off the hot path."""
+        if self.world.tick % self.memory_decay_every != 0:
+            return
+        elapsed = self.dt * self.memory_decay_every
+        for agent_id in self.brains:
+            agent = self.world.try_get(agent_id)
+            memory = getattr(agent, "memory", None)
+            if memory is not None and hasattr(memory, "decay"):
+                memory.decay(elapsed)
+
     def step(self) -> None:
         """One tick: drain off-tick results, then perceive -> decide -> apply, then advance."""
         self.drain_results()
@@ -179,9 +221,11 @@ class Simulation:
             percept = perceive(self.world, agent, self._sense_radius(brain))
             action = brain.decide(agent, percept)
             self._apply(agent, action)
+            self._form_memories(agent, percept)
         self._maybe_reflect()
         self.world.advance(self.dt)
         self._maybe_persist()
+        self._maybe_decay()
 
     async def run(self, max_ticks: int | None = None) -> None:
         """Run the fixed-timestep loop until stopped (or `max_ticks` reached)."""

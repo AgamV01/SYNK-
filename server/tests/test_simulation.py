@@ -11,7 +11,7 @@ from synk.memory import MemoryItem, MemoryStore
 from synk.persistence import Persistence
 from synk.reflection import ReflectionScheduler
 from synk.simulation import Simulation
-from synk.world import Agent, Player, World
+from synk.world import Agent, Player, World, WorldEvent
 
 
 class SlowProvider:
@@ -146,6 +146,36 @@ async def test_persistence_hook_enqueues_snapshot() -> None:
         assert count == 1
     finally:
         await persistence.close()
+
+
+def test_step_forms_memories_from_nearby_events() -> None:
+    world = World()
+    agent = Agent(id="npc1", position=Vec3(0, 0, 0), zone="room")
+    agent.memory = MemoryStore()
+    world.add(agent)
+    sim = Simulation(world, dt=0.1)
+    sim.register("npc1", ReactiveBrain())
+    world.emit_event(
+        WorldEvent(kind="spoke", source_id="bob", zone="room", tick=0,
+                   position=Vec3(1, 0, 0), salience=1.5, payload={"text": "hi"})
+    )
+    sim.step()
+    assert len(agent.memory) >= 1
+    assert any("bob" in m.text for m in agent.memory.items)
+
+
+def test_memory_decays_periodically() -> None:
+    world = World()
+    agent = Agent(id="npc1", position=Vec3(0, 0, 0), zone="room")
+    agent.memory = MemoryStore()
+    agent.memory.add(MemoryItem("old fact", ts=0.0, salience=1.0))
+    world.add(agent)
+    sim = Simulation(world, dt=0.1, memory_decay_every=2)
+    sim.register("npc1", ReactiveBrain())
+    before = agent.memory.items[0].salience
+    sim.step()  # tick 1: no decay
+    sim.step()  # tick 2: decay fires
+    assert agent.memory.items[0].salience < before
 
 
 async def test_reflection_hook_dispatches_off_tick() -> None:
