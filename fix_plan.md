@@ -102,7 +102,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 - [x] 71. Reflection runs off-tick (async) + test. verify: `cd server && pytest tests/test_reflection.py -q`
 
 ## Dialogue
-- [ ] 72. Conversation object + history + test. verify: `cd server && pytest tests/test_dialogue.py -q`
+- [x] 72. Conversation object + history + test. verify: `cd server && pytest tests/test_dialogue.py -q`
 - [ ] 73. DialogueManager start/route player->agent + test. verify: `cd server && pytest tests/test_dialogue.py -q`
 - [ ] 74. DialogueManager append turns, fetch history + test. verify: `cd server && pytest tests/test_dialogue.py -q`
 - [ ] 75. Multi-party NPC->NPC conversation + test. verify: `cd server && pytest tests/test_dialogue.py -q`

@@ -375,3 +375,8 @@ verify: `cd server && pytest tests/test_reflection.py -q`
 result: 9 passed. Confirmed reflect is a coroutine fn; runs concurrently via asyncio.gather (off-tick); scheduler gates reflection (due()->reflect()->mark()). Reflection phase (69-71) complete.
 files: server/tests/test_reflection.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 72 Conversation + history
+verify: `cd server && pytest tests/test_dialogue.py -q`
+result: 2 passed. NEW synk/dialogue.py: Turn{speaker,text,ts}, Conversation{id,participants,turns} with add_turn (auto-tracks participants) and history(limit). Matches the .turns shape LLMBrain._assemble_context expects.
+files: server/synk/dialogue.py, server/tests/test_dialogue.py, fix_plan.md, PROGRESS.md
+
