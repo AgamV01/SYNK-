@@ -62,3 +62,18 @@ def test_astar_invalid_endpoints() -> None:
     assert astar(g, (-1, 0), (4, 0)) == []
     g.block((4, 4))
     assert astar(g, (0, 0), (4, 4)) == []  # goal blocked
+
+
+def test_astar_straight_diagonal_on_empty_grid() -> None:
+    g = Grid(0, 0, 8, 8, 1.0)
+    path = astar(g, (0, 0), (4, 4))
+    # Optimal diagonal: one step per cell, length == Chebyshev distance + 1.
+    assert len(path) == 5
+    assert path == [(0, 0), (1, 1), (2, 2), (3, 3), (4, 4)]
+
+
+def test_astar_straight_orthogonal_length() -> None:
+    g = Grid(0, 0, 8, 8, 1.0)
+    path = astar(g, (0, 0), (5, 0))
+    assert len(path) == 6  # Chebyshev distance 5 + 1
+    assert all(row == 0 for _, row in path)

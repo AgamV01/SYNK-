@@ -156,3 +156,8 @@ verify: `cd server && pytest tests/test_pathfinding.py -q`
 result: 8 passed. 8-connected A* with octile heuristic, heapq open set, closed set, no diagonal corner-cutting. Returns cell path incl endpoints, or [] for invalid/blocked endpoints. Grid.neighbors() added.
 files: server/synk/pathfinding.py, server/tests/test_pathfinding.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 29 straight path on empty grid
+verify: `cd server && pytest tests/test_pathfinding.py -q`
+result: 10 passed. Confirmed A* yields the optimal straight diagonal [(0,0)..(4,4)] and orthogonal paths of Chebyshev+1 length on empty grids. Test-only (impl already correct).
+files: server/tests/test_pathfinding.py, fix_plan.md, PROGRESS.md
+
