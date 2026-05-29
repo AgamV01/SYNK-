@@ -118,6 +118,24 @@ def test_decide_picks_highest_utility() -> None:
     assert isinstance(brain.decide(agent, _percept(agent, nearby=[player])), Face)
 
 
+def test_pursues_goal_target() -> None:
+    brain = ReactiveBrain()
+    agent = Agent(id="npc1", position=Vec3(0, 0, 0))
+    agent.goal = "go to npc_gus and ask about the coin"
+    gus = Agent(id="npc_gus", position=Vec3(8, 0, 0))
+    action = brain.decide(agent, _percept(agent, nearby=[gus]))
+    assert isinstance(action, MoveTo)
+    assert action.target == Vec3(8, 0, 0)  # no grid -> steer straight at the goal target
+
+
+def test_no_goal_pursuit_when_target_absent() -> None:
+    brain = ReactiveBrain()
+    agent = Agent(id="npc1", position=Vec3(0, 0, 0))
+    agent.goal = "go to npc_gus"
+    # Gus is not perceived -> falls back to ambient wander.
+    assert isinstance(brain.decide(agent, _percept(agent)), Wander)
+
+
 def test_emotes_on_nearby_event_when_alone() -> None:
     brain = ReactiveBrain()
     agent = Agent(id="npc1", position=Vec3(0, 0, 0))

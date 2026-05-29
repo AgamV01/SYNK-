@@ -72,7 +72,23 @@ class ReactiveBrain:
                 cands.append((3.0, Face(target_id=player.id)))
             else:
                 cands.append((2.0, self._steer_towards(agent, player.position)))
+        # Goal pursuit: if the agent's goal names a perceivable entity, steer to it.
+        goal_target = self._goal_target(agent, percept)
+        if goal_target is not None:
+            cands.append((2.5, self._steer_towards(agent, goal_target.position)))
         return cands
+
+    @staticmethod
+    def _goal_target(agent: Agent, percept: Percept):
+        """The perceivable entity referenced by the agent's goal string, if any.
+        Lets an LLM-set goal (e.g. 'go to npc_gus') drive reactive movement."""
+        goal = getattr(agent, "goal", None)
+        if not goal:
+            return None
+        for entity in percept.nearby:
+            if entity.id in goal:
+                return entity
+        return None
 
     def decide(self, agent: Agent, percept: Percept) -> Action:
         candidates = self._candidates(agent, percept)
