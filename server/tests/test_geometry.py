@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 from synk.geometry import Vec3
 
 
@@ -18,6 +20,25 @@ def test_sub() -> None:
 def test_mul_scalar_both_sides() -> None:
     assert Vec3(1, -2, 3) * 2 == Vec3(2, -4, 6)
     assert 2 * Vec3(1, -2, 3) == Vec3(2, -4, 6)
+
+
+def test_length() -> None:
+    assert Vec3(3, 4, 0).length() == 5.0
+    assert math.isclose(Vec3(1, 2, 2).length(), 3.0)
+
+
+def test_length_xz_ignores_y() -> None:
+    assert Vec3(3, 100, 4).length_xz() == 5.0
+
+
+def test_normalize_unit_length() -> None:
+    n = Vec3(0, 0, 5).normalize()
+    assert n == Vec3(0, 0, 1)
+    assert math.isclose(Vec3(1, 1, 1).normalize().length(), 1.0)
+
+
+def test_normalize_zero_is_zero() -> None:
+    assert Vec3(0, 0, 0).normalize() == Vec3(0, 0, 0)
 
 
 def test_is_frozen() -> None:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 
@@ -21,3 +22,16 @@ class Vec3:
         return Vec3(self.x * scalar, self.y * scalar, self.z * scalar)
 
     __rmul__ = __mul__
+
+    def length(self) -> float:
+        return math.sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
+
+    def length_xz(self) -> float:
+        return math.sqrt(self.x * self.x + self.z * self.z)
+
+    def normalize(self) -> Vec3:
+        """Unit vector in 3D. The zero vector normalizes to itself."""
+        n = self.length()
+        if n == 0.0:
+            return Vec3(0.0, 0.0, 0.0)
+        return Vec3(self.x / n, self.y / n, self.z / n)

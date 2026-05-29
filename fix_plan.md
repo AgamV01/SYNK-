@@ -21,7 +21,7 @@ Work top to bottom. One unchecked task per Ralph iteration, topmost whose depend
 
 ## Geometry
 - [x] 14. Vec3 dataclass + add/sub/mul + test. verify: `cd server && pytest tests/test_geometry.py -q`
-- [ ] 15. Vec3 length, length_xz, normalize + test. verify: `cd server && pytest tests/test_geometry.py -q`
+- [x] 15. Vec3 length, length_xz, normalize + test. verify: `cd server && pytest tests/test_geometry.py -q`
 - [ ] 16. Vec3 distance_to (xz), to/from list + test. verify: `cd server && pytest tests/test_geometry.py -q`
 
 ## World & entities

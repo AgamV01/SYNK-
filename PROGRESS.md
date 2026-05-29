@@ -85,3 +85,8 @@ verify: `cd server && pytest tests/test_geometry.py -q` (via `python -m pytest`,
 result: 5 passed. Vec3 frozen+slots dataclass, defaults 0; __add__/__sub__/__mul__/__rmul__.
 files: server/synk/geometry.py, server/tests/test_geometry.py, fix_plan.md, PROGRESS.md
 
+## 2026-05-28 — task 15 Vec3 length/length_xz/normalize
+verify: `cd server && pytest tests/test_geometry.py -q`
+result: 9 passed. length (3D), length_xz (ignores y), normalize (zero->zero).
+files: server/synk/geometry.py, server/tests/test_geometry.py, fix_plan.md, PROGRESS.md
+
