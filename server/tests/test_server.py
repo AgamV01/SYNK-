@@ -5,7 +5,8 @@ from fastapi.testclient import TestClient
 
 from synk.brains.reactive import ReactiveBrain
 from synk.geometry import Vec3
-from synk.memory import MemoryStore
+from synk.memory import MemoryItem, MemoryStore
+from synk.persistence import Persistence
 from synk.server import (
     RateLimiter,
     Throttle,
@@ -102,6 +103,31 @@ def test_ws_say_returns_dialogue() -> None:
         assert "Gus" in reply["text"]
         assert "hello" in reply["text"]
         assert reply["overheard"] is False
+
+
+async def test_server_loads_persisted_world_and_memory_on_boot(tmp_path) -> None:
+    db = str(tmp_path / "synk.db")
+    # Seed a DB: one agent with a memory.
+    seed = Persistence(db)
+    await seed.connect()
+    seeded_world = World()
+    seeded_world.add(Agent(id="npc_seed", name="Seed", position=Vec3(2, 0, 2), zone="tavern"))
+    seeded_world.advance(0.1)
+    seed.save_world(seeded_world)
+    mem = MemoryStore()
+    mem.add(MemoryItem("i recall the storm", ts=1.0, salience=3.0))
+    seed.save_memory("npc_seed", mem)
+    await seed.flush()
+    await seed.close()
+
+    # Boot the app against that DB — lifespan loads the world + memory + brains.
+    app = create_app(db_path=db)
+    with TestClient(app):
+        assert "npc_seed" in app.state.world
+        agent = app.state.world.get("npc_seed")
+        assert agent.name == "Seed"
+        assert "npc_seed" in app.state.sim.brains  # brain re-registered
+        assert any("storm" in m.text for m in agent.memory.items)  # memory restored
 
 
 def test_demo_npcs_use_hybrid_llm_brain() -> None:

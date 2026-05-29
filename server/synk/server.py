@@ -25,6 +25,7 @@ from .geometry import Vec3
 from .memory import MemoryItem, MemoryStore, score_event_salience
 from .pathfinding import Grid, Obstacle
 from .perception import perceive
+from .persistence import Persistence
 from .simulation import Simulation
 from .world import Agent, Player, World
 
@@ -183,27 +184,48 @@ def populate_demo(world: World, sim: Simulation) -> None:
         sim.register(npc.id, LLMBrain(provider=provider, reactive=reactive))
 
 
+async def _attach_brains_and_memory(world: World, sim: Simulation, persistence: Persistence) -> None:
+    """For agents restored from the DB, reload their memory and register a brain so the
+    simulation drives them again after a restart."""
+    provider = select_provider()
+    for entity in world.all():
+        if isinstance(entity, Agent) and entity.id not in sim.brains:
+            entity.memory = await persistence.load_memory(entity.id)
+            sim.register(entity.id, LLMBrain(provider=provider, reactive=ReactiveBrain()))
+
+
 def create_app(
     demo: bool = False,
     allowed_origins: list[str] | None = None,
     msg_rate: float = 50.0,
     msg_burst: float = 100.0,
+    db_path: str | None = None,
 ) -> FastAPI:
     world = World()
     auth = AuthManager()
     dialogue = DialogueManager()
-    sim = Simulation(world, dt=SNAPSHOT_INTERVAL)
+    db_path = db_path if db_path is not None else os.environ.get("SYNK_DB_PATH")
+    persistence = Persistence(db_path) if db_path else None
+    sim = Simulation(world, dt=SNAPSHOT_INTERVAL, persistence=persistence)
     connections: dict[str, WebSocket] = {}
     broadcast_throttle = Throttle(0.0)
     allowed = allowed_origins if allowed_origins is not None else _env_allowed_origins()
 
-    if demo:
+    # With persistence, the populate-vs-load decision happens in lifespan (after connect).
+    if demo and persistence is None:
         populate_demo(world, sim)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         tasks: list[asyncio.Task] = []
-        if demo:
+        if persistence is not None:
+            await persistence.connect()
+            loaded = await persistence.load_into(world)
+            if loaded == 0 and demo:
+                populate_demo(world, sim)
+            else:
+                await _attach_brains_and_memory(world, sim, persistence)
+        if demo or persistence is not None:
             tasks.append(asyncio.create_task(sim.run()))
 
             async def broadcaster() -> None:
@@ -220,6 +242,10 @@ def create_app(
             sim.stop()
             for task in tasks:
                 task.cancel()
+            if persistence is not None:
+                persistence.save_world(world)
+                await persistence.flush()
+                await persistence.close()
 
     app = FastAPI(title="SYNK", lifespan=lifespan)
     app.add_middleware(

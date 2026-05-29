@@ -128,14 +128,14 @@ class Persistence:
             store.add(MemoryItem(text=text, ts=ts, salience=salience))
         return store
 
-    async def load_world(self) -> World:
-        """Reconstruct a World from the database (entities + meta). The inverse of
-        save_world; used on boot so the world survives restarts."""
-        world = World()
+    async def load_into(self, world: World) -> int:
+        """Load persisted entities + meta INTO an existing world (mutating it), so
+        references held by the simulation/server stay valid. Returns the entity count."""
         cursor = await self.db.execute(
             "SELECT id, kind, name, x, y, z, facing, zone, current_action, goal FROM entities"
         )
-        for row in await cursor.fetchall():
+        rows = await cursor.fetchall()
+        for row in rows:
             id_, kind, name, x, y, z, facing, zone, current_action, goal = row
             pos = Vec3(x, y, z)
             entity: Entity
@@ -155,11 +155,19 @@ class Persistence:
                 )
             else:
                 entity = Entity(id=id_, position=pos, zone=zone)
-            world.add(entity)
+            if entity.id not in world:
+                world.add(entity)
         cursor = await self.db.execute("SELECT key, value FROM world_meta")
         meta = {key: value for key, value in await cursor.fetchall()}
         world.tick = int(meta.get("tick", 0))
         world.sim_time = float(meta.get("sim_time", 0.0))
+        return len(rows)
+
+    async def load_world(self) -> World:
+        """Reconstruct a fresh World from the database (entities + meta). The inverse
+        of save_world; used on boot so the world survives restarts."""
+        world = World()
+        await self.load_into(world)
         return world
 
     async def table_names(self) -> set[str]:

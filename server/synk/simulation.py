@@ -182,6 +182,11 @@ class Simulation:
         the actual disk write is flushed off-tick in run()."""
         if self.persistence is not None and self.world.tick % self.save_every == 0:
             self.persistence.save_world(self.world)
+            for agent_id in self.brains:
+                agent = self.world.try_get(agent_id)
+                memory = getattr(agent, "memory", None)
+                if memory is not None and hasattr(memory, "items"):
+                    self.persistence.save_memory(agent_id, memory)
 
     def _form_memories(self, agent: Agent, percept) -> None:
         """Record this-tick perceived events into the agent's memory (if it has one).

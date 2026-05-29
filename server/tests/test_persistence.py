@@ -121,6 +121,30 @@ async def test_save_then_load_world_on_boot(tmp_path) -> None:
         await booted.close()
 
 
+async def test_load_into_mutates_existing_world(tmp_path) -> None:
+    db = str(tmp_path / "into.db")
+    src = Persistence(db)
+    await src.connect()
+    w = World()
+    w.add(Agent(id="a", name="A", position=Vec3(1, 0, 1), zone="z"))
+    w.advance(0.1)
+    src.save_world(w)
+    await src.flush()
+    await src.close()
+
+    p = Persistence(db)
+    await p.connect()
+    try:
+        target = World()
+        target.add(Player(id="pre", zone="z"))  # pre-existing entity
+        n = await p.load_into(target)
+        assert n == 1
+        assert "a" in target and "pre" in target  # loaded + pre-existing both present
+        assert target.tick == 1
+    finally:
+        await p.close()
+
+
 async def test_memory_roundtrip(tmp_path) -> None:
     db_path = str(tmp_path / "mem.db")
     mem = MemoryStore()
