@@ -4,8 +4,8 @@
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)
 ![Node 18+](https://img.shields.io/badge/node-18%2B-brightgreen.svg)
 ![status: v1](https://img.shields.io/badge/status-v1-success.svg)
-![tests: 207](https://img.shields.io/badge/tests-207%20passing-success.svg)
-![coverage: 93%](https://img.shields.io/badge/coverage-93%25-success.svg)
+![tests: 209](https://img.shields.io/badge/tests-209%20passing-success.svg)
+![coverage: 94%](https://img.shields.io/badge/coverage-94%25-success.svg)
 
 > Repository: [`AgamV01/SYNK-`](https://github.com/AgamV01/SYNK-) (the project is **SYNK**; the
 > GitHub repo name carries a trailing dash, so `git clone` creates a `SYNK-` directory).
@@ -143,6 +143,20 @@ set_goal, handoff) parsed from its output — malformed output safely degrades t
 
 - [Writing a custom brain](docs/writing-a-brain.md)
 - [Adding a custom structured action](docs/custom-actions.md)
+
+## How this was built
+
+SYNK's v1 core was built **autonomously by Claude Code** with a *Ralph Wiggum loop* — the
+same short prompt re-fed to a fresh context each iteration, with all state living in files
+and git history rather than the model's memory. The build landed as **120 small,
+individually verified commits**: every task ended in one machine-checkable `verify:` command
+(a passing test, a clean type-check, a green build) and was marked done only once that
+command actually passed — holding an **≥80% coverage gate** the whole way (~94% final). The
+harness that drove it lives in the repo: `PROMPT.md`, `specs/`, `fix_plan.md`, `PROGRESS.md`.
+
+A later release-readiness pass hardened security, wired up the memory/persistence/overhearing
+layers, added proactive + NPC↔NPC deliberation, a spatial index, and CI/Docker/packaging —
+bringing the repo to **149 commits, 209 tests, 94% coverage**. See [`REVIEW.md`](REVIEW.md).
 
 ## License
 
