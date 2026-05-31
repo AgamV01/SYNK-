@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
@@ -121,6 +122,62 @@ ACTION_SCHEMA: dict[str, list[str]] = {
     "set_goal": ["goal"],      # goal: str
     "handoff": ["to", "topic"],    # to: agent id, topic: str
 }
+
+
+# Human/LLM-readable descriptions and per-field JSON-schema fragments, used to build
+# native tool-calling schemas from ACTION_SCHEMA without duplicating the field list.
+_ACTION_DESCRIPTIONS: dict[str, str] = {
+    "move_to": "Walk to a world position [x, y, z].",
+    "face": "Turn to face another entity by id.",
+    "emote": "Play a short emote/gesture (e.g. wave, nod, shrug).",
+    "give_item": "Hand an item to another agent or player.",
+    "set_goal": "Adopt a short-term goal to pursue.",
+    "handoff": "Hand the conversation to another agent on a topic.",
+}
+_FIELD_SCHEMA: dict[str, dict] = {
+    "target": {
+        "type": "array",
+        "items": {"type": "number"},
+        "minItems": 3,
+        "maxItems": 3,
+        "description": "World position [x, y, z].",
+    },
+    "target_id": {"type": "string", "description": "Id of the entity to face."},
+    "emote": {"type": "string", "description": "Emote/gesture name."},
+    "item": {"type": "string", "description": "Item name."},
+    "to": {"type": "string", "description": "Recipient agent/player id."},
+    "goal": {"type": "string", "description": "Goal description."},
+    "topic": {"type": "string", "description": "Conversation topic."},
+}
+
+
+def action_tool_schemas() -> list[dict]:
+    """Build provider-agnostic (Anthropic-style) tool definitions from ACTION_SCHEMA.
+
+    Each entry is `{"name", "description", "input_schema"}`. OpenAIProvider translates
+    these into its own function-tool format; AnthropicProvider passes them through.
+    The single source of truth for fields stays ACTION_SCHEMA."""
+    tools: list[dict] = []
+    for name, fields in ACTION_SCHEMA.items():
+        properties = {field: _FIELD_SCHEMA[field] for field in fields}
+        tools.append(
+            {
+                "name": name,
+                "description": _ACTION_DESCRIPTIONS.get(name, f"Perform the {name} action."),
+                "input_schema": {
+                    "type": "object",
+                    "properties": properties,
+                    "required": list(fields),
+                },
+            }
+        )
+    return tools
+
+
+def tool_call_to_output(name: str, tool_input: Mapping, speech: str = "") -> str:
+    """Serialize a native tool-call (name + input) into the action-JSON string that
+    `parse_llm_output` understands, so the tool-calling and text paths converge."""
+    return json.dumps({"speech": speech, "action": {"type": name, **dict(tool_input)}})
 
 
 def action_from_dict(data: dict) -> Action:

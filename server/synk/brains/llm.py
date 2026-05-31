@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .base import Action, ConverseResult, parse_llm_output
+from .base import Action, ConverseResult, action_tool_schemas, parse_llm_output
 from .providers import (
     DEFAULT_RETRIES,
     DEFAULT_TIMEOUT,
@@ -33,11 +33,15 @@ class LLMBrain:
         *,
         timeout: float | None = DEFAULT_TIMEOUT,
         retries: int = DEFAULT_RETRIES,
+        use_tools: bool = True,
     ) -> None:
         self.provider = provider
         self.reactive = reactive or ReactiveBrain()
         self.timeout = timeout
         self.retries = retries
+        # Offer native tool-calling schemas to providers that support them; providers
+        # that ignore `tools` simply fall back to JSON-in-text (parse_llm_output).
+        self.use_tools = use_tools
 
     def decide(self, agent: Agent, percept: Percept) -> Action:
         # Hot path: pure reactive, no provider, no I/O.
@@ -62,6 +66,7 @@ class LLMBrain:
             system=self._system_prompt(agent),
             timeout=self.timeout,
             retries=self.retries,
+            tools=action_tool_schemas() if self.use_tools else None,
         )
         # On provider failure/timeout (all retries exhausted) degrade to reactive dialogue.
         if text is None:

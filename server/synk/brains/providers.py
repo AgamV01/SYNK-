@@ -9,8 +9,23 @@ import os
 from collections.abc import Callable, Mapping
 from typing import Protocol, runtime_checkable
 
+from .base import tool_call_to_output
+
 # A streaming callback receives partial text chunks as they arrive.
 StreamCallback = Callable[[str], None]
+
+
+def _to_openai_tool(tool: dict) -> dict:
+    """Translate an Anthropic-style tool def ({name, description, input_schema}) into
+    the OpenAI function-tool format ({type:function, function:{...parameters}})."""
+    return {
+        "type": "function",
+        "function": {
+            "name": tool["name"],
+            "description": tool.get("description", ""),
+            "parameters": tool.get("input_schema", {"type": "object", "properties": {}}),
+        },
+    }
 
 # Defaults for the resilience wrapper (see `resilient_generate`).
 DEFAULT_TIMEOUT = 30.0
@@ -204,9 +219,14 @@ class AnthropicProvider:
                     stream_cb(text)
             return "".join(chunks)
         message = await client.messages.create(**kwargs)
-        return "".join(
+        text = "".join(
             block.text for block in message.content if getattr(block, "type", None) == "text"
         )
+        if tools:  # prefer a native tool-call; serialize to the action-JSON contract
+            for block in message.content:  # pragma: no cover - needs the live SDK
+                if getattr(block, "type", None) == "tool_use":
+                    return tool_call_to_output(block.name, dict(block.input), speech=text)
+        return text
 
 
 class OpenAIProvider:
@@ -253,8 +273,8 @@ class OpenAIProvider:
             "max_tokens": max_tokens or self.max_tokens,
             "messages": messages,
         }
-        if tools:
-            kwargs["tools"] = tools
+        if tools:  # translate Anthropic-style schemas to OpenAI function tools
+            kwargs["tools"] = [_to_openai_tool(t) for t in tools]
         if timeout is not None:
             kwargs["timeout"] = timeout
         if stream_cb is not None:  # stream partial text chunks as they arrive
@@ -267,7 +287,17 @@ class OpenAIProvider:
                     stream_cb(delta)
             return "".join(chunks)
         response = await client.chat.completions.create(**kwargs)
-        return response.choices[0].message.content or ""
+        choice = response.choices[0].message
+        tool_calls = getattr(choice, "tool_calls", None)
+        if tool_calls:  # prefer a native tool-call, serialize to the action-JSON contract
+            import json as _json  # pragma: no cover - needs the live SDK
+
+            call = tool_calls[0]  # pragma: no cover
+            args = _json.loads(call.function.arguments or "{}")  # pragma: no cover
+            return tool_call_to_output(  # pragma: no cover
+                call.function.name, args, speech=choice.content or ""
+            )
+        return choice.content or ""
 
 
 # Registry of provider factories by name. Mock is always present; the guarded LLM

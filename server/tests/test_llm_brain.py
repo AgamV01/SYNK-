@@ -56,6 +56,22 @@ class SlowProvider:
         return "too late"
 
 
+class ToolCallProvider:
+    """Simulates a provider that returns a native tool-call serialized to action-JSON
+    (as the real Anthropic/OpenAI providers do). Records the tools it was offered."""
+
+    name = "toolcall"
+
+    def __init__(self) -> None:
+        self.tools_seen: list[dict] | None = None
+
+    async def generate(self, prompt: str, *, system: str | None = None, **kwargs) -> str:
+        from synk.brains.base import tool_call_to_output
+
+        self.tools_seen = kwargs.get("tools")
+        return tool_call_to_output("emote", {"emote": "wave"}, speech="Hello there!")
+
+
 def _percept(agent: Agent) -> Percept:
     return Percept(agent_id=agent.id, position=agent.position, tick=0)
 
@@ -110,6 +126,32 @@ async def test_converse_assembles_memory_context_into_prompt() -> None:
     await brain.converse(agent, _percept(agent), "remember me?")
     assert provider.last_prompt is not None
     assert "the player gave me a gold coin" in provider.last_prompt
+
+
+async def test_converse_passes_tool_schemas_and_parses_tool_call() -> None:
+    # A3: LLMBrain offers ACTION_SCHEMA-derived tools; a returned tool-call becomes a typed Action.
+    from synk.brains.base import Emote
+
+    provider = ToolCallProvider()
+    brain = LLMBrain(provider=provider)
+    agent = Agent(id="npc1", name="Gus", personality="a gruff barkeep")
+    result = await brain.converse(agent, _percept(agent), "hi")
+    assert result.text == "Hello there!"
+    assert isinstance(result.action, Emote)
+    assert result.action.emote == "wave"
+    # The brain offered the tool schemas, including the move_to tool.
+    assert provider.tools_seen is not None
+    names = {t["name"] for t in provider.tools_seen}
+    assert {"move_to", "emote", "give_item", "handoff"} <= names
+
+
+async def test_converse_can_disable_tools() -> None:
+    # A3: use_tools=False sends no tool schemas to the provider.
+    provider = ToolCallProvider()
+    brain = LLMBrain(provider=provider, use_tools=False)
+    agent = Agent(id="npc1", name="Gus")
+    await brain.converse(agent, _percept(agent), "hi")
+    assert provider.tools_seen is None
 
 
 async def test_converse_retries_flaky_provider_then_succeeds() -> None:

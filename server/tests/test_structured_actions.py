@@ -149,3 +149,28 @@ def test_apply_unhandled_action_returns_none() -> None:
 
     world, agent = _agent_in_world()
     assert apply_action(world, agent, Idle()) is None
+
+
+def test_action_tool_schemas_cover_action_vocabulary() -> None:
+    # A3: tool schemas are derived from ACTION_SCHEMA — one tool per action with required fields.
+    from synk.brains.base import ACTION_SCHEMA, action_tool_schemas
+
+    schemas = action_tool_schemas()
+    by_name = {t["name"]: t for t in schemas}
+    assert set(by_name) == set(ACTION_SCHEMA)
+    move = by_name["move_to"]
+    assert move["input_schema"]["required"] == ["target"]
+    assert "target" in move["input_schema"]["properties"]
+    assert move["description"]  # non-empty human-readable description
+
+
+def test_tool_call_to_output_roundtrips_through_parser() -> None:
+    # A3: a serialized tool-call parses back into a typed Action with the speech preserved.
+    from synk.brains.base import tool_call_to_output
+
+    out = tool_call_to_output("give_item", {"item": "coin", "to": "player_1"}, speech="Here.")
+    speech, action = parse_llm_output(out)
+    assert speech == "Here."
+    assert isinstance(action, GiveItem)
+    assert action.item == "coin"
+    assert action.to_id == "player_1"
