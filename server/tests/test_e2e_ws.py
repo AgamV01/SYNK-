@@ -16,7 +16,7 @@ from synk.world import Agent, Player, World
 class _LineProvider:
     name = "line"
 
-    async def generate(self, prompt: str, *, system: str | None = None) -> str:
+    async def generate(self, prompt: str, *, system: str | None = None, **kwargs) -> str:
         return "Quiet night, isn't it?"
 
 

@@ -13,7 +13,7 @@ class ExplodingProvider:
 
     name = "exploding"
 
-    async def generate(self, prompt: str, *, system: str | None = None) -> str:
+    async def generate(self, prompt: str, *, system: str | None = None, **kwargs) -> str:
         raise AssertionError("provider must never be called from decide()")
 
 
@@ -23,9 +23,37 @@ class StubProvider:
     def __init__(self) -> None:
         self.last_prompt: str | None = None
 
-    async def generate(self, prompt: str, *, system: str | None = None) -> str:
+    async def generate(self, prompt: str, *, system: str | None = None, **kwargs) -> str:
         self.last_prompt = prompt
         return "  A stubbed line of dialogue.  "
+
+
+class FlakyProvider:
+    """Fails `fail_times` then succeeds — exercises the retry path."""
+
+    name = "flaky"
+
+    def __init__(self, fail_times: int) -> None:
+        self.fail_times = fail_times
+        self.calls = 0
+
+    async def generate(self, prompt: str, *, system: str | None = None, **kwargs) -> str:
+        self.calls += 1
+        if self.calls <= self.fail_times:
+            raise RuntimeError("transient provider error")
+        return "recovered dialogue"
+
+
+class SlowProvider:
+    """Sleeps longer than the timeout — exercises the timeout path."""
+
+    name = "slow"
+
+    async def generate(self, prompt: str, *, system: str | None = None, **kwargs) -> str:
+        import asyncio
+
+        await asyncio.sleep(10)
+        return "too late"
 
 
 def _percept(agent: Agent) -> Percept:
@@ -82,3 +110,34 @@ async def test_converse_assembles_memory_context_into_prompt() -> None:
     await brain.converse(agent, _percept(agent), "remember me?")
     assert provider.last_prompt is not None
     assert "the player gave me a gold coin" in provider.last_prompt
+
+
+async def test_converse_retries_flaky_provider_then_succeeds() -> None:
+    # A2: a provider that fails twice then succeeds is retried up to success.
+    provider = FlakyProvider(fail_times=2)
+    brain = LLMBrain(provider=provider, retries=3)
+    agent = Agent(id="npc1", name="Gus", personality="a gruff barkeep")
+    result = await brain.converse(agent, _percept(agent), "hi")
+    assert result.text == "recovered dialogue"
+    assert provider.calls == 3  # 2 failures + 1 success
+
+
+async def test_converse_falls_back_to_reactive_when_retries_exhausted() -> None:
+    # A2: a provider that always fails exhausts retries and degrades to reactive.
+    provider = FlakyProvider(fail_times=99)
+    brain = LLMBrain(provider=provider, retries=2)
+    agent = Agent(id="npc1", name="Gus", personality="a gruff barkeep")
+    result = await brain.converse(agent, _percept(agent), "hello there")
+    assert "Gus" in result.text  # reactive templated greeting
+    assert "hello there" in result.text
+    assert provider.calls == 3  # initial + 2 retries
+
+
+async def test_converse_times_out_then_falls_back_to_reactive() -> None:
+    # A2: a slow provider times out per attempt and degrades to reactive dialogue.
+    provider = SlowProvider()
+    brain = LLMBrain(provider=provider, timeout=0.05, retries=1)
+    agent = Agent(id="npc1", name="Gus", personality="a gruff barkeep")
+    result = await brain.converse(agent, _percept(agent), "hello there")
+    assert "Gus" in result.text
+    assert "hello there" in result.text

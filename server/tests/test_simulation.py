@@ -18,7 +18,7 @@ from synk.world import Agent, Player, World, WorldEvent
 class SlowProvider:
     name = "slow"
 
-    async def generate(self, prompt: str, *, system: str | None = None) -> str:
+    async def generate(self, prompt: str, *, system: str | None = None, **kwargs) -> str:
         await asyncio.sleep(0.02)
         return "a considered reply"
 
@@ -160,7 +160,7 @@ async def test_autonomous_npc_to_npc_conversation() -> None:
 class ActionJSONProvider:
     name = "json"
 
-    async def generate(self, prompt: str, *, system: str | None = None) -> str:
+    async def generate(self, prompt: str, *, system: str | None = None, **kwargs) -> str:
         return '{"speech": "Take this!", "action": {"type": "emote", "emote": "wave"}}'
 
 
@@ -184,7 +184,7 @@ class ExplodingProvider:
 
     name = "exploding"
 
-    async def generate(self, prompt: str, *, system: str | None = None) -> str:
+    async def generate(self, prompt: str, *, system: str | None = None, **kwargs) -> str:
         raise AssertionError("LLM provider must never be called on the tick path")
 
 

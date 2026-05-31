@@ -3,6 +3,7 @@ no provider installed and no API key, using MockProvider by default."""
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import os
 from collections.abc import Callable, Mapping
@@ -10,6 +11,11 @@ from typing import Protocol, runtime_checkable
 
 # A streaming callback receives partial text chunks as they arrive.
 StreamCallback = Callable[[str], None]
+
+# Defaults for the resilience wrapper (see `resilient_generate`).
+DEFAULT_TIMEOUT = 30.0
+DEFAULT_RETRIES = 2
+DEFAULT_BASE_DELAY = 0.1
 
 
 @runtime_checkable
@@ -60,6 +66,43 @@ def build_prompt(
     lines.append(f'\nThe player says: "{utterance}"')
     lines.append("Your reply:")
     return "\n".join(lines)
+
+
+async def resilient_generate(
+    provider: Provider,
+    prompt: str,
+    *,
+    system: str | None = None,
+    max_tokens: int | None = None,
+    timeout: float | None = DEFAULT_TIMEOUT,
+    tools: list[dict] | None = None,
+    stream_cb: StreamCallback | None = None,
+    retries: int = DEFAULT_RETRIES,
+    base_delay: float = DEFAULT_BASE_DELAY,
+) -> str | None:
+    """Call `provider.generate` with a per-attempt timeout and bounded exponential
+    backoff. Returns the generated text, or `None` if every attempt fails — so the
+    caller (LLMBrain.converse) can degrade to reactive dialogue instead of raising.
+    Never called on the sim tick; safe for any Provider, including Mock."""
+    attempt = 0
+    while True:
+        try:
+            coro = provider.generate(
+                prompt,
+                system=system,
+                max_tokens=max_tokens,
+                timeout=timeout,
+                tools=tools,
+                stream_cb=stream_cb,
+            )
+            if timeout is not None:
+                return await asyncio.wait_for(coro, timeout=timeout)
+            return await coro
+        except Exception:  # noqa: BLE001 - any provider failure is retryable
+            attempt += 1
+            if attempt > retries:
+                return None
+            await asyncio.sleep(base_delay * (2 ** (attempt - 1)))
 
 
 _MOCK_TEMPLATES = (

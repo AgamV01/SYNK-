@@ -11,7 +11,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .base import Action, ConverseResult, parse_llm_output
-from .providers import Provider, build_prompt
+from .providers import (
+    DEFAULT_RETRIES,
+    DEFAULT_TIMEOUT,
+    Provider,
+    build_prompt,
+    resilient_generate,
+)
 from .reactive import ReactiveBrain
 
 if TYPE_CHECKING:
@@ -24,9 +30,14 @@ class LLMBrain:
         self,
         provider: Provider | None = None,
         reactive: ReactiveBrain | None = None,
+        *,
+        timeout: float | None = DEFAULT_TIMEOUT,
+        retries: int = DEFAULT_RETRIES,
     ) -> None:
         self.provider = provider
         self.reactive = reactive or ReactiveBrain()
+        self.timeout = timeout
+        self.retries = retries
 
     def decide(self, agent: Agent, percept: Percept) -> Action:
         # Hot path: pure reactive, no provider, no I/O.
@@ -45,7 +56,16 @@ class LLMBrain:
             utterance=utterance,
             relationships=relationships,
         )
-        text = await self.provider.generate(prompt, system=self._system_prompt(agent))
+        text = await resilient_generate(
+            self.provider,
+            prompt,
+            system=self._system_prompt(agent),
+            timeout=self.timeout,
+            retries=self.retries,
+        )
+        # On provider failure/timeout (all retries exhausted) degrade to reactive dialogue.
+        if text is None:
+            return await self.reactive.converse(agent, percept, utterance)
         # Parse a possible structured action; malformed output degrades to speech-only.
         speech, action = parse_llm_output(text)
         return ConverseResult(text=speech, action=action)
