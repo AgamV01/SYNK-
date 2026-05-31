@@ -64,6 +64,36 @@ def test_build_world_seeds_relationships_and_goal() -> None:
     assert "b" in desc
 
 
+def test_tavern_has_two_zones_and_portals() -> None:
+    # B6: the tavern world declares a connected market zone reachable via portals.
+    loaded = load_world_file(TAVERN)
+    assert set(loaded.world.zones) == {"tavern", "market"}
+    assert loaded.world.neighbors("tavern") == {"market"}
+    assert loaded.world.neighbors("market") == {"tavern"}
+
+
+def test_e2e_agent_migrates_between_zones() -> None:
+    # B6 (end-to-end): an NPC that walks onto the tavern->market portal migrates and
+    # then appears in the market zone, driven by the real loader + Simulation.
+    from synk.brains.reactive import ReactiveBrain
+    from synk.geometry import Vec3
+    from synk.simulation import Simulation
+    from synk.world import Agent
+
+    loaded = load_world_file(TAVERN)
+    world = loaded.world
+    gus = world.try_get("npc_gus")
+    assert isinstance(gus, Agent)
+    gus.position = Vec3(12, 0, 0)  # standing on the tavern->market portal
+    sim = Simulation(world, dt=0.1, day_length=loaded.day_length)
+    sim.register("npc_gus", ReactiveBrain())
+    sim.step()
+    assert gus.zone == "market"
+    assert gus.position == Vec3(-10, 0, 0)
+    assert any(e.id == "npc_gus" for e in world.by_zone("market"))
+    assert all(e.id != "npc_gus" for e in world.by_zone("tavern"))
+
+
 def test_unknown_brain_kind_raises() -> None:
     with pytest.raises(ValueError):
         build_world({"agents": [{"id": "a", "brain": "telepathy"}]})

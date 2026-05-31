@@ -4,6 +4,26 @@
 name: tavern
 day_length: 60.0
 
+# Two connected zones. A doorway on the east wall of the tavern leads to the market
+# square and back; an NPC (or player) that steps onto a portal migrates across.
+zones:
+  - id: tavern
+    name: The Tavern
+  - id: market
+    name: Market Square
+
+portals:
+  - from: tavern
+    to: market
+    position: [12, 0, 0]
+    target: [-10, 0, 0]
+    radius: 1.5
+  - from: market
+    to: tavern
+    position: [-10, 0, 0]
+    target: [12, 0, 0]
+    radius: 1.5
+
 grid:
   min_x: -15
   min_z: -15

@@ -19,7 +19,7 @@ from .memory import MemoryStore
 from .pathfinding import Grid, Obstacle
 from .relationships import Relationships
 from .schedule import DEFAULT_DAY_LENGTH, Schedule
-from .world import Agent, World
+from .world import Agent, Portal, World, Zone
 
 # Recognized brain kinds a world file may request per agent.
 BRAIN_KINDS = ("llm", "reactive")
@@ -63,9 +63,26 @@ def _grid_from(data: Mapping, obstacles: list[Obstacle]) -> Grid | None:
     )
 
 
+def _add_zones_and_portals(world: World, data: Mapping) -> None:
+    """Register declared zones and portals into the world's zone graph."""
+    for zone in data.get("zones", []) or []:
+        world.add_zone(Zone(id=zone["id"], name=zone.get("name", "")))
+    for portal in data.get("portals", []) or []:
+        world.add_portal(
+            Portal(
+                from_zone=portal["from"],
+                to_zone=portal["to"],
+                position=Vec3.from_list(portal["position"]),
+                target=Vec3.from_list(portal["target"]),
+                radius=float(portal.get("radius", 1.5)),
+            )
+        )
+
+
 def build_world(data: Mapping) -> LoadedWorld:
     """Build a LoadedWorld from an already-parsed mapping (see `load_world_file`)."""
     world = World()
+    _add_zones_and_portals(world, data)
     obstacles = _obstacles_from(data)
     grid = _grid_from(data, obstacles)
     schedules: dict[str, Schedule] = {}
