@@ -3,6 +3,7 @@
 import { SynkClient } from "../sdk";
 import type { AgentSnapshot } from "../sdk/types";
 import { OrbitFollowCamera } from "./camera";
+import { Minimap } from "./minimap";
 import { NPCManager } from "./npc";
 import { PlayerController } from "./player";
 import { createScene, type Obstacle } from "./scene";
@@ -28,6 +29,7 @@ const { scene, camera, renderer, resize, applyPhase } = createScene(canvas, obst
 window.addEventListener("resize", resize);
 
 const npcs = new NPCManager(scene);
+const minimap = new Minimap(uiRoot, obstacles);
 const voice = new Voice({ enabled: false }); // TTS/STT off by default
 const client = new SynkClient();
 
@@ -134,6 +136,7 @@ client.on("world_state", (msg) => {
   updateProximity(msg.agents);
   applyPhase(msg.phase);
   ui.setHud({ phase: msg.phase, worldTime: msg.world_time, ...lastMetrics });
+  minimap.render(msg.agents, { x: player.mesh.position.x, z: player.mesh.position.z });
 });
 
 client.on("dialogue", (msg) => {
