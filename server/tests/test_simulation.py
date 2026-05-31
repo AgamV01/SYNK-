@@ -179,6 +179,37 @@ async def test_drain_results_emits_spoke_and_action_events() -> None:
     assert sim._results == []  # drained
 
 
+async def test_global_token_budget_blocks_dispatch() -> None:
+    # A4: once the global budget is exhausted, dispatch_converse returns None and skips.
+    world = World()
+    world.add(Agent(id="npc1", name="Gus", position=Vec3(0, 0, 0), zone="room"))
+    sim = Simulation(world, dt=0.001, token_budget=5)
+    sim.register("npc1", LLMBrain(provider=ActionJSONProvider()))
+    # "hello there friends" -> 19 chars // 4 = 4 tokens, fits in budget=5.
+    task = sim.dispatch_converse("npc1", "hello there friends")
+    assert task is not None
+    await task
+    assert sim.metrics()["tokens_used"] == 4
+    # A second call would push over 5 -> skipped.
+    assert sim.dispatch_converse("npc1", "another long utterance here") is None
+    assert sim.metrics()["budget_skips"] == 1
+    assert sim.metrics()["llm_calls"] == 1  # the skipped call didn't count
+
+
+async def test_per_agent_token_budget_blocks_dispatch() -> None:
+    # A4: a duck-typed agent.token_budget caps that agent independently.
+    world = World()
+    agent = Agent(id="npc1", name="Gus", position=Vec3(0, 0, 0), zone="room")
+    agent.token_budget = 2  # tiny per-agent cap
+    world.add(agent)
+    sim = Simulation(world, dt=0.001)
+    sim.register("npc1", LLMBrain(provider=ActionJSONProvider()))
+    # 12 chars // 4 = 3 tokens > 2 -> skipped immediately.
+    assert sim.dispatch_converse("npc1", "hello world!") is None
+    assert sim.metrics()["budget_skips"] == 1
+    assert sim.metrics()["tokens_used"] == 0
+
+
 class ExplodingProvider:
     """Raises if the tick ever calls an LLM."""
 

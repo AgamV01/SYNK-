@@ -44,6 +44,12 @@ if TYPE_CHECKING:
 AGENT_SPEED = 2.0  # world units per second
 
 
+def estimate_tokens(text: str) -> int:
+    """Cheap, deterministic token estimate (~4 chars/token) for budget accounting.
+    Avoids depending on any tokenizer so it works offline with MockProvider."""
+    return max(1, len(text) // 4)
+
+
 class NpcConversation:
     """Drives a bounded, alternating conversation between two LLM NPCs. Each turn is an
     off-tick `dispatch_converse`; the spoken line is recorded into a group conversation
@@ -100,15 +106,19 @@ class NpcConversation:
         speaker.conversation = self.sim.dialogue.group(self.convo_id)  # context for the LLM
         listener = self.sim.world.try_get(listener_id)
         listener_name = getattr(listener, "name", listener_id)
+        task = self.sim.dispatch_converse(
+            speaker_id, f"Continue your conversation with {listener_name}. Say one short line."
+        )
+        if task is None:  # token budget exhausted — end the conversation gracefully
+            self.turns_remaining = 0
+            return
         self.last_turn = now
         self.turns_remaining -= 1
         self.next_speaker = listener_id
         self._speaker = speaker_id
         self.in_flight = True
         self.sim._metrics["npc_turns"] += 1
-        self._task = self.sim.dispatch_converse(
-            speaker_id, f"Continue your conversation with {listener_name}. Say one short line."
-        )
+        self._task = task
 
 
 class Simulation:
@@ -129,6 +139,7 @@ class Simulation:
         npc_chat_interval: float = 1.5,
         npc_chat_cooldown: float = 15.0,
         day_length: float = DEFAULT_DAY_LENGTH,
+        token_budget: int | None = None,
     ) -> None:
         if dt <= 0:
             raise ValueError("dt must be positive")
@@ -153,8 +164,19 @@ class Simulation:
         self.day_length = day_length
         self.schedules: dict[str, Schedule] = {}
         self._agent_phase: dict[str, str] = {}
+        # Token budgets: an optional global cap plus duck-typed per-agent caps
+        # (agent.token_budget). Off-tick deliberation skips when a cap is exhausted.
+        self.token_budget = token_budget
+        self._agent_tokens: dict[str, int] = {}
         # Cost telemetry — the data behind the hybrid-brain claim.
-        self._metrics = {"llm_calls": 0, "deliberations": 0, "reflections": 0, "npc_turns": 0}
+        self._metrics = {
+            "llm_calls": 0,
+            "deliberations": 0,
+            "reflections": 0,
+            "npc_turns": 0,
+            "tokens_used": 0,
+            "budget_skips": 0,
+        }
         self._running = False
         self._pending: list[asyncio.Task] = []
         self._results: list[tuple[str, ConverseResult]] = []
@@ -209,17 +231,34 @@ class Simulation:
     def pending_count(self) -> int:
         return len(self._pending)
 
-    def dispatch_converse(self, agent_id: str, utterance: str) -> asyncio.Task:
+    def _within_budget(self, agent: Agent, cost: int) -> bool:
+        """True if dispatching a `cost`-token call keeps both the global and the
+        agent's own (duck-typed `token_budget`) caps satisfied."""
+        if self.token_budget is not None and self._metrics["tokens_used"] + cost > self.token_budget:
+            return False
+        cap = getattr(agent, "token_budget", None)
+        if cap is not None and self._agent_tokens.get(agent.id, 0) + cost > cap:
+            return False
+        return True
+
+    def dispatch_converse(self, agent_id: str, utterance: str) -> asyncio.Task | None:
         """Kick off an agent's deliberative reply as an off-tick async task.
 
         Returns immediately with the Task — the tick loop never awaits it. The
-        result lands in `_results` for the loop to drain into world events later."""
+        result lands in `_results` for the loop to drain into world events later.
+        Returns None (and records a budget skip) when a token budget is exhausted."""
         brain = self.brains[agent_id]
         agent = self.world.try_get(agent_id)
         if not isinstance(agent, Agent):
             raise KeyError(f"no agent {agent_id!r} to converse")
+        cost = estimate_tokens(utterance)
+        if not self._within_budget(agent, cost):
+            self._metrics["budget_skips"] += 1
+            return None
         percept = perceive(self.world, agent, self._sense_radius(brain))
         self._metrics["llm_calls"] += 1
+        self._metrics["tokens_used"] += cost
+        self._agent_tokens[agent_id] = self._agent_tokens.get(agent_id, 0) + cost
 
         async def _runner() -> ConverseResult:
             result = await brain.converse(agent, percept, utterance)
