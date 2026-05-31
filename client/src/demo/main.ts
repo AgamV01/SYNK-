@@ -23,7 +23,7 @@ const obstacles: Obstacle[] = [
 const canvas = document.getElementById("scene") as HTMLCanvasElement;
 const uiRoot = document.getElementById("ui") as HTMLElement;
 
-const { scene, camera, renderer, resize } = createScene(canvas, obstacles);
+const { scene, camera, renderer, resize, applyPhase } = createScene(canvas, obstacles);
 window.addEventListener("resize", resize);
 
 const npcs = new NPCManager(scene);
@@ -101,6 +101,7 @@ client.onOpen(() => client.join(PLAYER_NAME, ZONE));
 client.on("welcome", (msg) => {
   for (const a of msg.snapshot.agents) agentNames.set(a.id, a.name);
   npcs.update(msg.snapshot.agents);
+  applyPhase(msg.snapshot.phase);
 });
 
 client.on("world_state", (msg) => {
@@ -110,6 +111,7 @@ client.on("world_state", (msg) => {
   }
   npcs.update(msg.agents);
   updateProximity(msg.agents);
+  applyPhase(msg.phase);
 });
 
 client.on("dialogue", (msg) => {
