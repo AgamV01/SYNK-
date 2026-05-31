@@ -84,6 +84,9 @@ docker compose up --build
 Server on <http://localhost:8000>, demo client on <http://localhost:8080>. The world and
 NPC memories persist to a named volume, so they survive restarts.
 
+To deploy a public instance (server on Render/Fly, static client on Cloudflare Pages), see
+[DEPLOY.md](DEPLOY.md).
+
 ## Architecture
 
 The server is authoritative: clients send intents and render snapshots; all agent

@@ -1,0 +1,28 @@
+# Fly.io config for the SYNK server. Deploy from this directory: `fly launch --no-deploy`
+# then `fly deploy`. Build context is this dir, so the Dockerfile's COPYs resolve.
+app = "synk-server"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[http_service.checks]]
+  path = "/healthz"
+  interval = "15s"
+  timeout = "2s"
+
+[env]
+  SYNK_DB_PATH = "/data/synk.db"
+  # Set ALLOWED_ORIGINS to your client URL in production:
+  #   fly secrets set ALLOWED_ORIGINS=https://synk.pages.dev
+
+[mounts]
+  source = "synk_data"
+  destination = "/data"

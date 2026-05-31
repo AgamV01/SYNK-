@@ -11,7 +11,9 @@ import { Voice } from "./voice";
 const PLAYER_NAME = "Traveler";
 const ZONE = "tavern";
 const TALK_RADIUS = 3.0;
-const WS_URL = `ws://${location.hostname || "localhost"}:8000/ws`;
+// Configurable for deploys (e.g. a Cloudflare Pages client + a Render/Fly server);
+// defaults to a local backend on :8000.
+const WS_URL = import.meta.env.VITE_SYNK_WS ?? `ws://${location.hostname || "localhost"}:8000/ws`;
 
 const obstacles: Obstacle[] = [
   { x: -4, z: -2, radius: 1.2 },
