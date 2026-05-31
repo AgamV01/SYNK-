@@ -85,7 +85,7 @@ Fields:
 - `token` (string) — short-lived session token (see auth in spec section 4).
 - `tick_rate` (number) — simulation ticks per second (default 10).
 - `zone` (string) — the zone the player joined.
-- `snapshot` (object) — same shape as a `world_state` body (`tick`, `agents`).
+- `snapshot` (object) — same shape as a `world_state` body (`tick`, `agents`, `world_time`, `phase`).
 
 ```json
 {
@@ -102,10 +102,13 @@ Fields:
 - `zone` (string) — zone these agents belong to.
 - `tick` (number) — simulation tick the snapshot was taken at.
 - `agents` (array) — each: `id` (string), `name` (string), `position` (`[x,y,z]`), `facing` (number, yaw radians), `action` (string label of current action, e.g. `"wander"`, `"approach"`, `"talk"`).
+- `world_time` (number) — simulation seconds elapsed (the world clock).
+- `phase` (string) — time-of-day derived from `world_time`: one of `morning`, `day`, `evening`, `night`. Drives the client day/night cycle and clock.
 
 ```json
 {
   "type": "world_state", "v": 1, "zone": "tavern", "tick": 142,
+  "world_time": 35.2, "phase": "evening",
   "agents": [
     { "id": "npc_barkeep", "name": "Gus", "position": [0.0, 0.0, 0.0], "facing": 0.0, "action": "wander" }
   ]

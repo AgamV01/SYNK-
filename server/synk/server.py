@@ -28,6 +28,7 @@ from .pathfinding import Grid, Obstacle
 from .perception import perceive
 from .persistence import Persistence
 from .relationships import Relationships
+from .schedule import DEFAULT_DAY_LENGTH, time_of_day
 from .simulation import Simulation
 from .world import Agent, Player, World
 from .worldfile import LoadedWorld, load_world_file
@@ -93,6 +94,7 @@ async def broadcast_world_state(
     world: World,
     connections: Mapping[str, object],
     throttle: Throttle,
+    day_length: float = DEFAULT_DAY_LENGTH,
 ) -> int:
     """Send each connected player a per-zone world_state snapshot, throttled. Returns
     the number of clients sent to (0 if throttled). Scoped to each player's zone."""
@@ -104,7 +106,7 @@ async def broadcast_world_state(
         player = world.try_get(player_id)
         zone = player.zone if player is not None else DEFAULT_ZONE
         if zone not in snapshots:
-            snapshots[zone] = zone_snapshot(world, zone)
+            snapshots[zone] = zone_snapshot(world, zone, day_length)
         snap = snapshots[zone]
         await ws.send_json(
             {
@@ -113,6 +115,8 @@ async def broadcast_world_state(
                 "zone": zone,
                 "tick": snap["tick"],
                 "agents": snap["agents"],
+                "world_time": snap["world_time"],
+                "phase": snap["phase"],
             }
         )
         sent += 1
@@ -151,8 +155,10 @@ async def broadcast_events(
     return world.event_count
 
 
-def zone_snapshot(world: World, zone: str) -> dict:
-    """A world_state-style snapshot of the agents in a zone."""
+def zone_snapshot(world: World, zone: str, day_length: float = DEFAULT_DAY_LENGTH) -> dict:
+    """A world_state-style snapshot of the agents in a zone, plus the world clock:
+    `world_time` (sim seconds) and the derived `phase` (morning/day/evening/night),
+    so clients can render a day/night cycle and a clock."""
     agents = [
         {
             "id": e.id,
@@ -164,7 +170,12 @@ def zone_snapshot(world: World, zone: str) -> dict:
         for e in world.by_zone(zone)
         if isinstance(e, Agent)
     ]
-    return {"tick": world.tick, "agents": agents}
+    return {
+        "tick": world.tick,
+        "agents": agents,
+        "world_time": round(world.sim_time, 3),
+        "phase": time_of_day(world.sim_time, day_length),
+    }
 
 
 async def send_error(ws: object, code: str, message: str) -> None:
@@ -270,7 +281,7 @@ def create_app(
                 event_cursor = world.event_count
                 while True:
                     await asyncio.sleep(sim.dt)
-                    await broadcast_world_state(world, connections, broadcast_throttle)
+                    await broadcast_world_state(world, connections, broadcast_throttle, sim.day_length)
                     event_cursor = await broadcast_events(world, connections, event_cursor)
 
             tasks.append(asyncio.create_task(broadcaster()))
@@ -344,7 +355,7 @@ def create_app(
                             "token": session.token,
                             "tick_rate": round(1 / sim.dt),
                             "zone": zone,
-                            "snapshot": zone_snapshot(world, zone),
+                            "snapshot": zone_snapshot(world, zone, sim.day_length),
                         }
                     )
                     continue

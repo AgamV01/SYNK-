@@ -60,9 +60,14 @@ export interface AgentSnapshot {
   action: string;
 }
 
+// Time-of-day phase derived from the world clock (drives the client day/night cycle).
+export type Phase = "morning" | "day" | "evening" | "night";
+
 export interface ZoneSnapshot {
   tick: number;
   agents: AgentSnapshot[];
+  world_time: number;
+  phase: Phase;
 }
 
 export interface WelcomeMessage {
@@ -81,6 +86,8 @@ export interface WorldStateMessage {
   zone: string;
   tick: number;
   agents: AgentSnapshot[];
+  world_time: number;
+  phase: Phase;
 }
 
 export interface AgentEventMessage {

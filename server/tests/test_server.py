@@ -45,6 +45,23 @@ def test_ws_join_returns_welcome_with_token() -> None:
         assert welcome["zone"] == "tavern"
         assert welcome["tick_rate"] == 10
         assert "snapshot" in welcome and "agents" in welcome["snapshot"]
+        # B5: the snapshot carries the world clock + phase for the day/night cycle.
+        assert welcome["snapshot"]["phase"] in {"morning", "day", "evening", "night"}
+        assert "world_time" in welcome["snapshot"]
+
+
+def test_zone_snapshot_includes_phase_and_world_time() -> None:
+    # B5: zone_snapshot reports phase derived from the world clock + day length.
+    from synk.server import zone_snapshot
+    from synk.world import World
+
+    world = World()
+    world.sim_time = 0.0
+    snap = zone_snapshot(world, "tavern", day_length=60.0)
+    assert snap["phase"] == "morning"
+    assert snap["world_time"] == 0.0
+    world.sim_time = 50.0  # last quarter of a 60s day -> night
+    assert zone_snapshot(world, "tavern", day_length=60.0)["phase"] == "night"
 
 
 def test_ws_join_default_zone() -> None:
@@ -320,9 +337,9 @@ async def test_broadcast_builds_snapshot_once_per_zone(monkeypatch) -> None:
     real = srv.zone_snapshot
     calls = {"n": 0}
 
-    def counting(w, z):
+    def counting(w, z, day_length=60.0):
         calls["n"] += 1
-        return real(w, z)
+        return real(w, z, day_length)
 
     monkeypatch.setattr(srv, "zone_snapshot", counting)
     conns = {"p1": FakeWS(), "p2": FakeWS()}
