@@ -3,10 +3,13 @@ disk: writes are queued and flushed by a background task, not awaited on the tic
 
 from __future__ import annotations
 
+import json
+
 import aiosqlite
 
 from .geometry import Vec3
 from .memory import MemoryItem, MemoryStore
+from .pathfinding import Obstacle
 from .world import Agent, Entity, Player, World
 
 SCHEMA = """
@@ -127,6 +130,23 @@ class Persistence:
         for text, ts, salience in await cursor.fetchall():
             store.add(MemoryItem(text=text, ts=ts, salience=salience))
         return store
+
+    def save_obstacles(self, obstacles: list[Obstacle]) -> None:
+        """Queue the zone's static obstacles (as JSON in world_meta) so A* navigation
+        survives a restart. Tick-safe; flushed off-tick."""
+        payload = json.dumps([[o.center.x, o.center.z, o.radius] for o in obstacles])
+        self.enqueue(
+            "INSERT OR REPLACE INTO world_meta(key, value) VALUES ('obstacles', ?)",
+            (payload,),
+        )
+
+    async def load_obstacles(self) -> list[Obstacle]:
+        """Reload obstacles persisted by save_obstacles (empty list if none)."""
+        cursor = await self.db.execute("SELECT value FROM world_meta WHERE key = 'obstacles'")
+        row = await cursor.fetchone()
+        if row is None:
+            return []
+        return [Obstacle(center=Vec3(x, 0.0, z), radius=r) for x, z, r in json.loads(row[0])]
 
     async def load_into(self, world: World) -> int:
         """Load persisted entities + meta INTO an existing world (mutating it), so

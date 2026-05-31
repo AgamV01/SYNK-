@@ -130,6 +130,26 @@ async def test_server_loads_persisted_world_and_memory_on_boot(tmp_path) -> None
         assert any("storm" in m.text for m in agent.memory.items)  # memory restored
 
 
+async def test_restored_agents_keep_grid_navigation(tmp_path) -> None:
+    from synk.pathfinding import Obstacle
+
+    db = str(tmp_path / "synk.db")
+    seed = Persistence(db)
+    await seed.connect()
+    w = World()
+    w.add(Agent(id="npc_gus", name="Gus", position=Vec3(0, 0, -3), zone="tavern"))
+    w.advance(0.1)
+    seed.save_world(w)
+    seed.save_obstacles([Obstacle(center=Vec3(-4, 0, -2), radius=1.2)])
+    await seed.flush()
+    await seed.close()
+
+    app = create_app(db_path=db)
+    with TestClient(app):
+        brain = app.state.sim.brains["npc_gus"]
+        assert brain.reactive.grid is not None  # grid rebuilt from persisted obstacles
+
+
 def test_demo_npcs_use_hybrid_llm_brain() -> None:
     from synk.brains.llm import LLMBrain
 

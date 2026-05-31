@@ -145,6 +145,27 @@ async def test_load_into_mutates_existing_world(tmp_path) -> None:
         await p.close()
 
 
+async def test_obstacles_roundtrip(tmp_path) -> None:
+    from synk.pathfinding import Obstacle
+
+    db = str(tmp_path / "obs.db")
+    p = Persistence(db)
+    await p.connect()
+    try:
+        p.save_obstacles(
+            [Obstacle(center=Vec3(-4, 0, -2), radius=1.2), Obstacle(center=Vec3(5, 0, 1), radius=1.0)]
+        )
+        await p.flush()
+        obs = await p.load_obstacles()
+        assert len(obs) == 2
+        assert obs[0].center == Vec3(-4, 0, -2) and obs[0].radius == 1.2
+        # A fresh DB with no obstacles row returns [].
+        await p.db.execute("DELETE FROM world_meta WHERE key='obstacles'")
+        assert await p.load_obstacles() == []
+    finally:
+        await p.close()
+
+
 async def test_memory_roundtrip(tmp_path) -> None:
     db_path = str(tmp_path / "mem.db")
     mem = MemoryStore()

@@ -168,12 +168,16 @@ async def send_error(ws: object, code: str, message: str) -> None:
     )
 
 
-def populate_demo(world: World, sim: Simulation) -> None:
+def _demo_grid(obstacles: list[Obstacle]) -> Grid:
+    return Grid.from_obstacles(-15, -15, 30, 30, 1.0, obstacles)
+
+
+def populate_demo(world: World, sim: Simulation) -> list[Obstacle]:
     """Add the tavern demo world: three personality NPCs around two obstacles, each
-    with a reactive brain registered on the simulation. Lets `uvicorn synk.server:app`
-    show living NPCs with zero configuration."""
+    with a hybrid brain registered on the simulation. Returns the obstacle list (so it
+    can be persisted). Lets `uvicorn synk.server:app` show living NPCs with zero config."""
     obstacles = [Obstacle(center=Vec3(-4, 0, -2), radius=1.2), Obstacle(center=Vec3(5, 0, 1), radius=1.0)]
-    grid = Grid.from_obstacles(-15, -15, 30, 30, 1.0, obstacles)
+    grid = _demo_grid(obstacles)
     npcs = [
         Agent(id="npc_gus", name="Gus", personality="a gruff barkeep", position=Vec3(0, 0, -3), zone="tavern"),
         Agent(id="npc_mira", name="Mira", personality="a curious bard", position=Vec3(3, 0, 2), zone="tavern"),
@@ -185,16 +189,21 @@ def populate_demo(world: World, sim: Simulation) -> None:
         world.add(npc)
         reactive = ReactiveBrain(grid=grid, arrive_radius=1.5)  # cheap tick layer keeps the grid
         sim.register(npc.id, LLMBrain(provider=provider, reactive=reactive))
+    return obstacles
 
 
-async def _attach_brains_and_memory(world: World, sim: Simulation, persistence: Persistence) -> None:
-    """For agents restored from the DB, reload their memory and register a brain so the
-    simulation drives them again after a restart."""
+async def _attach_brains_and_memory(
+    world: World, sim: Simulation, persistence: Persistence, obstacles: list[Obstacle]
+) -> None:
+    """For agents restored from the DB, reload their memory and register a grid-aware brain
+    (rebuilt from the persisted obstacles) so they navigate around obstacles after a restart."""
     provider = select_provider()
+    grid = _demo_grid(obstacles) if obstacles else None
     for entity in world.all():
         if isinstance(entity, Agent) and entity.id not in sim.brains:
             entity.memory = await persistence.load_memory(entity.id)
-            sim.register(entity.id, LLMBrain(provider=provider, reactive=ReactiveBrain()))
+            reactive = ReactiveBrain(grid=grid, arrive_radius=1.5)
+            sim.register(entity.id, LLMBrain(provider=provider, reactive=reactive))
 
 
 def create_app(
@@ -231,9 +240,10 @@ def create_app(
             await persistence.connect()
             loaded = await persistence.load_into(world)
             if loaded == 0 and demo:
-                populate_demo(world, sim)
+                persistence.save_obstacles(populate_demo(world, sim))
             else:
-                await _attach_brains_and_memory(world, sim, persistence)
+                obstacles = await persistence.load_obstacles()
+                await _attach_brains_and_memory(world, sim, persistence, obstacles)
         if demo or persistence is not None:
             tasks.append(asyncio.create_task(sim.run()))
 
