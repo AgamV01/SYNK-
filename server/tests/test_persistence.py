@@ -14,7 +14,14 @@ async def test_migrate_creates_tables() -> None:
     await p.connect()
     try:
         tables = await p.table_names()
-        assert {"world_meta", "entities", "memories", "relationships", "conversations"} <= tables
+        assert {
+            "world_meta",
+            "entities",
+            "memories",
+            "relationships",
+            "conversations",
+            "schedules",
+        } <= tables
     finally:
         await p.close()
 
@@ -87,6 +94,45 @@ async def test_conversations_roundtrip() -> None:
             ("npc_gus", "evening, traveler"),
         ]
         assert history[0].ts == 1.0
+    finally:
+        await p.close()
+
+
+async def test_schedules_roundtrip() -> None:
+    # C3: per-agent daily schedules (incl. runtime overrides) survive save/flush/load.
+    from synk.schedule import Schedule
+
+    p = Persistence(":memory:")
+    await p.connect()
+    try:
+        schedules = {
+            "npc_gus": Schedule({"morning": "open the bar", "night": "lock up"}),
+            "npc_mira": Schedule({"day": "play a tune"}),
+        }
+        p.save_schedules(schedules)
+        await p.flush()
+        restored = await p.load_schedules()
+        assert set(restored) == {"npc_gus", "npc_mira"}
+        assert restored["npc_gus"].goal_for("morning") == "open the bar"
+        assert restored["npc_gus"].goal_for("night") == "lock up"
+        assert restored["npc_mira"].goal_for("day") == "play a tune"
+    finally:
+        await p.close()
+
+
+async def test_goal_survives_world_roundtrip() -> None:
+    # C3: an agent's goal (on the entity) is restored by save_world/load_into.
+    p = Persistence(":memory:")
+    await p.connect()
+    try:
+        world = World()
+        gus = Agent(id="npc_gus", name="Gus", zone="tavern", goal="guard the till")
+        world.add(gus)
+        p.save_world(world)
+        await p.flush()
+        restored = World()
+        await p.load_into(restored)
+        assert restored.get("npc_gus").goal == "guard the till"
     finally:
         await p.close()
 

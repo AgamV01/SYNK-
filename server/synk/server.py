@@ -260,6 +260,8 @@ def create_app(
             else:
                 obstacles = await persistence.load_obstacles()
                 await _attach_brains_and_memory(world, sim, persistence, obstacles)
+                for agent_id, schedule in (await persistence.load_schedules()).items():
+                    sim.register_schedule(agent_id, schedule)
             dialogue.restore(await persistence.load_conversations())
         if demo or persistence is not None:
             tasks.append(asyncio.create_task(sim.run()))

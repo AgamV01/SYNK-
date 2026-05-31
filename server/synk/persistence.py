@@ -12,6 +12,7 @@ from .dialogue import Conversation, Turn
 from .memory import MemoryItem, MemoryStore
 from .pathfinding import Obstacle
 from .relationships import Relationships
+from .schedule import Schedule
 from .world import Agent, Entity, Player, World
 
 SCHEMA = """
@@ -48,6 +49,10 @@ CREATE TABLE IF NOT EXISTS conversations (
     id           TEXT PRIMARY KEY,
     participants TEXT NOT NULL,
     turns        TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS schedules (
+    agent_id TEXT PRIMARY KEY,
+    by_phase TEXT NOT NULL
 );
 """
 
@@ -182,6 +187,23 @@ class Persistence:
                 convo.turns.append(Turn(speaker=speaker, text=text, ts=ts))
             out.append(convo)
         return out
+
+    def save_schedules(self, schedules: dict[str, Schedule]) -> None:
+        """Queue a replace of each agent's daily schedule (phase->goal as JSON), so
+        routines (including runtime overrides) survive a restart. Tick-safe."""
+        for agent_id, schedule in schedules.items():
+            self.enqueue(
+                "INSERT OR REPLACE INTO schedules(agent_id, by_phase) VALUES (?,?)",
+                (agent_id, json.dumps(schedule.by_phase)),
+            )
+
+    async def load_schedules(self) -> dict[str, Schedule]:
+        """Rebuild all persisted per-agent schedules."""
+        cursor = await self.db.execute("SELECT agent_id, by_phase FROM schedules")
+        return {
+            agent_id: Schedule(json.loads(by_phase))
+            for agent_id, by_phase in await cursor.fetchall()
+        }
 
     def save_obstacles(self, obstacles: list[Obstacle]) -> None:
         """Queue the zone's static obstacles (as JSON in world_meta) so A* navigation
