@@ -8,6 +8,7 @@ import json
 import aiosqlite
 
 from .geometry import Vec3
+from .dialogue import Conversation, Turn
 from .memory import MemoryItem, MemoryStore
 from .pathfinding import Obstacle
 from .relationships import Relationships
@@ -42,6 +43,11 @@ CREATE TABLE IF NOT EXISTS relationships (
     other_id TEXT NOT NULL,
     score    REAL NOT NULL,
     PRIMARY KEY (agent_id, other_id)
+);
+CREATE TABLE IF NOT EXISTS conversations (
+    id           TEXT PRIMARY KEY,
+    participants TEXT NOT NULL,
+    turns        TEXT NOT NULL
 );
 """
 
@@ -154,6 +160,28 @@ class Persistence:
         )
         scores = {other_id: score for other_id, score in await cursor.fetchall()}
         return Relationships.from_scores(scores)
+
+    def save_conversations(self, dialogue) -> None:
+        """Queue a replace of all conversations (participants + turns as JSON). Tick-safe;
+        flush off-tick. So dialogue history survives a restart and the LLM keeps context."""
+        for convo in dialogue.all():
+            participants = json.dumps(list(convo.participants))
+            turns = json.dumps([[t.speaker, t.text, t.ts] for t in convo.turns])
+            self.enqueue(
+                "INSERT OR REPLACE INTO conversations(id, participants, turns) VALUES (?,?,?)",
+                (convo.id, participants, turns),
+            )
+
+    async def load_conversations(self) -> list[Conversation]:
+        """Rebuild all persisted conversations (oldest turns first within each)."""
+        cursor = await self.db.execute("SELECT id, participants, turns FROM conversations")
+        out: list[Conversation] = []
+        for cid, participants, turns in await cursor.fetchall():
+            convo = Conversation(id=cid, participants=list(json.loads(participants)))
+            for speaker, text, ts in json.loads(turns):
+                convo.turns.append(Turn(speaker=speaker, text=text, ts=ts))
+            out.append(convo)
+        return out
 
     def save_obstacles(self, obstacles: list[Obstacle]) -> None:
         """Queue the zone's static obstacles (as JSON in world_meta) so A* navigation

@@ -14,7 +14,7 @@ async def test_migrate_creates_tables() -> None:
     await p.connect()
     try:
         tables = await p.table_names()
-        assert {"world_meta", "entities", "memories", "relationships"} <= tables
+        assert {"world_meta", "entities", "memories", "relationships", "conversations"} <= tables
     finally:
         await p.close()
 
@@ -63,6 +63,30 @@ async def test_relationships_save_replaces_prior() -> None:
         await p.flush()
         restored = await p.load_relationships("npc1")
         assert restored.as_dict() == {"b": 2.0}
+    finally:
+        await p.close()
+
+
+async def test_conversations_roundtrip() -> None:
+    # C2: a (player, agent) conversation's turns survive a save/flush/load cycle.
+    from synk.dialogue import DialogueManager
+
+    p = Persistence(":memory:")
+    await p.connect()
+    try:
+        dm = DialogueManager()
+        dm.route_player_message("player_1", "npc_gus", "hello there", ts=1.0)
+        dm.append_agent_reply("player_1", "npc_gus", "evening, traveler", ts=2.0)
+        p.save_conversations(dm)
+        await p.flush()
+        restored = DialogueManager()
+        restored.restore(await p.load_conversations())
+        history = restored.history("player_1", "npc_gus")
+        assert [(t.speaker, t.text) for t in history] == [
+            ("player_1", "hello there"),
+            ("npc_gus", "evening, traveler"),
+        ]
+        assert history[0].ts == 1.0
     finally:
         await p.close()
 

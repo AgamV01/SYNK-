@@ -61,6 +61,15 @@ class DialogueManager:
     def __init__(self) -> None:
         self._conversations: dict[str, Conversation] = {}
 
+    def all(self) -> list[Conversation]:
+        """Every tracked conversation (for persistence/inspection)."""
+        return list(self._conversations.values())
+
+    def restore(self, conversations: list[Conversation]) -> None:
+        """Load persisted conversations back in, keyed by id (overwriting any in memory)."""
+        for convo in conversations:
+            self._conversations[convo.id] = convo
+
     @staticmethod
     def _key(player_id: str, agent_id: str) -> str:
         return f"{player_id}->{agent_id}"
