@@ -62,6 +62,23 @@ scene.add(player.mesh);
 // Orbit/follow camera: drag to orbit, wheel to zoom; follows the player each frame.
 const orbitCamera = new OrbitFollowCamera(camera, canvas);
 
+// Poll /metrics for token spend to feed the HUD meter (HTTP sibling of the WS URL).
+const METRICS_URL = WS_URL.replace(/^ws/, "http").replace(/\/ws$/, "/metrics");
+let lastMetrics: { tokensUsed?: number; llmCalls?: number } = {};
+async function pollMetrics(): Promise<void> {
+  try {
+    const r = await fetch(METRICS_URL);
+    if (r.ok) {
+      const m = await r.json();
+      lastMetrics = { tokensUsed: m.tokens_used, llmCalls: m.llm_calls };
+    }
+  } catch {
+    /* metrics are best-effort; ignore transient fetch errors */
+  }
+}
+setInterval(pollMetrics, 2000);
+void pollMetrics();
+
 // Lightweight client-side mirror of agent state for the proximity + debug panels.
 const agentNames = new Map<string, string>();
 const agentActions = new Map<string, string>();
@@ -116,6 +133,7 @@ client.on("world_state", (msg) => {
   npcs.update(msg.agents);
   updateProximity(msg.agents);
   applyPhase(msg.phase);
+  ui.setHud({ phase: msg.phase, worldTime: msg.world_time, ...lastMetrics });
 });
 
 client.on("dialogue", (msg) => {

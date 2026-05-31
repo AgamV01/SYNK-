@@ -12,11 +12,27 @@ export interface AgentDebugInfo {
   recent?: string[];
 }
 
+// Inputs to the top-right HUD chip: the world clock/phase and token spend.
+export interface HudInfo {
+  phase: string;
+  worldTime: number;
+  tokensUsed?: number;
+  llmCalls?: number;
+}
+
+const PHASE_ICON: Record<string, string> = {
+  morning: "🌅",
+  day: "☀️",
+  evening: "🌇",
+  night: "🌙",
+};
+
 export class DemoUI {
   private readonly prompt: HTMLDivElement;
   private readonly input: HTMLInputElement;
   private readonly log: HTMLDivElement;
   private readonly debug: HTMLDivElement;
+  private readonly hud: HTMLDivElement;
   private nearbyAgentId: string | null = null;
   private readonly onSay?: (text: string) => void;
   private readonly onMic?: () => void;
@@ -24,6 +40,22 @@ export class DemoUI {
   constructor(root: HTMLElement, options: DemoUIOptions = {}) {
     this.onSay = options.onSay;
     this.onMic = options.onMic;
+
+    this.hud = document.createElement("div");
+    Object.assign(this.hud.style, {
+      position: "fixed",
+      top: "16px",
+      right: "16px",
+      padding: "8px 14px",
+      borderRadius: "10px",
+      background: "rgba(20,20,28,0.7)",
+      color: "#eee",
+      font: "13px ui-monospace, monospace",
+      lineHeight: "1.6",
+      textAlign: "right",
+      whiteSpace: "pre",
+    } satisfies Partial<CSSStyleDeclaration>);
+    root.appendChild(this.hud);
 
     this.log = document.createElement("div");
     Object.assign(this.log.style, {
@@ -123,6 +155,17 @@ export class DemoUI {
         this.input.value = "";
       }
     });
+  }
+
+  /** Update the top-right HUD: time-of-day clock chip + token spend meter. */
+  setHud(info: HudInfo): void {
+    const icon = PHASE_ICON[info.phase] ?? "•";
+    const clock = `${icon} ${info.phase}  ·  t=${info.worldTime.toFixed(0)}s`;
+    const tokens =
+      info.tokensUsed !== undefined
+        ? `\n🪙 ${info.tokensUsed} tokens · ${info.llmCalls ?? 0} LLM calls`
+        : "";
+    this.hud.textContent = clock + tokens;
   }
 
   /** Update the proximity prompt with the nearest agent (or null when none). */
