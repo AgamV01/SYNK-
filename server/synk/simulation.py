@@ -18,6 +18,7 @@ from .geometry import Vec3
 from .memory import MemoryItem, score_event_salience
 from .perception import DEFAULT_SENSE_RADIUS, perceive
 from .reflection import reflect
+from .relationships import sentiment_for
 from .spatial import SpatialIndex
 from .world import Agent, World, WorldEvent
 
@@ -295,6 +296,7 @@ class Simulation:
         Only events emitted on the current tick are recorded, so the recency window
         doesn't create duplicates across ticks."""
         memory = getattr(agent, "memory", None)
+        relationships = getattr(agent, "relationships", None)
         if memory is None or not hasattr(memory, "add"):
             return
         for event in percept.events:
@@ -306,6 +308,8 @@ class Simulation:
                         salience=event.salience,
                     )
                 )
+                if relationships is not None:
+                    relationships.adjust(event.source_id, sentiment_for(event.kind))
 
     def _maybe_deliberate(self, agent_id: str, brain: Brain, percept) -> None:
         """Wake an LLM agent's deliberative layer when it perceives a salient event,

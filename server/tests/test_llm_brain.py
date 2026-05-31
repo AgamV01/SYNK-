@@ -58,6 +58,20 @@ async def test_converse_degrades_to_reactive_without_provider() -> None:
     assert "hello there" in result.text
 
 
+async def test_converse_includes_relationships_in_prompt() -> None:
+    from synk.relationships import Relationships
+
+    provider = StubProvider()
+    brain = LLMBrain(provider=provider)
+    agent = Agent(id="npc1", name="Gus")
+    agent.relationships = Relationships()
+    agent.relationships.adjust("player_1", 3.0)
+    await brain.converse(agent, _percept(agent), "hi")
+    assert provider.last_prompt is not None
+    assert "How you feel about others" in provider.last_prompt
+    assert "player_1" in provider.last_prompt
+
+
 async def test_converse_assembles_memory_context_into_prompt() -> None:
     provider = StubProvider()
     brain = LLMBrain(provider=provider)

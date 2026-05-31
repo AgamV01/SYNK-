@@ -26,6 +26,7 @@ from .memory import MemoryItem, MemoryStore, score_event_salience
 from .pathfinding import Grid, Obstacle
 from .perception import perceive
 from .persistence import Persistence
+from .relationships import Relationships
 from .simulation import Simulation
 from .world import Agent, Player, World
 
@@ -186,6 +187,7 @@ def populate_demo(world: World, sim: Simulation) -> list[Obstacle]:
     provider = select_provider()  # Mock with no key; real LLM when ANTHROPIC/OPENAI key is set
     for npc in npcs:
         npc.memory = MemoryStore()  # episodic memory (duck-typed; used by LLMBrain + reflection)
+        npc.relationships = Relationships()  # social memory (sentiment toward others)
         world.add(npc)
         reactive = ReactiveBrain(grid=grid, arrive_radius=1.5)  # cheap tick layer keeps the grid
         sim.register(npc.id, LLMBrain(provider=provider, reactive=reactive))
@@ -202,6 +204,7 @@ async def _attach_brains_and_memory(
     for entity in world.all():
         if isinstance(entity, Agent) and entity.id not in sim.brains:
             entity.memory = await persistence.load_memory(entity.id)
+            entity.relationships = Relationships()
             reactive = ReactiveBrain(grid=grid, arrive_radius=1.5)
             sim.register(entity.id, LLMBrain(provider=provider, reactive=reactive))
 

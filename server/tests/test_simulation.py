@@ -234,6 +234,24 @@ def test_step_forms_memories_from_nearby_events() -> None:
     assert any("bob" in m.text for m in agent.memory.items)
 
 
+def test_perceived_events_shift_relationships() -> None:
+    from synk.relationships import Relationships
+
+    world = World()
+    agent = Agent(id="npc1", position=Vec3(0, 0, 0), zone="room")
+    agent.memory = MemoryStore()
+    agent.relationships = Relationships()
+    world.add(agent)
+    sim = Simulation(world, dt=0.1)
+    sim.register("npc1", ReactiveBrain())
+    world.emit_event(
+        WorldEvent(kind="gave_item", source_id="bob", zone="room", tick=0,
+                   position=Vec3(1, 0, 0), salience=3.0, payload={"item": "coin"})
+    )
+    sim.step()
+    assert agent.relationships.sentiment("bob") > 0  # a gift warms the relationship
+
+
 def test_memory_decays_periodically() -> None:
     world = World()
     agent = Agent(id="npc1", position=Vec3(0, 0, 0), zone="room")

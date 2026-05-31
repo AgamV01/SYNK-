@@ -26,13 +26,17 @@ def build_prompt(
     memories: list[str],
     history: list[tuple[str, str]],
     utterance: str,
+    relationships: list[str] | None = None,
 ) -> str:
-    """Assemble an NPC dialogue prompt from personality, recalled memories, and
-    conversation history. Provider-agnostic plain text so any backend can use it."""
+    """Assemble an NPC dialogue prompt from personality, recalled memories, relationship
+    sentiment, and conversation history. Provider-agnostic plain text for any backend."""
     persona = personality or "a nondescript character"
     lines = [
         f"You are {persona}. Stay in character. Reply in one or two sentences.",
     ]
+    if relationships:
+        lines.append("\nHow you feel about others:")
+        lines.extend(f"- you {r}" for r in relationships)
     if memories:
         lines.append("\nWhat you remember:")
         lines.extend(f"- {m}" for m in memories)
