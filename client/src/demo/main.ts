@@ -35,6 +35,20 @@ const ui = new DemoUI(uiRoot, {
     client.say(target, text);
     ui.addDialogue("You", text, false);
   },
+  onMic: () => {
+    voice.enabled = true; // push-to-talk opt-in
+    const started = voice.startListening((text) => {
+      const target = ui.currentTarget;
+      if (target && text.trim()) {
+        ui.setChatText(text);
+        client.say(target, text);
+        ui.addDialogue("You", text, false);
+      }
+    });
+    if (!started) {
+      ui.addDialogue("system", "Speech recognition unavailable in this browser.", true);
+    }
+  },
 });
 
 const player = new PlayerController(camera, {

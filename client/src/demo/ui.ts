@@ -2,6 +2,7 @@
 
 export interface DemoUIOptions {
   onSay?: (text: string) => void;
+  onMic?: () => void;
 }
 
 export interface AgentDebugInfo {
@@ -18,9 +19,11 @@ export class DemoUI {
   private readonly debug: HTMLDivElement;
   private nearbyAgentId: string | null = null;
   private readonly onSay?: (text: string) => void;
+  private readonly onMic?: () => void;
 
   constructor(root: HTMLElement, options: DemoUIOptions = {}) {
     this.onSay = options.onSay;
+    this.onMic = options.onMic;
 
     this.log = document.createElement("div");
     Object.assign(this.log.style, {
@@ -77,13 +80,15 @@ export class DemoUI {
       left: "50%",
       transform: "translateX(-50%)",
       width: "min(560px, 90vw)",
+      display: "flex",
+      gap: "8px",
     } satisfies Partial<CSSStyleDeclaration>);
 
     this.input = document.createElement("input");
     this.input.type = "text";
     this.input.placeholder = "Walk up to an NPC and type to talk…";
     Object.assign(this.input.style, {
-      width: "100%",
+      flex: "1",
       padding: "10px 14px",
       borderRadius: "10px",
       border: "1px solid #3a3a4a",
@@ -92,6 +97,22 @@ export class DemoUI {
       font: "15px system-ui, sans-serif",
     } satisfies Partial<CSSStyleDeclaration>);
     form.appendChild(this.input);
+
+    // Push-to-talk: hand voice input off to the wiring (Web Speech STT).
+    const mic = document.createElement("button");
+    mic.type = "button";
+    mic.textContent = "🎤";
+    mic.title = "Speak to the nearby NPC (browser speech recognition)";
+    Object.assign(mic.style, {
+      padding: "10px 12px",
+      borderRadius: "10px",
+      border: "1px solid #3a3a4a",
+      background: "rgba(20,20,28,0.85)",
+      color: "#fff",
+      cursor: "pointer",
+    } satisfies Partial<CSSStyleDeclaration>);
+    mic.addEventListener("click", () => this.onMic?.());
+    form.appendChild(mic);
     root.appendChild(form);
 
     form.addEventListener("submit", (e) => {
@@ -117,6 +138,11 @@ export class DemoUI {
 
   get currentTarget(): string | null {
     return this.nearbyAgentId;
+  }
+
+  /** Put text in the chat input (e.g. a speech-recognition transcript). */
+  setChatText(text: string): void {
+    this.input.value = text;
   }
 
   /** Append a dialogue line. Overheard lines (NPC↔NPC or others' chats) are dimmed. */

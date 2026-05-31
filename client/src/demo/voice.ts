@@ -50,7 +50,7 @@ export class Voice {
 
   /** Start one-shot speech recognition. Returns false if disabled/unsupported. */
   startListening(onResult: (text: string) => void): boolean {
-    if (!this.enabled) return false;
+    if (!this.enabled || typeof window === "undefined") return false;
     const w = window as unknown as SpeechCapableWindow;
     const Recognition = w.SpeechRecognition ?? w.webkitSpeechRecognition;
     if (!Recognition) return false;
