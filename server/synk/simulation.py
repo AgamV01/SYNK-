@@ -444,6 +444,40 @@ class Simulation:
                 busy.update((a_id, b_id))
                 break
 
+    def _maybe_migrate(self, agent: Agent) -> None:
+        """If the agent has stepped onto a portal leaving its current zone, migrate it
+        to the portal's target zone + position and emit zone_left/zone_entered events
+        (which nearby players in each zone perceive). One migration per tick."""
+        for portal in self.world.portals_in(agent.zone):
+            if not portal.contains(agent.position):
+                continue
+            from_zone = agent.zone
+            self.world.emit_event(
+                WorldEvent(
+                    kind="zone_left",
+                    source_id=agent.id,
+                    zone=from_zone,
+                    tick=self.world.tick,
+                    position=agent.position,
+                    salience=score_event_salience("zone_left"),
+                    payload={"to": portal.to_zone},
+                )
+            )
+            agent.zone = portal.to_zone
+            agent.position = portal.target
+            self.world.emit_event(
+                WorldEvent(
+                    kind="zone_entered",
+                    source_id=agent.id,
+                    zone=portal.to_zone,
+                    tick=self.world.tick,
+                    position=agent.position,
+                    salience=score_event_salience("zone_entered"),
+                    payload={"from": from_zone},
+                )
+            )
+            return
+
     def _maybe_decay(self) -> None:
         """Periodically decay every agent's memory off the hot path."""
         if self.world.tick % self.memory_decay_every != 0:
@@ -468,6 +502,7 @@ class Simulation:
             percept = perceive(self.world, agent, self._sense_radius(brain), index=index)
             action = brain.decide(agent, percept)
             self._apply(agent, action)
+            self._maybe_migrate(agent)  # portal crossings reassign zone + position
             self._form_memories(agent, percept)
             self._maybe_deliberate(agent_id, brain, percept)
         self._maybe_reflect()

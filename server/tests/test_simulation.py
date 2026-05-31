@@ -12,7 +12,7 @@ from synk.memory import MemoryItem, MemoryStore
 from synk.persistence import Persistence
 from synk.reflection import ReflectionScheduler
 from synk.simulation import Simulation
-from synk.world import Agent, Player, World, WorldEvent
+from synk.world import Agent, Player, Portal, World, WorldEvent
 
 
 class SlowProvider:
@@ -177,6 +177,37 @@ async def test_drain_results_emits_spoke_and_action_events() -> None:
     spoke = next(e for e in events if e.kind == "spoke")
     assert spoke.payload["text"] == "Take this!"
     assert sim._results == []  # drained
+
+
+def test_portal_crossing_migrates_agent() -> None:
+    # B4: an agent that steps onto a portal is reassigned to the target zone + position,
+    # emitting zone_left (old zone) and zone_entered (new zone) events.
+    world = World()
+    world.add_portal(
+        Portal(from_zone="tavern", to_zone="market", position=Vec3(5, 0, 0), target=Vec3(-8, 0, 1), radius=2.0)
+    )
+    agent = Agent(id="npc1", name="Gus", position=Vec3(5, 0, 0), zone="tavern")
+    world.add(agent)
+    sim = Simulation(world, dt=0.1)
+    sim.register("npc1", ReactiveBrain())
+    cursor = world.event_count
+    sim.step()
+    assert agent.zone == "market"
+    assert agent.position == Vec3(-8, 0, 1)
+    kinds = [e.kind for e in world.events_from(cursor)]
+    assert "zone_left" in kinds
+    assert "zone_entered" in kinds
+
+
+def test_no_migration_without_portal() -> None:
+    # B4: with no portal under the agent, its zone is unchanged.
+    world = World()
+    agent = Agent(id="npc1", name="Gus", position=Vec3(0, 0, 0), zone="tavern")
+    world.add(agent)
+    sim = Simulation(world, dt=0.1)
+    sim.register("npc1", ReactiveBrain())
+    sim.step()
+    assert agent.zone == "tavern"
 
 
 async def test_global_token_budget_blocks_dispatch() -> None:

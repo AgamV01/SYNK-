@@ -117,8 +117,12 @@ A discrete thing an agent did. `kind` is one of the enumerated kinds (see Struct
 
 Fields:
 - `agent_id` (string) — the acting agent.
-- `kind` (string) — event kind: `spoke`, `emoted`, `moved`, `gave_item`, `goal_changed`, `handoff`.
+- `kind` (string) — event kind: `spoke`, `emoted`, `moved`, `gave_item`, `goal_changed`, `handoff`, `zone_entered`, `zone_left`.
 - `payload` (object) — kind-specific, e.g. `{ "emote": "wave" }` or `{ "item": "ale", "to": "player_7f3a" }`.
+
+Zone migration: when an agent crosses a portal it emits `zone_left` (in the old zone,
+payload `{ "to": <zone> }`) then `zone_entered` (in the new zone, payload `{ "from": <zone> }`).
+These are zone-scoped like all events, so players see only the side relevant to their zone.
 
 ```json
 { "type": "agent_event", "v": 1, "agent_id": "npc_barkeep", "kind": "emoted", "payload": { "emote": "wave" } }
