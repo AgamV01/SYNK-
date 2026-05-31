@@ -103,6 +103,7 @@ class NpcConversation:
         self.next_speaker = listener_id
         self._speaker = speaker_id
         self.in_flight = True
+        self.sim._metrics["npc_turns"] += 1
         self._task = self.sim.dispatch_converse(
             speaker_id, f"Continue your conversation with {listener_name}. Say one short line."
         )
@@ -146,9 +147,20 @@ class Simulation:
         self.npc_chat_cooldown = npc_chat_cooldown
         self._npc_convos: list[NpcConversation] = []
         self._npc_chat_cooldown_until: dict[frozenset, float] = {}
+        # Cost telemetry — the data behind the hybrid-brain claim.
+        self._metrics = {"llm_calls": 0, "deliberations": 0, "reflections": 0, "npc_turns": 0}
         self._running = False
         self._pending: list[asyncio.Task] = []
         self._results: list[tuple[str, ConverseResult]] = []
+
+    def metrics(self) -> dict:
+        """Cumulative simulation counters (ticks + off-tick LLM activity)."""
+        return {
+            **self._metrics,
+            "ticks": self.world.tick,
+            "sim_time": round(self.world.sim_time, 3),
+            "agents": len(self.brains),
+        }
 
     @property
     def running(self) -> bool:
@@ -171,6 +183,7 @@ class Simulation:
         if not isinstance(agent, Agent):
             raise KeyError(f"no agent {agent_id!r} to converse")
         percept = perceive(self.world, agent, self._sense_radius(brain))
+        self._metrics["llm_calls"] += 1
 
         async def _runner() -> ConverseResult:
             result = await brain.converse(agent, percept, utterance)
@@ -261,6 +274,8 @@ class Simulation:
                 )
                 self._pending.append(task)
                 self.reflection.mark(agent_id, self.world.sim_time)
+                self._metrics["reflections"] += 1
+                self._metrics["llm_calls"] += 1  # reflect() calls the provider when set
                 dispatched += 1
         return dispatched
 
@@ -304,6 +319,7 @@ class Simulation:
         if self.world.sim_time - last < self.deliberate_cooldown:
             return
         self._last_deliberation[agent_id] = self.world.sim_time
+        self._metrics["deliberations"] += 1
         self.dispatch_converse(
             agent_id, f"You witnessed: {describe_event(top)}. React briefly, in character."
         )

@@ -25,6 +25,14 @@ def test_healthz() -> None:
     assert response.json() == {"status": "ok"}
 
 
+def test_metrics_endpoint() -> None:
+    client = TestClient(create_app())
+    body = client.get("/metrics").json()
+    assert body["v"] == 1
+    for key in ("llm_calls", "deliberations", "reflections", "npc_turns", "ticks", "agents", "entities"):
+        assert key in body
+
+
 def test_ws_join_returns_welcome_with_token() -> None:
     client = TestClient(create_app())
     with client.websocket_connect("/ws") as ws:

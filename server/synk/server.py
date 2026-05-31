@@ -285,6 +285,10 @@ def create_app(
     async def healthz() -> dict[str, str]:
         return {"status": "ok"}
 
+    @app.get("/metrics")
+    async def metrics() -> dict:
+        return {"v": PROTOCOL_VERSION, "entities": len(world), **sim.metrics()}
+
     @app.websocket("/ws")
     async def ws(websocket: WebSocket) -> None:
         if not origin_allowed(websocket.headers.get("origin"), allowed):

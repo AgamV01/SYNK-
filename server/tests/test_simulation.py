@@ -104,6 +104,24 @@ async def test_event_driven_deliberation_on_salient_event() -> None:
     assert any(e.kind == "spoke" for e in world.recent_events())
 
 
+async def test_metrics_count_off_tick_llm_activity() -> None:
+    world = World()
+    world.add(Agent(id="npc1", position=Vec3(0, 0, 0), zone="room"))
+    sim = Simulation(world, dt=0.1, deliberate_threshold=1.0, deliberate_cooldown=5.0)
+    sim.register("npc1", LLMBrain(provider=SlowProvider()))
+    assert sim.metrics()["llm_calls"] == 0  # idle world spends nothing
+    world.emit_event(
+        WorldEvent(kind="gave_item", source_id="bob", zone="room", tick=0,
+                   position=Vec3(1, 0, 0), salience=3.0, payload={"item": "coin"})
+    )
+    sim.step()
+    m = sim.metrics()
+    assert m["deliberations"] == 1
+    assert m["llm_calls"] == 1
+    assert m["ticks"] == 1
+    await asyncio.gather(*sim._pending)
+
+
 def test_no_deliberation_below_threshold_or_for_reactive() -> None:
     world = World()
     world.add(Agent(id="npc1", position=Vec3(0, 0, 0), zone="room"))
