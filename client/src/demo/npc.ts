@@ -4,12 +4,43 @@ import * as THREE from "three";
 
 import type { AgentSnapshot } from "../sdk/types";
 
+// world_state arrives ~every 100 ms (protocol/messages.md). We interpolate between the
+// last two snapshots over this window so motion is smooth instead of teleporting.
+export const SNAPSHOT_MS = 100;
+
+/** Clamp `t` to [0,1]. */
+export function clamp01(t: number): number {
+  return t < 0 ? 0 : t > 1 ? 1 : t;
+}
+
+/** Linear interpolation from `prev` to `next` at fraction `t` (clamped to [0,1]). */
+export function interpolate(prev: number, next: number, t: number): number {
+  return prev + (next - prev) * clamp01(t);
+}
+
+/** Interpolate an angle (radians) along the shortest path, so facing never spins
+ *  the long way around when crossing the ±π wrap. */
+export function interpolateAngle(prev: number, next: number, t: number): number {
+  let delta = next - prev;
+  while (delta > Math.PI) delta -= 2 * Math.PI;
+  while (delta < -Math.PI) delta += 2 * Math.PI;
+  return prev + delta * clamp01(t);
+}
+
 interface NPCView {
   group: THREE.Group;
   body: THREE.Mesh;
   bubble: THREE.Sprite | null;
   bubbleExpiry: number;
   emoteUntil: number;
+  // Interpolation endpoints (xz + yaw) and the time the latest snapshot landed.
+  fromX: number;
+  fromZ: number;
+  fromYaw: number;
+  toX: number;
+  toZ: number;
+  toYaw: number;
+  lerpStart: number;
 }
 
 function makeLabel(text: string): THREE.Sprite {
@@ -65,11 +96,19 @@ export class NPCManager {
 
   update(agents: AgentSnapshot[]): void {
     const seen = new Set<string>();
+    const now = performance.now();
     for (const agent of agents) {
       seen.add(agent.id);
       const view = this.views.get(agent.id) ?? this.create(agent);
-      view.group.position.set(agent.position[0], 1.0, agent.position[2]);
-      view.group.rotation.y = -agent.facing;
+      // Re-anchor the interpolation: start from where we're currently rendered and
+      // ease toward the new snapshot over the next snapshot window.
+      view.fromX = view.group.position.x;
+      view.fromZ = view.group.position.z;
+      view.fromYaw = view.group.rotation.y;
+      view.toX = agent.position[0];
+      view.toZ = agent.position[2];
+      view.toYaw = -agent.facing;
+      view.lerpStart = now;
     }
     for (const [id, view] of this.views) {
       if (!seen.has(id)) {
@@ -87,6 +126,8 @@ export class NPCManager {
     );
     group.add(body);
     group.add(makeLabel(agent.name || agent.id));
+    group.position.set(agent.position[0], 1.0, agent.position[2]);
+    group.rotation.y = -agent.facing;
     this.scene.add(group);
     const view: NPCView = {
       group,
@@ -94,6 +135,13 @@ export class NPCManager {
       bubble: null,
       bubbleExpiry: 0,
       emoteUntil: 0,
+      fromX: agent.position[0],
+      fromZ: agent.position[2],
+      fromYaw: -agent.facing,
+      toX: agent.position[0],
+      toZ: agent.position[2],
+      toYaw: -agent.facing,
+      lerpStart: performance.now(),
     };
     this.views.set(agent.id, view);
     return view;
@@ -117,10 +165,15 @@ export class NPCManager {
     view.emoteUntil = performance.now() + durationMs;
   }
 
-  /** Advance per-frame animations: expire bubbles, animate emote bounces. */
+  /** Advance per-frame animations: interpolate positions/facing toward the latest
+   *  snapshot, expire bubbles, animate emote bounces. */
   animate(): void {
     const now = performance.now();
     for (const view of this.views.values()) {
+      const t = (now - view.lerpStart) / SNAPSHOT_MS;
+      view.group.position.x = interpolate(view.fromX, view.toX, t);
+      view.group.position.z = interpolate(view.fromZ, view.toZ, t);
+      view.group.rotation.y = interpolateAngle(view.fromYaw, view.toYaw, t);
       if (view.bubble && now > view.bubbleExpiry) {
         view.group.remove(view.bubble);
         view.bubble = null;
