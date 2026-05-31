@@ -33,6 +33,29 @@ def test_metrics_endpoint() -> None:
         assert key in body
 
 
+def test_prometheus_exposition_format() -> None:
+    # E2: the formatter emits HELP/TYPE + a numeric line per metric, skips non-numerics.
+    from synk.server import prometheus_exposition
+
+    text = prometheus_exposition({"llm_calls": 5, "ticks": 12, "sim_time": 1.2, "v": "x"})
+    assert "# TYPE synk_llm_calls counter" in text
+    assert "synk_llm_calls 5" in text
+    assert "# TYPE synk_ticks gauge" in text
+    assert "synk_ticks 12" in text
+    assert "synk_v" not in text  # non-numeric skipped
+    assert text.endswith("\n")
+
+
+def test_metrics_prom_endpoint() -> None:
+    # E2: /metrics/prom scrapes as Prometheus text exposition.
+    client = TestClient(create_app(demo=True))
+    resp = client.get("/metrics/prom")
+    assert resp.status_code == 200
+    assert resp.headers["content-type"].startswith("text/plain")
+    assert "synk_llm_calls" in resp.text
+    assert "synk_tokens_used" in resp.text
+
+
 def test_ws_join_returns_welcome_with_token() -> None:
     client = TestClient(create_app())
     with client.websocket_connect("/ws") as ws:

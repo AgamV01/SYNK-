@@ -15,6 +15,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import PlainTextResponse
 
 from . import actions
 from .auth import AuthManager
@@ -178,6 +179,27 @@ def zone_snapshot(world: World, zone: str, day_length: float = DEFAULT_DAY_LENGT
     }
 
 
+# Metrics that are monotonic counters; everything else is exposed as a gauge.
+_COUNTER_METRICS = frozenset(
+    {"llm_calls", "deliberations", "reflections", "npc_turns", "tokens_used", "budget_skips"}
+)
+
+
+def prometheus_exposition(metrics: Mapping[str, object]) -> str:
+    """Render a metrics dict as Prometheus text exposition (v0.0.4). Numeric values are
+    emitted as `synk_<name>` with HELP/TYPE; non-numeric values are skipped."""
+    lines: list[str] = []
+    for key, value in metrics.items():
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            continue
+        name = f"synk_{key}"
+        kind = "counter" if key in _COUNTER_METRICS else "gauge"
+        lines.append(f"# HELP {name} SYNK {key}")
+        lines.append(f"# TYPE {name} {kind}")
+        lines.append(f"{name} {value}")
+    return "\n".join(lines) + "\n"
+
+
 async def send_error(ws: object, code: str, message: str) -> None:
     await ws.send_json(
         {"type": "error", "v": PROTOCOL_VERSION, "code": code, "message": message}
@@ -318,6 +340,11 @@ def create_app(
     @app.get("/metrics")
     async def metrics() -> dict:
         return {"v": PROTOCOL_VERSION, "entities": len(world), **sim.metrics()}
+
+    @app.get("/metrics/prom")
+    async def metrics_prom() -> PlainTextResponse:
+        body = prometheus_exposition({"entities": len(world), **sim.metrics()})
+        return PlainTextResponse(body, media_type="text/plain; version=0.0.4")
 
     @app.websocket("/ws")
     async def ws(websocket: WebSocket) -> None:
