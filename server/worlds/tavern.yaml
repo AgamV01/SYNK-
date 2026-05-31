@@ -1,0 +1,55 @@
+# The SYNK tavern demo world, as data. Mirrors the legacy populate_demo():
+# three personality NPCs around two obstacles, each with a hybrid (LLM) brain and a
+# daily routine. Load with synk.worldfile.load_world_file or via SYNK_WORLD.
+name: tavern
+day_length: 60.0
+
+grid:
+  min_x: -15
+  min_z: -15
+  cols: 30
+  rows: 30
+  cell_size: 1.0
+
+obstacles:
+  - center: [-4, 0, -2]
+    radius: 1.2
+  - center: [5, 0, 1]
+    radius: 1.0
+
+agents:
+  - id: npc_gus
+    name: Gus
+    personality: a gruff barkeep
+    position: [0, 0, -3]
+    zone: tavern
+    brain: llm
+    schedule:
+      morning: open up and wipe down the bar
+      day: serve the regulars
+      evening: hold court by the hearth
+      night: keep an eye on npc_tomas
+
+  - id: npc_mira
+    name: Mira
+    personality: a curious bard
+    position: [3, 0, 2]
+    zone: tavern
+    brain: llm
+    schedule:
+      morning: tune your lute
+      day: seek out npc_gus for tavern gossip
+      evening: perform for the room
+      night: rest in a corner
+
+  - id: npc_tomas
+    name: Tomas
+    personality: a suspicious guard
+    position: [-3, 0, 3]
+    zone: tavern
+    brain: llm
+    schedule:
+      morning: inspect the doors
+      day: patrol and watch npc_mira
+      evening: guard npc_gus and the till
+      night: make the rounds
