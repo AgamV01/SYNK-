@@ -51,23 +51,35 @@ class Agent(Entity):
 class World:
     """Holds all entities and the simulation clock. Authoritative."""
 
-    def __init__(self) -> None:
+    def __init__(self, max_events: int = 1000) -> None:
+        if max_events <= 0:
+            raise ValueError("max_events must be positive")
         self._entities: dict[str, Entity] = {}
         self._events: list[WorldEvent] = []
+        self._event_offset: int = 0  # # of events dropped off the front (keeps cursor monotonic)
+        self.max_events = max_events
         self.tick: int = 0
         self.sim_time: float = 0.0
 
     def emit_event(self, event: WorldEvent) -> None:
         self._events.append(event)
+        # Bound memory: drop oldest beyond the cap, advancing the offset so the
+        # global event cursor stays monotonic for streaming consumers.
+        overflow = len(self._events) - self.max_events
+        if overflow > 0:
+            del self._events[:overflow]
+            self._event_offset += overflow
 
     @property
     def event_count(self) -> int:
-        """Total events emitted so far — a monotonic cursor for streaming consumers."""
-        return len(self._events)
+        """Total events ever emitted — a monotonic cursor for streaming consumers."""
+        return self._event_offset + len(self._events)
 
     def events_from(self, index: int) -> list[WorldEvent]:
-        """Events emitted at or after the given cursor index (see `event_count`)."""
-        return self._events[index:]
+        """Events at or after the given global cursor index (see `event_count`).
+        Events older than the retained window are not returned."""
+        start = max(0, index - self._event_offset)
+        return self._events[start:]
 
     def recent_events(self, within_ticks: int | None = None) -> list[WorldEvent]:
         """Events emitted recently. With `within_ticks`, only those whose tick is

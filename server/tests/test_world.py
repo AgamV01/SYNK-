@@ -3,7 +3,7 @@ from __future__ import annotations
 from synk.geometry import Vec3
 import pytest
 
-from synk.world import Agent, Entity, Player, World
+from synk.world import Agent, Entity, Player, World, WorldEvent
 
 
 def test_entity_defaults() -> None:
@@ -108,6 +108,26 @@ def test_within_radius_excludes_self() -> None:
     w.add(Entity(id="you", position=Vec3(1, 0, 0), zone="tavern"))
     hits = {e.id for e in w.within_radius(Vec3(0, 0, 0), 10.0, "tavern", exclude_id="me")}
     assert hits == {"you"}
+
+
+def test_event_buffer_is_bounded_with_monotonic_cursor() -> None:
+    w = World(max_events=3)
+    for i in range(5):
+        w.emit_event(WorldEvent(kind="spoke", source_id=f"s{i}", zone="z", tick=i))
+    # Only the last 3 are retained, but the cursor counts all 5 emitted.
+    assert len(w._events) == 3
+    assert w.event_count == 5
+    # events_from honors the global cursor; the dropped events (0,1) are gone.
+    tail = w.events_from(4)
+    assert [e.source_id for e in tail] == ["s4"]
+    assert [e.source_id for e in w.events_from(2)] == ["s2", "s3", "s4"]
+    # Asking before the retained window returns the whole retained window, not a crash.
+    assert len(w.events_from(0)) == 3
+
+
+def test_world_rejects_bad_max_events() -> None:
+    with pytest.raises(ValueError):
+        World(max_events=0)
 
 
 def test_world_clock_starts_at_zero() -> None:
