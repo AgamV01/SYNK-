@@ -10,6 +10,7 @@ import aiosqlite
 from .geometry import Vec3
 from .memory import MemoryItem, MemoryStore
 from .pathfinding import Obstacle
+from .relationships import Relationships
 from .world import Agent, Entity, Player, World
 
 SCHEMA = """
@@ -36,6 +37,12 @@ CREATE TABLE IF NOT EXISTS memories (
     salience REAL NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_memories_agent ON memories(agent_id);
+CREATE TABLE IF NOT EXISTS relationships (
+    agent_id TEXT NOT NULL,
+    other_id TEXT NOT NULL,
+    score    REAL NOT NULL,
+    PRIMARY KEY (agent_id, other_id)
+);
 """
 
 
@@ -130,6 +137,23 @@ class Persistence:
         for text, ts, salience in await cursor.fetchall():
             store.add(MemoryItem(text=text, ts=ts, salience=salience))
         return store
+
+    def save_relationships(self, agent_id: str, relationships: Relationships) -> None:
+        """Queue a replace of an agent's sentiment scores. Tick-safe; flush off-tick."""
+        self.enqueue("DELETE FROM relationships WHERE agent_id = ?", (agent_id,))
+        for other_id, score in relationships.as_dict().items():
+            self.enqueue(
+                "INSERT INTO relationships(agent_id, other_id, score) VALUES (?,?,?)",
+                (agent_id, other_id, score),
+            )
+
+    async def load_relationships(self, agent_id: str) -> Relationships:
+        """Rebuild an agent's Relationships (sentiment toward others) from the database."""
+        cursor = await self.db.execute(
+            "SELECT other_id, score FROM relationships WHERE agent_id = ?", (agent_id,)
+        )
+        scores = {other_id: score for other_id, score in await cursor.fetchall()}
+        return Relationships.from_scores(scores)
 
     def save_obstacles(self, obstacles: list[Obstacle]) -> None:
         """Queue the zone's static obstacles (as JSON in world_meta) so A* navigation

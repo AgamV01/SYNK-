@@ -32,6 +32,17 @@ class Relationships:
     def sentiment(self, other_id: str) -> float:
         return self._scores.get(other_id, 0.0)
 
+    def as_dict(self) -> dict[str, float]:
+        """A copy of the raw sentiment scores, for persistence/inspection."""
+        return dict(self._scores)
+
+    @classmethod
+    def from_scores(cls, scores: dict[str, float]) -> "Relationships":
+        """Rebuild from persisted scores (the inverse of as_dict)."""
+        rel = cls()
+        rel._scores = {str(k): float(v) for k, v in scores.items()}
+        return rel
+
     def top(self, n: int = 3) -> list[tuple[str, float]]:
         return sorted(self._scores.items(), key=lambda kv: kv[1], reverse=True)[:n]
 

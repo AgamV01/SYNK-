@@ -5,6 +5,7 @@ import inspect
 from synk.geometry import Vec3
 from synk.memory import MemoryItem, MemoryStore
 from synk.persistence import Persistence
+from synk.relationships import Relationships
 from synk.world import Agent, Player, World
 
 
@@ -13,7 +14,7 @@ async def test_migrate_creates_tables() -> None:
     await p.connect()
     try:
         tables = await p.table_names()
-        assert {"world_meta", "entities", "memories"} <= tables
+        assert {"world_meta", "entities", "memories", "relationships"} <= tables
     finally:
         await p.close()
 
@@ -25,6 +26,43 @@ async def test_migrate_is_idempotent() -> None:
         await p.migrate()  # running again must not raise
         tables = await p.table_names()
         assert "entities" in tables
+    finally:
+        await p.close()
+
+
+async def test_relationships_roundtrip() -> None:
+    # C1: sentiment scores survive a save/flush/load cycle.
+    p = Persistence(":memory:")
+    await p.connect()
+    try:
+        rel = Relationships()
+        rel.adjust("npc_gus", 3.0)
+        rel.adjust("player_1", -1.5)
+        p.save_relationships("npc_mira", rel)
+        await p.flush()
+        restored = await p.load_relationships("npc_mira")
+        assert restored.sentiment("npc_gus") == 3.0
+        assert restored.sentiment("player_1") == -1.5
+        assert restored.sentiment("unknown") == 0.0
+    finally:
+        await p.close()
+
+
+async def test_relationships_save_replaces_prior() -> None:
+    # C1: re-saving replaces the prior row set (no stale duplicates).
+    p = Persistence(":memory:")
+    await p.connect()
+    try:
+        first = Relationships()
+        first.adjust("a", 1.0)
+        p.save_relationships("npc1", first)
+        await p.flush()
+        second = Relationships()
+        second.adjust("b", 2.0)
+        p.save_relationships("npc1", second)
+        await p.flush()
+        restored = await p.load_relationships("npc1")
+        assert restored.as_dict() == {"b": 2.0}
     finally:
         await p.close()
 

@@ -214,7 +214,7 @@ async def _attach_brains_and_memory(
     for entity in world.all():
         if isinstance(entity, Agent) and entity.id not in sim.brains:
             entity.memory = await persistence.load_memory(entity.id)
-            entity.relationships = Relationships()
+            entity.relationships = await persistence.load_relationships(entity.id)
             reactive = ReactiveBrain(grid=grid, arrive_radius=1.5)
             sim.register(entity.id, LLMBrain(provider=provider, reactive=reactive))
 

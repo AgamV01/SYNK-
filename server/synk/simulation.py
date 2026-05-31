@@ -364,6 +364,9 @@ class Simulation:
                 memory = getattr(agent, "memory", None)
                 if memory is not None and hasattr(memory, "items"):
                     self.persistence.save_memory(agent_id, memory)
+                relationships = getattr(agent, "relationships", None)
+                if relationships is not None and hasattr(relationships, "as_dict"):
+                    self.persistence.save_relationships(agent_id, relationships)
 
     def _form_memories(self, agent: Agent, percept) -> None:
         """Record this-tick perceived events into the agent's memory (if it has one).
