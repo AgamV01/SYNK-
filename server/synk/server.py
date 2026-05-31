@@ -11,6 +11,7 @@ import secrets
 import time
 from collections.abc import AsyncIterator, Callable, Mapping
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,18 +23,20 @@ from .brains.providers import select_provider
 from .brains.reactive import ReactiveBrain
 from .dialogue import DialogueManager, overhearers
 from .geometry import Vec3
-from .memory import MemoryItem, MemoryStore, score_event_salience
+from .memory import MemoryItem, score_event_salience
 from .pathfinding import Grid, Obstacle
 from .perception import perceive
 from .persistence import Persistence
 from .relationships import Relationships
-from .schedule import Schedule
 from .simulation import Simulation
 from .world import Agent, Player, World
+from .worldfile import LoadedWorld, load_world_file
 
 PROTOCOL_VERSION = 1
 DEFAULT_ZONE = "default"
 SNAPSHOT_INTERVAL = 0.1  # 10 Hz, per protocol/messages.md
+# The default demo world (worlds/tavern.yaml lives next to the synk package).
+DEFAULT_WORLD_FILE = Path(__file__).resolve().parent.parent / "worlds" / "tavern.yaml"
 
 
 class Throttle:
@@ -174,40 +177,31 @@ def _demo_grid(obstacles: list[Obstacle]) -> Grid:
     return Grid.from_obstacles(-15, -15, 30, 30, 1.0, obstacles)
 
 
-def populate_demo(world: World, sim: Simulation) -> list[Obstacle]:
-    """Add the tavern demo world: three personality NPCs around two obstacles, each
-    with a hybrid brain registered on the simulation. Returns the obstacle list (so it
-    can be persisted). Lets `uvicorn synk.server:app` show living NPCs with zero config."""
-    obstacles = [Obstacle(center=Vec3(-4, 0, -2), radius=1.2), Obstacle(center=Vec3(5, 0, 1), radius=1.0)]
-    grid = _demo_grid(obstacles)
-    npcs = [
-        Agent(id="npc_gus", name="Gus", personality="a gruff barkeep", position=Vec3(0, 0, -3), zone="tavern"),
-        Agent(id="npc_mira", name="Mira", personality="a curious bard", position=Vec3(3, 0, 2), zone="tavern"),
-        Agent(id="npc_tomas", name="Tomas", personality="a suspicious guard", position=Vec3(-3, 0, 3), zone="tavern"),
-    ]
+def populate_from_world(world: World, sim: Simulation, loaded: LoadedWorld) -> list[Obstacle]:
+    """Wire a LoadedWorld (see synk.worldfile) into a live World + Simulation: copy in
+    agents (with their memory/relationships), register a grid-aware hybrid brain per
+    agent's declared kind, install daily schedules, and adopt the day length. Returns
+    the obstacle list (so it can be persisted)."""
     provider = select_provider()  # Mock with no key; real LLM when ANTHROPIC/OPENAI key is set
-    for npc in npcs:
-        npc.memory = MemoryStore()  # episodic memory (duck-typed; used by LLMBrain + reflection)
-        npc.relationships = Relationships()  # social memory (sentiment toward others)
-        world.add(npc)
-        reactive = ReactiveBrain(grid=grid, arrive_radius=1.5)  # cheap tick layer keeps the grid
-        sim.register(npc.id, LLMBrain(provider=provider, reactive=reactive))
+    sim.day_length = loaded.day_length
+    for entity in loaded.world.all():
+        world.add(entity)
+        reactive = ReactiveBrain(grid=loaded.grid, arrive_radius=1.5)  # cheap tick layer keeps the grid
+        if loaded.brains.get(entity.id, "llm") == "llm":
+            sim.register(entity.id, LLMBrain(provider=provider, reactive=reactive))
+        else:
+            sim.register(entity.id, reactive)
+    for agent_id, schedule in loaded.schedules.items():
+        sim.register_schedule(agent_id, schedule)
+    return loaded.obstacles
 
-    # Daily routines: phase-driven goals make the tavern live without a player. Goals that
-    # name another NPC are pursued by the reactive layer (A*); others just flavor dialogue.
-    sim.register_schedule("npc_gus", Schedule({
-        "morning": "open up and wipe down the bar", "day": "serve the regulars",
-        "evening": "hold court by the hearth", "night": "keep an eye on npc_tomas",
-    }))
-    sim.register_schedule("npc_mira", Schedule({
-        "morning": "tune your lute", "day": "seek out npc_gus for tavern gossip",
-        "evening": "perform for the room", "night": "rest in a corner",
-    }))
-    sim.register_schedule("npc_tomas", Schedule({
-        "morning": "inspect the doors", "day": "patrol and watch npc_mira",
-        "evening": "guard npc_gus and the till", "night": "make the rounds",
-    }))
-    return obstacles
+
+def populate_demo(world: World, sim: Simulation, world_file: str | Path | None = None) -> list[Obstacle]:
+    """Add the demo world from a YAML world file (default: worlds/tavern.yaml), so
+    `uvicorn synk.server:app` shows living NPCs with zero config. Worlds-as-data:
+    set SYNK_WORLD or pass `world_file` to load a different world."""
+    path = world_file or DEFAULT_WORLD_FILE
+    return populate_from_world(world, sim, load_world_file(path))
 
 
 async def _attach_brains_and_memory(
@@ -231,8 +225,11 @@ def create_app(
     msg_rate: float = 50.0,
     msg_burst: float = 100.0,
     db_path: str | None = None,
+    world_file: str | Path | None = None,
 ) -> FastAPI:
     world = World()
+    # Worlds-as-data: explicit arg wins, else SYNK_WORLD env, else the default tavern.
+    world_file = world_file or os.environ.get("SYNK_WORLD") or DEFAULT_WORLD_FILE
     auth = AuthManager()
     dialogue = DialogueManager()
     db_path = db_path if db_path is not None else os.environ.get("SYNK_DB_PATH")
@@ -250,7 +247,7 @@ def create_app(
 
     # With persistence, the populate-vs-load decision happens in lifespan (after connect).
     if demo and persistence is None:
-        populate_demo(world, sim)
+        populate_demo(world, sim, world_file)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -259,7 +256,7 @@ def create_app(
             await persistence.connect()
             loaded = await persistence.load_into(world)
             if loaded == 0 and demo:
-                persistence.save_obstacles(populate_demo(world, sim))
+                persistence.save_obstacles(populate_demo(world, sim, world_file))
             else:
                 obstacles = await persistence.load_obstacles()
                 await _attach_brains_and_memory(world, sim, persistence, obstacles)

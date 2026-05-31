@@ -168,6 +168,37 @@ def test_demo_npcs_use_hybrid_llm_brain() -> None:
     assert app.state.world.get("npc_gus").memory is not None
 
 
+def test_app_boots_from_world_file(tmp_path) -> None:
+    # B2: create_app(world_file=...) loads agents/brains from a YAML world file.
+    from synk.brains.llm import LLMBrain
+    from synk.brains.reactive import ReactiveBrain
+
+    world_yaml = tmp_path / "mini.yaml"
+    world_yaml.write_text(
+        "name: mini\n"
+        "agents:\n"
+        "  - id: npc_ann\n"
+        "    name: Ann\n"
+        "    personality: a tinkerer\n"
+        "    position: [1, 0, 2]\n"
+        "    zone: shop\n"
+        "    brain: llm\n"
+        "  - id: npc_bob\n"
+        "    name: Bob\n"
+        "    position: [0, 0, 0]\n"
+        "    zone: shop\n"
+        "    brain: reactive\n",
+        encoding="utf-8",
+    )
+    app = create_app(demo=True, world_file=str(world_yaml))
+    sim = app.state.sim
+    assert set(sim.brains) == {"npc_ann", "npc_bob"}
+    assert isinstance(sim.brains["npc_ann"], LLMBrain)
+    assert isinstance(sim.brains["npc_bob"], ReactiveBrain)
+    ann = app.state.world.get("npc_ann")
+    assert ann.name == "Ann" and ann.zone == "shop"
+
+
 def test_ws_say_records_memory_and_conversation() -> None:
     app = create_app()
     gus = Agent(id="npc_gus", name="Gus", zone="tavern", personality="a barkeep")
