@@ -121,7 +121,9 @@ The whole point of SYNK is that intelligence is **two layers**:
 
 The hard invariant: **the LLM is never called on the per-tick path and never awaited on
 the tick** (enforced by a test). So an idle world with 100 NPCs costs essentially zero —
-you only spend tokens when something worth thinking about happens.
+you only spend tokens when something worth thinking about happens. Measured: 100 idle NPCs
+over 200 ticks make **0 LLM calls**, and even 500 NPCs tick within the 10 Hz budget — see
+[docs/BENCHMARKS.md](docs/BENCHMARKS.md) (`python tools/benchmark.py`).
 
 ## Upgrading to real LLM dialogue
 
