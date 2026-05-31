@@ -52,6 +52,28 @@ async def test_mock_provider_handles_empty_prompt() -> None:
     assert "this" in out
 
 
+async def test_mock_provider_accepts_v2_kwargs() -> None:
+    # A1: new optional kwargs are back-compatible no-ops on MockProvider.
+    p = MockProvider()
+    out = await p.generate(
+        "tell me about the treasure",
+        system="be terse",
+        max_tokens=16,
+        timeout=1.0,
+        tools=[{"name": "noop"}],
+    )
+    assert "treasure" in out
+
+
+async def test_mock_provider_streams_chunks() -> None:
+    # A1: stream_cb receives partial chunks whose join equals the full return value.
+    p = MockProvider()
+    chunks: list[str] = []
+    out = await p.generate("tell me about the treasure", stream_cb=chunks.append)
+    assert chunks  # streamed at least one chunk
+    assert "".join(chunks).strip() == out.strip()
+
+
 def test_select_defaults_to_mock_with_no_keys() -> None:
     assert isinstance(select_provider({}), MockProvider)
 

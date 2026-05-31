@@ -8,17 +8,31 @@ import os
 from collections.abc import Callable, Mapping
 from typing import Protocol, runtime_checkable
 
+# A streaming callback receives partial text chunks as they arrive.
+StreamCallback = Callable[[str], None]
+
 
 @runtime_checkable
 class Provider(Protocol):
     """A text generator the deliberative brain calls off-tick.
 
     `generate` is async because real providers do network I/O. It must never be
-    awaited on the simulation tick (see spec section 2)."""
+    awaited on the simulation tick (see spec section 2). Optional kwargs: `max_tokens`
+    (per-call cap), `timeout` (seconds), `tools` (structured-output / tool-calling
+    schemas), and `stream_cb` (called with partial chunks; the full text is returned)."""
 
     name: str
 
-    async def generate(self, prompt: str, *, system: str | None = None) -> str: ...
+    async def generate(
+        self,
+        prompt: str,
+        *,
+        system: str | None = None,
+        max_tokens: int | None = None,
+        timeout: float | None = None,
+        tools: list[dict] | None = None,
+        stream_cb: StreamCallback | None = None,
+    ) -> str: ...
 
 
 def build_prompt(
@@ -63,11 +77,23 @@ class MockProvider:
 
     name = "mock"
 
-    async def generate(self, prompt: str, *, system: str | None = None) -> str:
+    async def generate(
+        self,
+        prompt: str,
+        *,
+        system: str | None = None,
+        max_tokens: int | None = None,
+        timeout: float | None = None,
+        tools: list[dict] | None = None,
+        stream_cb: StreamCallback | None = None,
+    ) -> str:
         keyword = self._keyword(prompt)
         digest = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
-        idx = int(digest, 16) % len(_MOCK_TEMPLATES)
-        return _MOCK_TEMPLATES[idx].format(kw=keyword)
+        text = _MOCK_TEMPLATES[int(digest, 16) % len(_MOCK_TEMPLATES)].format(kw=keyword)
+        if stream_cb:  # emit word-by-word so streaming consumers can be exercised offline
+            for word in text.split(" "):
+                stream_cb(word + " ")
+        return text
 
     @staticmethod
     def _keyword(prompt: str) -> str:
@@ -97,7 +123,16 @@ class AnthropicProvider:
         self.model = model
         self.max_tokens = max_tokens
 
-    async def generate(self, prompt: str, *, system: str | None = None) -> str:
+    async def generate(
+        self,
+        prompt: str,
+        *,
+        system: str | None = None,
+        max_tokens: int | None = None,
+        timeout: float | None = None,
+        tools: list[dict] | None = None,
+        stream_cb: StreamCallback | None = None,
+    ) -> str:
         try:
             import anthropic
         except ImportError as exc:  # pragma: no cover - exercised only without the SDK
@@ -109,11 +144,22 @@ class AnthropicProvider:
         client = anthropic.AsyncAnthropic(api_key=self.api_key)
         kwargs: dict = {
             "model": self.model,
-            "max_tokens": self.max_tokens,
+            "max_tokens": max_tokens or self.max_tokens,
             "messages": [{"role": "user", "content": prompt}],
         }
         if system:
             kwargs["system"] = system
+        if tools:
+            kwargs["tools"] = tools
+        if timeout is not None:
+            kwargs["timeout"] = timeout
+        if stream_cb is not None:  # stream partial text chunks as they arrive
+            chunks: list[str] = []
+            async with client.messages.stream(**kwargs) as stream:
+                async for text in stream.text_stream:
+                    chunks.append(text)
+                    stream_cb(text)
+            return "".join(chunks)
         message = await client.messages.create(**kwargs)
         return "".join(
             block.text for block in message.content if getattr(block, "type", None) == "text"
@@ -136,7 +182,16 @@ class OpenAIProvider:
         self.model = model
         self.max_tokens = max_tokens
 
-    async def generate(self, prompt: str, *, system: str | None = None) -> str:
+    async def generate(
+        self,
+        prompt: str,
+        *,
+        system: str | None = None,
+        max_tokens: int | None = None,
+        timeout: float | None = None,
+        tools: list[dict] | None = None,
+        stream_cb: StreamCallback | None = None,
+    ) -> str:
         try:
             import openai
         except ImportError as exc:  # pragma: no cover - exercised only without the SDK
@@ -150,9 +205,25 @@ class OpenAIProvider:
         if system:
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
-        response = await client.chat.completions.create(
-            model=self.model, max_tokens=self.max_tokens, messages=messages
-        )
+        kwargs: dict = {
+            "model": self.model,
+            "max_tokens": max_tokens or self.max_tokens,
+            "messages": messages,
+        }
+        if tools:
+            kwargs["tools"] = tools
+        if timeout is not None:
+            kwargs["timeout"] = timeout
+        if stream_cb is not None:  # stream partial text chunks as they arrive
+            chunks: list[str] = []
+            stream = await client.chat.completions.create(stream=True, **kwargs)
+            async for event in stream:
+                delta = event.choices[0].delta.content if event.choices else None
+                if delta:
+                    chunks.append(delta)
+                    stream_cb(delta)
+            return "".join(chunks)
+        response = await client.chat.completions.create(**kwargs)
         return response.choices[0].message.content or ""
 
 
