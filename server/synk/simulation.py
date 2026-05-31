@@ -19,6 +19,7 @@ from .memory import MemoryItem, score_event_salience
 from .perception import DEFAULT_SENSE_RADIUS, perceive
 from .reflection import reflect
 from .relationships import sentiment_for
+from .schedule import DEFAULT_DAY_LENGTH, Schedule, time_of_day
 from .spatial import SpatialIndex
 from .world import Agent, World, WorldEvent
 
@@ -127,6 +128,7 @@ class Simulation:
         npc_chat_turns: int = 4,
         npc_chat_interval: float = 1.5,
         npc_chat_cooldown: float = 15.0,
+        day_length: float = DEFAULT_DAY_LENGTH,
     ) -> None:
         if dt <= 0:
             raise ValueError("dt must be positive")
@@ -148,6 +150,9 @@ class Simulation:
         self.npc_chat_cooldown = npc_chat_cooldown
         self._npc_convos: list[NpcConversation] = []
         self._npc_chat_cooldown_until: dict[frozenset, float] = {}
+        self.day_length = day_length
+        self.schedules: dict[str, Schedule] = {}
+        self._agent_phase: dict[str, str] = {}
         # Cost telemetry — the data behind the hybrid-brain claim.
         self._metrics = {"llm_calls": 0, "deliberations": 0, "reflections": 0, "npc_turns": 0}
         self._running = False
@@ -169,6 +174,36 @@ class Simulation:
 
     def register(self, agent_id: str, brain: Brain) -> None:
         self.brains[agent_id] = brain
+
+    def register_schedule(self, agent_id: str, schedule: Schedule) -> None:
+        self.schedules[agent_id] = schedule
+
+    def _apply_schedules(self) -> None:
+        """At each phase change, set scheduled agents' goals and emit a goal_changed event
+        (which others perceive, surfaces to clients, and the reactive layer pursues)."""
+        if not self.schedules:
+            return
+        phase = time_of_day(self.world.sim_time, self.day_length)
+        for agent_id, schedule in self.schedules.items():
+            if self._agent_phase.get(agent_id) == phase:
+                continue
+            self._agent_phase[agent_id] = phase
+            goal = schedule.goal_for(phase)
+            agent = self.world.try_get(agent_id)
+            if goal is None or not isinstance(agent, Agent):
+                continue
+            agent.goal = goal
+            self.world.emit_event(
+                WorldEvent(
+                    kind="goal_changed",
+                    source_id=agent_id,
+                    zone=agent.zone,
+                    tick=self.world.tick,
+                    position=agent.position,
+                    salience=score_event_salience("goal_changed"),
+                    payload={"goal": goal},
+                )
+            )
 
     @property
     def pending_count(self) -> int:
@@ -379,6 +414,7 @@ class Simulation:
     def step(self) -> None:
         """One tick: drain off-tick results, then perceive -> decide -> apply, then advance."""
         self.drain_results()
+        self._apply_schedules()  # phase-driven goals before agents decide
         # Build the spatial index once per tick so each agent's perception is ~O(1).
         index = SpatialIndex(self.world.all(), cell_size=DEFAULT_SENSE_RADIUS)
         for agent_id, brain in self.brains.items():

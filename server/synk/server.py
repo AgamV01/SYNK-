@@ -27,6 +27,7 @@ from .pathfinding import Grid, Obstacle
 from .perception import perceive
 from .persistence import Persistence
 from .relationships import Relationships
+from .schedule import Schedule
 from .simulation import Simulation
 from .world import Agent, Player, World
 
@@ -191,6 +192,21 @@ def populate_demo(world: World, sim: Simulation) -> list[Obstacle]:
         world.add(npc)
         reactive = ReactiveBrain(grid=grid, arrive_radius=1.5)  # cheap tick layer keeps the grid
         sim.register(npc.id, LLMBrain(provider=provider, reactive=reactive))
+
+    # Daily routines: phase-driven goals make the tavern live without a player. Goals that
+    # name another NPC are pursued by the reactive layer (A*); others just flavor dialogue.
+    sim.register_schedule("npc_gus", Schedule({
+        "morning": "open up and wipe down the bar", "day": "serve the regulars",
+        "evening": "hold court by the hearth", "night": "keep an eye on npc_tomas",
+    }))
+    sim.register_schedule("npc_mira", Schedule({
+        "morning": "tune your lute", "day": "seek out npc_gus for tavern gossip",
+        "evening": "perform for the room", "night": "rest in a corner",
+    }))
+    sim.register_schedule("npc_tomas", Schedule({
+        "morning": "inspect the doors", "day": "patrol and watch npc_mira",
+        "evening": "guard npc_gus and the till", "night": "make the rounds",
+    }))
     return obstacles
 
 

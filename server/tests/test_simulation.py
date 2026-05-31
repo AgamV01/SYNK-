@@ -234,6 +234,23 @@ def test_step_forms_memories_from_nearby_events() -> None:
     assert any("bob" in m.text for m in agent.memory.items)
 
 
+def test_schedule_sets_goal_and_emits_event_on_phase_change() -> None:
+    from synk.schedule import Schedule
+
+    world = World()
+    agent = Agent(id="npc1", position=Vec3(0, 0, 0), zone="room")
+    world.add(agent)
+    sim = Simulation(world, dt=0.1, day_length=60.0)
+    sim.register("npc1", ReactiveBrain())
+    sim.register_schedule("npc1", Schedule({"morning": "open the shop"}))
+    sim.step()  # sim_time starts at 0 -> morning
+    assert agent.goal == "open the shop"
+    assert any(e.kind == "goal_changed" for e in world.recent_events())
+    n_events = world.event_count
+    sim.step()  # still morning -> no new goal_changed event
+    assert world.event_count == n_events
+
+
 def test_perceived_events_shift_relationships() -> None:
     from synk.relationships import Relationships
 
