@@ -29,6 +29,32 @@ class WorldEvent:
     payload: dict = field(default_factory=dict)
 
 
+@dataclass(frozen=True, slots=True)
+class Portal:
+    """A doorway from one zone to another. An agent (or player) that steps within
+    `radius` (xz) of `position` in `from_zone` migrates to `to_zone`, re-anchored at
+    `target`. Portals are one-directional; add a matching reverse portal for two-way."""
+
+    from_zone: str
+    to_zone: str
+    position: Vec3
+    target: Vec3
+    radius: float = 1.5
+
+    def contains(self, position: Vec3) -> bool:
+        """True if `position` is within this portal's trigger radius (xz-plane)."""
+        return self.position.distance_to(position) <= self.radius
+
+
+@dataclass
+class Zone:
+    """A named region of the world, connected to neighbors by portals."""
+
+    id: str
+    name: str = ""
+    portals: list[Portal] = field(default_factory=list)
+
+
 @dataclass
 class Player(Entity):
     """A connected human player. The server owns the authoritative copy."""
@@ -60,6 +86,27 @@ class World:
         self.max_events = max_events
         self.tick: int = 0
         self.sim_time: float = 0.0
+        self.zones: dict[str, Zone] = {}  # zone graph (id -> Zone, with portals)
+
+    def add_zone(self, zone: Zone) -> None:
+        """Register a zone. Re-registering the same id replaces it."""
+        self.zones[zone.id] = zone
+
+    def add_portal(self, portal: Portal) -> None:
+        """Register a portal on its from_zone, creating bare zones for either end if
+        they aren't registered yet (so a portal-only world file still wires up)."""
+        for zone_id in (portal.from_zone, portal.to_zone):
+            self.zones.setdefault(zone_id, Zone(id=zone_id))
+        self.zones[portal.from_zone].portals.append(portal)
+
+    def portals_in(self, zone_id: str) -> list[Portal]:
+        """Portals leaving `zone_id` (empty if the zone is unknown or has none)."""
+        zone = self.zones.get(zone_id)
+        return list(zone.portals) if zone is not None else []
+
+    def neighbors(self, zone_id: str) -> set[str]:
+        """Zone ids directly reachable from `zone_id` via a portal."""
+        return {portal.to_zone for portal in self.portals_in(zone_id)}
 
     def emit_event(self, event: WorldEvent) -> None:
         self._events.append(event)

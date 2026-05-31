@@ -3,7 +3,37 @@ from __future__ import annotations
 from synk.geometry import Vec3
 import pytest
 
-from synk.world import Agent, Entity, Player, World, WorldEvent
+from synk.world import Agent, Entity, Player, Portal, World, WorldEvent, Zone
+
+
+def test_zone_graph_registers_portals_and_neighbors() -> None:
+    # B3: zones + portals form a small graph queryable by the migration logic.
+    world = World()
+    world.add_zone(Zone(id="tavern", name="The Tavern"))
+    world.add_zone(Zone(id="market", name="Market Square"))
+    world.add_portal(
+        Portal(from_zone="tavern", to_zone="market", position=Vec3(10, 0, 0), target=Vec3(-8, 0, 0))
+    )
+    world.add_portal(
+        Portal(from_zone="market", to_zone="tavern", position=Vec3(-8, 0, 0), target=Vec3(10, 0, 0))
+    )
+    assert set(world.zones) == {"tavern", "market"}
+    assert world.neighbors("tavern") == {"market"}
+    assert world.neighbors("market") == {"tavern"}
+    assert len(world.portals_in("tavern")) == 1
+    assert world.portals_in("unknown") == []
+
+
+def test_portal_contains_radius() -> None:
+    portal = Portal(from_zone="a", to_zone="b", position=Vec3(0, 0, 0), target=Vec3(5, 0, 5), radius=1.5)
+    assert portal.contains(Vec3(1.0, 0, 0))
+    assert not portal.contains(Vec3(3.0, 0, 0))
+
+
+def test_add_portal_creates_missing_zones() -> None:
+    world = World()
+    world.add_portal(Portal(from_zone="a", to_zone="b", position=Vec3(0, 0, 0), target=Vec3(1, 0, 1)))
+    assert set(world.zones) == {"a", "b"}
 
 
 def test_entity_defaults() -> None:
