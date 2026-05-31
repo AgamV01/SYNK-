@@ -2,6 +2,7 @@
 
 import { SynkClient } from "../sdk";
 import type { AgentSnapshot } from "../sdk/types";
+import { OrbitFollowCamera } from "./camera";
 import { NPCManager } from "./npc";
 import { PlayerController } from "./player";
 import { createScene, type Obstacle } from "./scene";
@@ -53,10 +54,13 @@ const ui = new DemoUI(uiRoot, {
   },
 });
 
-const player = new PlayerController(camera, {
+const player = new PlayerController({
   onMove: (position, facing) => client.move(position, facing),
 });
 scene.add(player.mesh);
+
+// Orbit/follow camera: drag to orbit, wheel to zoom; follows the player each frame.
+const orbitCamera = new OrbitFollowCamera(camera, canvas);
 
 // Lightweight client-side mirror of agent state for the proximity + debug panels.
 const agentNames = new Map<string, string>();
@@ -143,6 +147,7 @@ function frame(now: number): void {
   const dt = Math.min((now - last) / 1000, 0.1);
   last = now;
   player.update(dt);
+  orbitCamera.update(player.mesh.position);
   npcs.animate();
   renderer.render(scene, camera);
   requestAnimationFrame(frame);

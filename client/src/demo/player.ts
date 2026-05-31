@@ -1,4 +1,5 @@
-// Local player: WASD movement, a follow camera, and throttled move emission.
+// Local player: WASD movement and throttled move emission. Framing is handled
+// separately by OrbitFollowCamera (see camera.ts), which reads this.mesh.position.
 
 import * as THREE from "three";
 
@@ -16,10 +17,7 @@ export class PlayerController {
   private readonly onMove?: (position: [number, number, number], facing: number) => void;
   private lastEmit = 0;
 
-  constructor(
-    private readonly camera: THREE.PerspectiveCamera,
-    options: PlayerControllerOptions = {},
-  ) {
+  constructor(options: PlayerControllerOptions = {}) {
     this.speed = options.speed ?? 4;
     this.emitIntervalMs = options.emitIntervalMs ?? 100;
     this.onMove = options.onMove;
@@ -49,14 +47,6 @@ export class PlayerController {
       this.mesh.rotation.y = -Math.atan2(dz, dx);
       this.maybeEmit(Math.atan2(dz, dx));
     }
-
-    // Follow camera.
-    this.camera.position.set(
-      this.mesh.position.x,
-      this.mesh.position.y + 8,
-      this.mesh.position.z + 10,
-    );
-    this.camera.lookAt(this.mesh.position);
   }
 
   private maybeEmit(facing: number): void {
