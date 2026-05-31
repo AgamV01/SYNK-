@@ -13,7 +13,7 @@ from collections.abc import AsyncIterator, Callable, Mapping
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 
@@ -345,6 +345,35 @@ def create_app(
     async def metrics_prom() -> PlainTextResponse:
         body = prometheus_exposition({"entities": len(world), **sim.metrics()})
         return PlainTextResponse(body, media_type="text/plain; version=0.0.4")
+
+    @app.get("/agents/{agent_id}")
+    async def agent_info(agent_id: str) -> dict:
+        """Read-only introspection of one agent: live action/goal/zone plus recalled
+        memory and relationship sentiment — handy for debugging and the dashboard."""
+        agent = world.try_get(agent_id)
+        if not isinstance(agent, Agent):
+            raise HTTPException(status_code=404, detail=f"no agent {agent_id!r}")
+        memory = getattr(agent, "memory", None)
+        relationships = getattr(agent, "relationships", None)
+        return {
+            "v": PROTOCOL_VERSION,
+            "id": agent.id,
+            "name": agent.name,
+            "zone": agent.zone,
+            "action": agent.current_action,
+            "goal": agent.goal,
+            "position": agent.position.to_list(),
+            "memory": (
+                [item.text for item in memory.recall()]
+                if memory is not None and hasattr(memory, "recall")
+                else []
+            ),
+            "relationships": (
+                relationships.describe()
+                if relationships is not None and hasattr(relationships, "describe")
+                else []
+            ),
+        }
 
     @app.websocket("/ws")
     async def ws(websocket: WebSocket) -> None:

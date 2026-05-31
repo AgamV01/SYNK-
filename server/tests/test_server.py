@@ -56,6 +56,24 @@ def test_metrics_prom_endpoint() -> None:
     assert "synk_tokens_used" in resp.text
 
 
+def test_agent_introspection_endpoint() -> None:
+    # E3: GET /agents/{id} returns live action/goal/zone + memory + relationships.
+    app = create_app(demo=True)
+    client = TestClient(app)
+    body = client.get("/agents/npc_gus").json()
+    assert body["id"] == "npc_gus"
+    assert body["name"] == "Gus"
+    assert body["zone"] == "tavern"
+    assert "action" in body and "goal" in body
+    assert isinstance(body["memory"], list)
+    assert isinstance(body["relationships"], list)
+
+
+def test_agent_introspection_404_for_unknown() -> None:
+    client = TestClient(create_app(demo=True))
+    assert client.get("/agents/nobody").status_code == 404
+
+
 def test_ws_join_returns_welcome_with_token() -> None:
     client = TestClient(create_app())
     with client.websocket_connect("/ws") as ws:
